@@ -1,4 +1,4 @@
-package org;
+package core;
 
 public abstract class NodeSplitter {
 

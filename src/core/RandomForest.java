@@ -1,7 +1,14 @@
-package org;
+package core;
 
 import java.util.List;
 
+/**
+ * Represents Random Forest object.
+ * 
+ * @author Murat Ali Bayir
+ * @author Cuneyt Akcora
+ *
+ */
 public class RandomForest {
 
     private int numTrees;
