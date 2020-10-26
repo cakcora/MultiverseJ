@@ -1,5 +1,7 @@
 package mlcore;
 
+import core.MLContants;
+
 /**
  * Contains Simple arithmetic utility for computing Entropy.
  * 
@@ -7,8 +9,6 @@ package mlcore;
  *
  */
 public class Entropy {
-	
-	private static double Epsilon = Math.pow(10, -6);
 	
 	public Entropy()
 	{
@@ -21,7 +21,7 @@ public class Entropy {
 	 */
 	private double getLogLoss(double probability)
 	{
-		if ((Math.abs(probability) < Epsilon) || (Math.abs(1.0d -probability) < Epsilon))
+		if ((Math.abs(probability) < MLContants.EPSILON) || (Math.abs(1.0d -probability) < MLContants.EPSILON))
 		{
 			return 0;
 		} else {

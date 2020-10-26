@@ -1,7 +1,7 @@
 package core;
 
 /**
- * Represents single node in Decision Tree.
+ * Represents single node in the Decision Tree.
  * 
  * @author Murat Ali Bayir
  * @author Cuneyt Akcora
@@ -132,6 +132,17 @@ public class TreeNode {
 
 	public String getFeatureName() {
 		return featureName;
+	}
+	
+	/**
+	 * @TODO(HuseyinCan): To be implemented by Huseyin Can.
+	 * 
+	 * @param features
+	 * @return
+	 */
+	public int GetChildren(float[] features)
+	{
+		return -1;
 	}
     
     

@@ -36,4 +36,17 @@ public class DecisionTree {
     	}
     	return null;
     }
+    
+    /**
+	 * @TODO(HuseyinCan): To be implemented by Huseyin Can.
+	 * 
+	 * @param features
+	 * @return
+	 */
+    public double Predict(double[] features)
+	{
+    	return 0.0;
+
+	}
+	
 }
