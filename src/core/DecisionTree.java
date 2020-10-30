@@ -8,6 +8,7 @@ import java.util.List;
  * 
  * @author Murat Ali Bayir
  * @author Cuneyt Akcora
+ * @author Huseyincan Kaynak
  *
  */
 public class DecisionTree {
@@ -20,6 +21,16 @@ public class DecisionTree {
     public DecisionTree()
     {
     	nodes = new ArrayList<TreeNode>();
+    }
+    
+    /**
+     * Add node to the decision Tree.
+     * 
+     * @param node the node to be added.
+     */
+    public void addNode(TreeNode node)
+    {
+    	this.nodes.add(node);
     }
     
     /**
@@ -38,15 +49,42 @@ public class DecisionTree {
     }
     
     /**
-	 * @TODO(HuseyinCan): To be implemented by Huseyin Can.
+	 * Predicts the probability for given features.
 	 * 
-	 * @param features
+	 * @param features is the input array of features.
 	 * @return
 	 */
-    public double Predict(double[] features)
+    public double predict(double[] features)
 	{
-    	return 0.0;
-
+    	if (nodes.size() > 0) {
+    		var root = nodes.get(0);
+        	return predictRecursive(root, features);
+    	} else {
+    		throw new IllegalStateException("Nodes should have at least one item!");
+    	}
 	}
+    /**
+     * 
+     * Predict the value of y-label for the given tree.
+     * 
+     * @param node is the current tree node.
+     * @param features
+     * @return Predicted probability.
+     */
+    private double predictRecursive(TreeNode node, double[] features) 
+    {
+    	if (node.isLeafNode())
+    	{
+    		return node.getValue();
+    	}
+    	
+    	var childIndex = node.getChildren(features);
+    	var childNode = getNode(childIndex);
+    	if (childNode != null)
+    	{
+    		return predictRecursive(childNode, features);
+    	}
+    	return 0.0;
+    }
 	
 }

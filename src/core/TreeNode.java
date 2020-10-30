@@ -5,6 +5,7 @@ package core;
  * 
  * @author Murat Ali Bayir
  * @author Cuneyt Akcora
+ * @author Huseyincan Kaynak
  */
 
 public class TreeNode {
@@ -53,8 +54,12 @@ public class TreeNode {
      */
     private int sumOfPositiveLabels;
     
-    
     /**
+     * Prediction value stored in leaf nodes;
+     */
+    private double value;
+
+	/**
      * Construct TreeNode object.
      * @param id
      * @param featureID
@@ -67,7 +72,17 @@ public class TreeNode {
     	this.leftChild = -1;
     	this.rightChild = -1;
     	this.sumOfPositiveLabels = 0;
+    	this.value = -1.0d;
     }
+    
+    public double getValue() {
+		return value;
+	}
+
+
+	public void setValue(double value) {
+		this.value = value;
+	}
 
 
 	public double getSplitValue() {
@@ -134,17 +149,35 @@ public class TreeNode {
 		return featureName;
 	}
 	
+	public boolean isLeafNode()
+	{
+		return leftChild == -1 && rightChild == -1;
+	}
 	/**
-	 * @TODO(HuseyinCan): To be implemented by Huseyin Can.
+	 * Gets id of the child the subtree of which contains current data.
 	 * 
 	 * @param features
-	 * @return
+	 * @return child node id.
 	 */
-	public int GetChildren(float[] features)
+	public int getChildren(double[] features)
 	{
-		return -1;
+		if (isLeafNode()) {
+			return id;
+		}
+		else {
+			if (featureID >= 0 && featureID < features.length) {
+				if (features[featureID] > splitValue) {
+					return rightChild;
+				}
+				else {
+					return leftChild;
+				}
+			}
+			else {
+				throw new IllegalStateException("Feature array length: " + Integer.toString(features.length) + " featureID: "  + Integer.toString(featureID) + " is invalid.");
+			}
+		}
+		
 	}
-    
-    
-    
+
 }

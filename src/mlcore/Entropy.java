@@ -36,7 +36,9 @@ public class Entropy {
 	public double computeEntropy(int numberOfPositiveSamples, int numberOfNegativeSamples)
 	{
 		double total = (numberOfNegativeSamples + numberOfNegativeSamples) * 1.0d;
-		return getLogLoss((numberOfPositiveSamples * 1.0d) / total) +
-				getLogLoss((numberOfNegativeSamples * 1.0d) / total);
+		return total != 0 ? 
+				getLogLoss((numberOfPositiveSamples * 1.0d) / total) +
+				getLogLoss((numberOfNegativeSamples * 1.0d) / total)
+				: 0.0;
 	}
 }

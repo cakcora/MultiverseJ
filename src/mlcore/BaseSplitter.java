@@ -15,29 +15,27 @@ import core.MLContants;
 public abstract class BaseSplitter {
 
 	/**
-	 * The minimum size of any set 'after split'.
-	 * Example: If minimum split size is 40 and total population is 90.
-	 * 			Split-1) 42 + 48 is valid split
-	 * 			Split-2) 35 + 65 is invalid split.
-	 */
-	protected int minimumSplitSize;
-	
-	/**
 	 * The minimum input population size for split.
 	 * If input data has less than minimumPopulation items, then
 	 * we don't split.
 	 */
 	protected int minimumPopulation;
 	
-	public BaseSplitter(int minimumSplitSize, int minimumPopulation)
+	
+	/**
+	 * Used for computing entropy for a given data set.
+	 */
+	protected Entropy entropyComputer;
+	
+	public BaseSplitter(int minimumPopulation)
 	{
-		this.minimumSplitSize = minimumSplitSize;
 		this.minimumPopulation = minimumPopulation;
+		this.entropyComputer = new Entropy();
 	}
 	
 	public BaseSplitter()
 	{
-		
+		this.entropyComputer = new Entropy();
 	}
 	
 
@@ -48,7 +46,7 @@ public abstract class BaseSplitter {
 	 * 		values in the data set.
 	 * @param dataSet is the input data.
 	 */
-    public abstract void FindBestSplit(int featureIndex, List<DataPoint> dataSet);
+    public abstract Split FindBestSplit(int featureIndex, List<DataPoint> dataSet);
     
 
     /**
