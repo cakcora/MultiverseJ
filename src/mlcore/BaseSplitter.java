@@ -85,16 +85,6 @@ public abstract class BaseSplitter {
     	return true;
     }
 
-	public int getMinimumSplitSize() {
-		return minimumSplitSize;
-	}
-
-
-	public void setMinimumSplitSize(int minimumSplitSize) {
-		this.minimumSplitSize = minimumSplitSize;
-	}
-
-
 	public int getMinimumPopulation() {
 		return minimumPopulation;
 	}

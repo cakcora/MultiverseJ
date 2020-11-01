@@ -174,7 +174,11 @@ public class TreeNode {
 				}
 			}
 			else {
-				throw new IllegalStateException("Feature array length: " + Integer.toString(features.length) + " featureID: "  + Integer.toString(featureID) + " is invalid.");
+				throw new IllegalStateException("Feature array length: "
+						+ Integer.toString(features.length)
+						+ " featureID: " 
+						+ Integer.toString(featureID)
+						+ " are invalid!");
 			}
 		}
 		

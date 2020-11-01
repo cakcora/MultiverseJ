@@ -35,6 +35,8 @@ public class DataPoint {
 		this.features = features;
 	}
 
+	public DataPoint() {}
+
 	public double[] getFeatures() {
 		return features;
 	}
