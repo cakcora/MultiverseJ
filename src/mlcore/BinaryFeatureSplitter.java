@@ -59,7 +59,7 @@ public class BinaryFeatureSplitter extends BaseSplitter {
 	}
 
 	@Override
-	public Split FindBestSplit(int featureIndex, List<DataPoint> dataSet) {
+	public Split findBestSplit(int featureIndex, List<DataPoint> dataSet) {
 		
 		if (dataSet.size() < 2 * minimumPopulation)
 		{

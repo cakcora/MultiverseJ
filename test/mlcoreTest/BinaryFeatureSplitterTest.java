@@ -52,7 +52,7 @@ class BinaryFeatureSplitterTest {
 	void testDataWithTwoFeatureValues() {
 		var dataPoints = generateData();
 		var splitter = new BinaryFeatureSplitter(1);
-		var result = splitter.FindBestSplit(0, dataPoints);
+		var result = splitter.findBestSplit(0, dataPoints);
 		assertNotNull(result);
 		assertTrue(result.getInformationGain() > 0.0d);
 	}
@@ -74,7 +74,7 @@ class BinaryFeatureSplitterTest {
 		}
 		
 		var splitter = new BinaryFeatureSplitter(1);
-		var result = splitter.FindBestSplit(0, dataPoints);
+		var result = splitter.findBestSplit(0, dataPoints);
 		assertNull(result);
 	}
 	
@@ -83,7 +83,7 @@ class BinaryFeatureSplitterTest {
 	void testNoSplitCapacity() {
 		var dataPoints = generateData();
 		var splitter = new BinaryFeatureSplitter(1000);
-		var result = splitter.FindBestSplit(0, dataPoints);
+		var result = splitter.findBestSplit(0, dataPoints);
 		assertNull(result);
 	}
 }

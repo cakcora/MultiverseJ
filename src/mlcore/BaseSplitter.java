@@ -46,7 +46,7 @@ public abstract class BaseSplitter {
 	 * 		values in the data set.
 	 * @param dataSet is the input data.
 	 */
-    public abstract Split FindBestSplit(int featureIndex, List<DataPoint> dataSet);
+    public abstract Split findBestSplit(int featureIndex, List<DataPoint> dataSet);
     
 
     /**
