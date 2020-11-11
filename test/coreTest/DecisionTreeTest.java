@@ -26,7 +26,7 @@ class DecisionTreeTest {
 		var decisionTree = new DecisionTree();
 		double[] features = { 2.0d, 5.1d, 3.0d };
 		// intermediate nodes.
-		for(int i = 0; i < 3; i++) {
+		for (int i = 0; i < 3; i++) {
 			var intermediate = new TreeNode(i, 1);
 			intermediate.setSplitValue(1.3d);
 			intermediate.setLeftChild(i * 2 + 1);
@@ -34,14 +34,13 @@ class DecisionTreeTest {
 			decisionTree.addNode(intermediate);
 		}
 		// leaf nodes.
-		for(int i = 3; i < 7; i++) {
+		for (int i = 3; i < 7; i++) {
 			var leaf = new TreeNode(i, 1);
 			leaf.setValue((float) i);
 			decisionTree.addNode(leaf);
 		}
 		assertEquals(decisionTree.getNode(6).getId(), decisionTree.predict(features));
 	}
-	
 
 	@Test
 	void testPredictOneNode() {
@@ -60,23 +59,23 @@ class DecisionTreeTest {
 		decisionTree.addNode(rightLeaf);
 		assertEquals(leftLeaf.getValue(), decisionTree.predict(features));
 	}
-	
+
 	@Test
 	void testNoNodes() {
 		var decisionTree = new DecisionTree();
 		double[] features = { 1.0d, 2.0d, 3.0d };
 		Assertions.assertThrows(IllegalStateException.class, () -> {
-		    decisionTree.predict(features);
-		  });
+			decisionTree.predict(features);
+		});
 	}
-	
+
 	@Test
 	void testInvalidFeatureId() {
 		double[] features = { 1.0d };
 		var root = new TreeNode(0, 1);
 		var decisionTree = new DecisionTree();
 		Assertions.assertThrows(IllegalStateException.class, () -> {
-		    decisionTree.predict(features);
-		  });	
+			decisionTree.predict(features);
+		});
 	}
 }

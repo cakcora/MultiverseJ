@@ -9,33 +9,32 @@ import java.util.Arrays;
  *
  */
 public class DataPoint {
-	
+
 	/**
 	 * Constant value of the positive label.
 	 */
 	private static final double POSITIVE_LABEL = 1.0d;
-	
+
 	/**
 	 * Constant value of the negative label.
 	 */
 	private static final double NEGATIVE_LABEL = 0.0d;
-	
+
 	private double[] features;
-	
+
 	private double label;
-	
-	public DataPoint(double[] features, double label)
-	{
+
+	public DataPoint(double[] features, double label) {
 		this.features = features;
 		this.label = label;
 	}
 
-	public DataPoint(double[] features)
-	{
+	public DataPoint(double[] features) {
 		this.features = features;
 	}
 
-	public DataPoint() {}
+	public DataPoint() {
+	}
 
 	public double[] getFeatures() {
 		return features;
@@ -79,30 +78,29 @@ public class DataPoint {
 			return false;
 		return true;
 	}
-	
+
 	/**
-	 * Returns true if current data point has positive label. Otherwise, returns false.
+	 * Returns true if current data point has positive label. Otherwise, returns
+	 * false.
 	 */
-	public boolean IsPositive()
-	{
+	public boolean IsPositive() {
 		return (Math.abs(this.label - DataPoint.POSITIVE_LABEL) < MLContants.EPSILON);
 	}
-	
+
 	/**
-	 * Returns true if current data point has negative label. Otherwise, returns false.
+	 * Returns true if current data point has negative label. Otherwise, returns
+	 * false.
 	 */
-	public boolean IsNegative()
-	{
+	public boolean IsNegative() {
 		return (Math.abs(this.label - DataPoint.NEGATIVE_LABEL) < MLContants.EPSILON);
 	}
-	
+
 	/**
 	 * Returns corresponding feature value on index @featureIndex.
 	 * 
 	 * @param featureIndex is the index of corresponding feature in the sample data.
 	 */
-	public double getFeature(int featureIndex)
-	{
+	public double getFeature(int featureIndex) {
 		if (featureIndex < 0 || featureIndex >= this.features.length) {
 			throw new IllegalArgumentException("Feature Id: " + featureIndex + " is out of range!");
 		}

@@ -1,5 +1,8 @@
 package mlcore;
 
+import java.util.List;
+
+import core.DataPoint;
 import core.MLContants;
 
 /**
@@ -35,7 +38,7 @@ public class Entropy {
 	 */
 	public double computeEntropy(int numberOfPositiveSamples, int numberOfNegativeSamples)
 	{
-		double total = (numberOfNegativeSamples + numberOfNegativeSamples) * 1.0d;
+		double total = (numberOfPositiveSamples + numberOfNegativeSamples) * 1.0d;
 		return total != 0 ? 
 				getLogLoss((numberOfPositiveSamples * 1.0d) / total) +
 				getLogLoss((numberOfNegativeSamples * 1.0d) / total)

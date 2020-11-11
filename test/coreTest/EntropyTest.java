@@ -23,7 +23,7 @@ class EntropyTest {
 		var entropy = new Entropy();
 		assertEquals(0.6931, entropy.computeEntropy(1, 1), Math.pow(10, -4));
 	}
-	
+
 	@Test
 	@DisplayName("Zero Entropy")
 	void testEntropyZero() {
