@@ -19,27 +19,21 @@ import mlcore.BinaryFeatureSplitter;
  * @author Murat Ali Bayir
  */
 @Testable
-class BinaryFeatureSplitterTest {
+class BinaryFeatureSplitterTests {
 
-	
-	private List<DataPoint> generateData()
-	{
+	private List<DataPoint> generateData() {
 		var random = new Random("Seed".hashCode());
 		var dataPoints = new ArrayList<DataPoint>();
-		for (int i = 0; i < 100;  i++)
-		{
+		for (int i = 0; i < 100; i++) {
 			var isNegative = random.nextInt(100) < 50;
 			var label = isNegative ? 0.0d : 1.0d;
 			var point = new DataPoint();
 			point.setLabel(label);
-			if (isNegative)
-			{
-				var features = random.nextInt(100) < 90 ?
-						new double[] {0.0d} : new double[] {1.0};
+			if (isNegative) {
+				var features = random.nextInt(100) < 90 ? new double[] { 0.0d } : new double[] { 1.0 };
 				point.setFeatures(features);
 			} else {
-				var features = random.nextInt(100) >= 90 ?
-						new double[] {0.0d} : new double[] {1.0};
+				var features = random.nextInt(100) >= 90 ? new double[] { 0.0d } : new double[] { 1.0 };
 				point.setFeatures(features);
 			}
 			dataPoints.add(point);
@@ -56,28 +50,26 @@ class BinaryFeatureSplitterTest {
 		assertNotNull(result);
 		assertTrue(result.getInformationGain() > 0.0d);
 	}
-	
+
 	@Test
 	@DisplayName("One Label")
 	void testDataWithOneLabel() {
 		var random = new Random("Seed".hashCode());
 		var dataPoints = new ArrayList<DataPoint>();
-		
-		for (int i = 0; i < 100;  i++)
-		{
+
+		for (int i = 0; i < 100; i++) {
 			var point = new DataPoint();
 			point.setLabel(1.0d);
-			var features = random.nextInt(100) < 90 ?
-					new double[] {0.0d} : new double[] {1.0};
+			var features = random.nextInt(100) < 90 ? new double[] { 0.0d } : new double[] { 1.0 };
 			point.setFeatures(features);
 			dataPoints.add(point);
 		}
-		
+
 		var splitter = new BinaryFeatureSplitter(1);
 		var result = splitter.findBestSplit(0, dataPoints);
 		assertNull(result);
 	}
-	
+
 	@Test
 	@DisplayName("Capacity-Problem")
 	void testNoSplitCapacity() {
