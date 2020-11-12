@@ -12,26 +12,27 @@ public class DataPoint {
 
 	/**
 	 * Constant value of the positive label.
-	 */
-	private static final double POSITIVE_LABEL = 1.0d;
+     */
+    private static final double POSITIVE_LABEL = 1.0d;
 
-	/**
-	 * Constant value of the negative label.
-	 */
-	private static final double NEGATIVE_LABEL = 0.0d;
+    /**
+     * Constant value of the negative label.
+     */
+    private static final double NEGATIVE_LABEL = 0.0d;
 
-	private double[] features;
+    private double[] features;
+    private double label;
+    private Boolean[] featureTypes;
 
-	private double label;
+    public DataPoint(double[] features, double label) {
+        this.features = features;
+        this.label = label;
+    }
 
-	public DataPoint(double[] features, double label) {
-		this.features = features;
-		this.label = label;
-	}
 
-	public DataPoint(double[] features) {
-		this.features = features;
-	}
+    public DataPoint(double[] features) {
+        this.features = features;
+    }
 
 	public DataPoint() {
 	}
@@ -65,18 +66,16 @@ public class DataPoint {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		DataPoint other = (DataPoint) obj;
-		if (!Arrays.equals(features, other.features))
-			return false;
-		if (Double.doubleToLongBits(label) != Double.doubleToLongBits(other.label))
-			return false;
-		return true;
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        DataPoint other = (DataPoint) obj;
+        if (!Arrays.equals(features, other.features))
+            return false;
+        return Double.doubleToLongBits(label) == Double.doubleToLongBits(other.label);
 	}
 
 	/**
@@ -95,15 +94,31 @@ public class DataPoint {
 		return (Math.abs(this.label - DataPoint.NEGATIVE_LABEL) < MLContants.EPSILON);
 	}
 
-	/**
-	 * Returns corresponding feature value on index @featureIndex.
-	 * 
-	 * @param featureIndex is the index of corresponding feature in the sample data.
-	 */
-	public double getFeature(int featureIndex) {
-		if (featureIndex < 0 || featureIndex >= this.features.length) {
-			throw new IllegalArgumentException("Feature Id: " + featureIndex + " is out of range!");
-		}
-		return this.features[featureIndex];
-	}
+    /**
+     * Returns corresponding feature value on index @featureIndex.
+     *
+     * @param featureIndex is the index of corresponding feature in the sample data.
+     */
+    public double getFeature(int featureIndex) {
+        if (featureIndex < 0 || featureIndex >= this.features.length) {
+            throw new IllegalArgumentException("Feature Id: " + featureIndex + " is out of range!");
+        }
+        return this.features[featureIndex];
+    }
+
+    @Override
+    public String toString() {
+        return "DataPoint{" +
+                "features=" + Arrays.toString(features) +
+                ", label=" + label +
+                '}';
+    }
+
+    public void setFeatureTypes(Boolean[] toArray) {
+        this.featureTypes = toArray;
+    }
+
+    public Boolean[] getTypes() {
+        return this.featureTypes;
+    }
 }
