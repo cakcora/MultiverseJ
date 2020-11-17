@@ -45,6 +45,8 @@ public class CsvLoader {
 
 
     /**
+     * (Murat): Add some comment.
+     * 
      * @param csvFile   is the csv file being read.
      * @param quoteChar is the
      * @param sepChar   is the separating character of row values
@@ -55,8 +57,9 @@ public class CsvLoader {
         Scanner scanner = new Scanner(new File(csvFile));
         // Is the first row the data header in all CSV files?
         scanner.nextLine();
-        List<List<String>> lines = new ArrayList();
+        var lines = new ArrayList<List<String>>();
         while (scanner.hasNext()) {
+        	// (Murat): Consider using Split.
             List<String> line = parseLine(scanner.nextLine(), sepChar, quoteChar);
             lines.add(line);
         }
@@ -65,6 +68,8 @@ public class CsvLoader {
     }
 
     /**
+     * (Murat): comment
+     * 
      * @param lines      a list of data points as rows
      * @param labelIndex index of the label column
      * @return an array list of data points
@@ -73,12 +78,18 @@ public class CsvLoader {
         int nOfDataPoints = lines.size();
         int nOfFeatures = ((nOfDataPoints == 0 ? 0 : lines.get(0).size()));
 
+        // Following can go to another function
+        // FeatureStat findFeatureTypes(List<List<String>> lines, numberOfFeatures, );
+        // Class FeatureStat { boolean[] typeArray, int[] valArray, Map<<>>};
+        
         //valArr will record the number of unique values for the column
         int[] valArr = new int[nOfFeatures];
         //typeArr will record the nature of this column: false for categorical true for real valued
         boolean[] typeArr = new boolean[nOfFeatures];
 
+        // (Murat): Inline  comment.
         Map<Integer, Map<String, Integer>> encoder = new HashMap();
+        // <1.Feature, Map<Cuneyt, 0>>, <1.Feature, Map<Murat, 1>>
         for (int featureInd = 0; featureInd < nOfFeatures; featureInd++) {
             if (featureInd == labelIndex) continue;
             Set<String> uniqueVals = new HashSet<>();
@@ -103,7 +114,7 @@ public class CsvLoader {
                 encoder.put(featureInd, fEncoder);
             }
         }
-
+        // Existing Function.
         List<DataPoint> points = new ArrayList<>();
 
         for (int dataInd = 0; dataInd < nOfDataPoints; dataInd++) {
