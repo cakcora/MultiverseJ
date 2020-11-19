@@ -11,6 +11,7 @@ Loads CSV files with header into a list of data points.
  */
 public class CsvLoader {
     private FeatureStat featureStats = new FeatureStat();
+    private LoaderOptions options;
 
     /**
      * reads a csv file, identifies feature types and
@@ -20,35 +21,33 @@ public class CsvLoader {
      * @param csvFile is the csv file being read.
      * @param options contains information about parsing characters
      * @return list of data points from the csv file
-     * @throws FileNotFoundException
+     * @throws FileNotFoundException if the file does not exist
      */
     public List<DataPoint> loadCsv(String csvFile, int labelIndex, LoaderOptions options) throws Exception {
-        List<List<String>> lines = loadCSV(csvFile, options.getQuoter(), options.getSeparator());
+        this.options = options;
+        List<List<String>> lines = loadCSV(csvFile);
         findFeatureTypes(lines, labelIndex);
-        List<DataPoint> dataPoints = encodeDataPoints(lines, labelIndex);
-        return dataPoints;
+        return encodeDataPoints(lines, labelIndex);
     }
 
 
     /**
      * Reads rows from a file and returns them as a list
      *
-     * @param csvFile    is the csv file being read.
-     * @param quoteChar: the character that surround feature values in the file
-     * @param sepChar:   the character that separates feature values in the file
+     * @param csvFile is the csv file being read.
      * @return a list of rows in the file
-     * @throws FileNotFoundException
+     * @throws FileNotFoundException if the file does not exist
      */
 
-    private List<List<String>> loadCSV(String csvFile, char quoteChar, char sepChar) throws FileNotFoundException {
+    private List<List<String>> loadCSV(String csvFile) throws FileNotFoundException {
         Scanner scanner = new Scanner(new File(csvFile));
         // Is the first row the data header in all CSV files?
-        String headerString = scanner.nextLine().replaceAll(String.valueOf(quoteChar), "");
-        String[] headerArray = headerString.split(String.valueOf(sepChar));
+        String headerString = scanner.nextLine().replaceAll(String.valueOf(options.getQuoter()), "");
+        String[] headerArray = headerString.split(String.valueOf(options.getSeparator()));
         this.featureStats.addHeader(headerArray);
         var lines = new ArrayList<List<String>>();
         while (scanner.hasNext()) {
-            List<String> line = readLine(scanner.nextLine(), sepChar, quoteChar);
+            List<String> line = readLine(scanner.nextLine(), options.getSeparator(), options.getQuoter());
             lines.add(line);
         }
         scanner.close();
@@ -62,7 +61,6 @@ public class CsvLoader {
      *
      * @param lines      a list of data points as rows
      * @param labelIndex index of the label column
-     * @return an array list of data points
      */
     private void findFeatureTypes(List<List<String>> lines, int labelIndex) throws Exception {
         int nOfDataPoints = lines.size();
@@ -70,24 +68,24 @@ public class CsvLoader {
         if (nOfDataPoints < 1 || nOfFeatures < 1) {
             throw new Exception("There are no data points to shape.");
         }
-        this.featureStats.setValArray(nOfFeatures);
-        this.featureStats.setTypeArray(nOfFeatures);
+        featureStats.initialize(nOfFeatures);
+
         for (int featureIndex = 0; featureIndex < nOfFeatures; featureIndex++) {
             if (featureIndex == labelIndex) continue;
             Set<String> uniqueVals = new HashSet<>();
-            for (int dataIndex = 0; dataIndex < nOfDataPoints; dataIndex++) {
-                uniqueVals.add(lines.get(dataIndex).get(featureIndex));
+            for (List<String> line : lines) {
+                uniqueVals.add(line.get(featureIndex));
             }
-            this.featureStats.setFeatureNumUniqueVal(featureIndex, uniqueVals.size());
-            this.featureStats.setFeatureType(featureIndex, LoaderOptions.REAL_VALUED);
+            featureStats.valArr[featureIndex] = uniqueVals.size();
+            featureStats.typeArr[featureIndex] = LoaderOptions.REAL_VALUED;
             try {
                 for (String v : uniqueVals) {
                     Double.parseDouble(v);
                 }
             } catch (NumberFormatException e) {
-                this.featureStats.setFeatureType(featureIndex, LoaderOptions.CATEGORICAL);
+                featureStats.typeArr[featureIndex] = LoaderOptions.CATEGORICAL;
             }
-            if (this.featureStats.getFeatureType(featureIndex) == LoaderOptions.CATEGORICAL) {
+            if (featureStats.typeArr[featureIndex] == LoaderOptions.CATEGORICAL) {
                 Map<String, Integer> encodedValues = new HashMap<>();
                 int oneHotIndex = 0;
                 for (String uniqueFeatureVal : uniqueVals) {
@@ -108,23 +106,23 @@ public class CsvLoader {
 
     private List<DataPoint> encodeDataPoints(List<List<String>> lines, int labelIndex) {
         List<DataPoint> points = new ArrayList<>();
-        int nOfDataPoints = lines.size();
-        int nOfFeatures = this.featureStats.getNOfFeatures();
+        int nOfFeatures = featureStats.getNOfFeatures();
         double oneHotExists = 1.0;
-        double oneHotNotExists = 1.0;
-        for (int dataIndex = 0; dataIndex < nOfDataPoints; dataIndex++) {
+        double oneHotNotExists = 0.0;
+        for (List<String> line : lines) {
             List<Boolean> featureTypes = new ArrayList<>();
             ArrayList<Double> featureValueList = new ArrayList<>();
             for (int featureIndex = 0; featureIndex < nOfFeatures; featureIndex++) {
                 if (featureIndex == labelIndex) continue;
 
                 // one hot encoding for categorical features
-                if (this.featureStats.getFeatureType(featureIndex) == LoaderOptions.CATEGORICAL) {
+                boolean featureType = featureStats.typeArr[featureIndex];
+                if (featureType == LoaderOptions.CATEGORICAL) {
                     Map<String, Integer> featureMap = featureStats.getEncodedVals(featureIndex);
                     int oneHotCols = featureMap.size();
-                    if (featureStats.getFeatureVal(featureIndex) < LoaderOptions.ignoreThreshold) {
-
-                        int ind = featureMap.get(lines.get(dataIndex).get(featureIndex));
+                    int nOfFeatureVals = featureStats.valArr[featureIndex];
+                    if (nOfFeatureVals < options.getIgnoreThreshold()) {
+                        int ind = featureMap.get(line.get(featureIndex));
                         for (int k = 0; k < oneHotCols; k++) {
                             featureTypes.add(true);
                             if (k == ind) {
@@ -135,16 +133,29 @@ public class CsvLoader {
                         }
                     }
                 } else {
-                    featureValueList.add(Double.parseDouble(lines.get(dataIndex).get(featureIndex)));
+                    featureValueList.add(Double.parseDouble(line.get(featureIndex)));
                     featureTypes.add(false);
                 }
             }
             double[] featureVector = featureValueList.stream().mapToDouble(i -> i).toArray();
             DataPoint dataPoint = new DataPoint(featureVector);
-            dataPoint.setLabel(Double.parseDouble(lines.get(dataIndex).get(labelIndex)));
-            dataPoint.setFeatureTypes(featureTypes.toArray(new Boolean[featureTypes.size()]));
+            dataPoint.setLabel(Double.parseDouble(line.get(labelIndex)));
+            dataPoint.setFeatureTypes(featureTypes.toArray(new Boolean[0]));
             points.add(dataPoint);
         }
+        //we will create new feature names for this categorical feature
+        var newnames = new ArrayList<String>();
+        for (int i = 0; i < nOfFeatures; i++) {
+            if (featureStats.isEncoded(i)) {
+                Map<String, Integer> encodedValues = featureStats.getEncodedVals(i);
+                int tempInd = 0;
+                for (String s : encodedValues.keySet()) {
+                    newnames.add(featureStats.featureNames[tempInd] + "_" + s);
+                }
+            } else newnames.add(featureStats.featureNames[i]);
+        }
+        featureStats.featureNames = newnames.toArray(new String[0]);
+
         return points;
     }
 
@@ -160,7 +171,7 @@ public class CsvLoader {
     private List<String> readLine(String line, char sepChar, char quoteChar) {
 
         List<String> values = new ArrayList<>();
-        if (line == null && line.isEmpty()) {
+        if (line == null || line.isEmpty()) {
             return values;
         }
         String[] features = line.split(String.valueOf(sepChar));
@@ -171,7 +182,7 @@ public class CsvLoader {
     }
 
     public String[] getFeatureNames() {
-        return this.featureStats.featureNames;
+        return featureStats.featureNames;
     }
 
     /**
@@ -191,27 +202,19 @@ public class CsvLoader {
         // names of features
         private String[] featureNames;
 
-        public void setValArray(int nOfFeatures) {
+        public void initialize(int nOfFeatures) {
             valArr = new int[nOfFeatures];
+            this.typeArr = new boolean[nOfFeatures];
             encoder = new HashMap<>();
             this.nOfFeatures = nOfFeatures;
         }
 
-        public void setFeatureNumUniqueVal(int featureInd, int size) {
-            valArr[featureInd] = size;
-        }
 
         public int getFeatureVal(int featureIndex) {
             return valArr[featureIndex];
         }
 
-        public void setTypeArray(int nOfFeatures) {
-            typeArr = new boolean[nOfFeatures];
-        }
 
-        public void setFeatureType(int featureInd, boolean featureType) {
-            typeArr[featureInd] = featureType;
-        }
 
         public boolean getFeatureType(int featureIndex) {
             return typeArr[featureIndex];
@@ -231,6 +234,13 @@ public class CsvLoader {
 
         public void addHeader(String[] headerArray) {
             this.featureNames = headerArray;
+        }
+
+        public boolean isEncoded(int i) {
+            boolean f = false;
+            if (!encoder.isEmpty())
+                f = encoder.containsKey(i);
+            return f;
         }
     }
 }

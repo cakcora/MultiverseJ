@@ -16,7 +16,7 @@ public class LoaderOptions {
     Used in one-hot encoding, if a categorical feature has more than ignoreThreshold unique values,
     we exclude the feature from the dataset
      */
-    public static final int ignoreThreshold = 20;
+    public int featureIgnoreThresholdOnUniqueVals = 20;
 
     /*
         Column separator in the csv file
@@ -41,5 +41,13 @@ public class LoaderOptions {
 
     public void setSep(char sepChar) {
         separator = sepChar;
+    }
+
+    public void featureIgnoreThreshold(int ignoreAbove) {
+        featureIgnoreThresholdOnUniqueVals = ignoreAbove;
+    }
+
+    public int getIgnoreThreshold() {
+        return featureIgnoreThresholdOnUniqueVals;
     }
 }
