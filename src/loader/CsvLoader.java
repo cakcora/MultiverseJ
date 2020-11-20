@@ -44,7 +44,7 @@ public class CsvLoader {
         // Is the first row the data header in all CSV files?
         String headerString = scanner.nextLine().replaceAll(String.valueOf(options.getQuoter()), "");
         String[] headerArray = headerString.split(String.valueOf(options.getSeparator()));
-        this.featureStats.addHeader(headerArray);
+        featureStats.featureNames = headerArray;
         var lines = new ArrayList<List<String>>();
         while (scanner.hasNext()) {
             List<String> line = readLine(scanner.nextLine(), options.getSeparator(), options.getQuoter());
@@ -143,18 +143,17 @@ public class CsvLoader {
             dataPoint.setFeatureTypes(featureTypes.toArray(new Boolean[0]));
             points.add(dataPoint);
         }
-        //we will create new feature names for this categorical feature
-        var newnames = new ArrayList<String>();
+        //we will create new feature names for all on hot encoded features
+        var newFeatureNames = new ArrayList<String>();
         for (int i = 0; i < nOfFeatures; i++) {
             if (featureStats.isEncoded(i)) {
                 Map<String, Integer> encodedValues = featureStats.getEncodedVals(i);
-                int tempInd = 0;
                 for (String s : encodedValues.keySet()) {
-                    newnames.add(featureStats.featureNames[tempInd] + "_" + s);
+                    newFeatureNames.add(featureStats.featureNames[i] + "_" + s);
                 }
-            } else newnames.add(featureStats.featureNames[i]);
+            } else newFeatureNames.add(featureStats.featureNames[i]);
         }
-        featureStats.featureNames = newnames.toArray(new String[0]);
+        featureStats.featureNames = newFeatureNames.toArray(new String[0]);
 
         return points;
     }
@@ -199,6 +198,10 @@ public class CsvLoader {
         // a map that holds one hot encoded values of each feature (if one-hot encoded)
         Map<Integer, Map<String, Integer>> encoder;
 
+        public String[] getFeatureNames() {
+            return featureNames;
+        }
+
         // names of features
         private String[] featureNames;
 
@@ -207,17 +210,6 @@ public class CsvLoader {
             this.typeArr = new boolean[nOfFeatures];
             encoder = new HashMap<>();
             this.nOfFeatures = nOfFeatures;
-        }
-
-
-        public int getFeatureVal(int featureIndex) {
-            return valArr[featureIndex];
-        }
-
-
-
-        public boolean getFeatureType(int featureIndex) {
-            return typeArr[featureIndex];
         }
 
         public void saveEncoding(int featureIndex, Map<String, Integer> fEncoder) {
@@ -230,10 +222,6 @@ public class CsvLoader {
 
         public int getNOfFeatures() {
             return nOfFeatures;
-        }
-
-        public void addHeader(String[] headerArray) {
-            this.featureNames = headerArray;
         }
 
         public boolean isEncoded(int i) {

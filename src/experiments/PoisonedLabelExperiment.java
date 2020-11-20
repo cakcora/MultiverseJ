@@ -31,8 +31,13 @@ public class PoisonedLabelExperiment {
         options.featureIgnoreThreshold(20);
         List<DataPoint> dataPoints = csvLoader.loadCsv(csvFile, labelIndex, options);
         String[] featureNames = csvLoader.getFeatureNames();
+        String[] names = csvLoader.getFeatureNames();
         System.out.println("Dataset has " + dataPoints.size() + " data points");
-        System.out.println("Each data point has " + featureNames.length + " features.");
+        System.out.println("Each data point has " + featureNames.length + " features:");
+        for (String feature : featureNames) {
+            System.out.print(" " + feature);
+        }
+        System.out.println();
         // miraculously learn a decision tree
         DecisionTree dt = new DecisionTree();
         TreeNode node = new TreeNode(0, 1);
@@ -48,6 +53,7 @@ public class PoisonedLabelExperiment {
         // extract a graph from the tree
         GraphExtractor extractor = new GraphExtractor(dt);
         DirectedSparseMultigraph<Integer, Integer> graph = extractor.getGraph();
+
         GraphMetrics metric = new GraphMetrics();
         metric.computerAllMetrices(graph);
         long[] counts = metric.getTriadicCounts(graph);
