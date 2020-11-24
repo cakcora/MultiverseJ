@@ -22,7 +22,7 @@ public class DataPoint {
 
     private double[] features;
     private double label;
-    private Boolean[] featureTypes;
+    private boolean[] isCategorical;
 
     public DataPoint(double[] features, double label) {
         this.features = features;
@@ -114,11 +114,11 @@ public class DataPoint {
                 '}';
     }
 
-    public void setFeatureTypes(Boolean[] toArray) {
-        this.featureTypes = toArray;
+    public void setFeatureTypes(boolean[] isCategorical) {
+        this.isCategorical = isCategorical;
     }
 
-    public Boolean[] getTypes() {
-        return this.featureTypes;
+    public boolean[] getTypes() {
+        return this.isCategorical;
     }
 }
