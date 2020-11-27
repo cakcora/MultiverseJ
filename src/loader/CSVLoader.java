@@ -269,7 +269,7 @@ public class CSVLoader {
 		 * @return
 		 */
 		public boolean isEncoded(int featureIndex) {
-			return !oneHotEncodings.isEmpty() ? oneHotEncodings.containsKey(featureIndex) : false;
+			return !oneHotEncodings.isEmpty() && oneHotEncodings.containsKey(featureIndex);
 		}
 
 		public int getNumberOfFinalFeatures() {

@@ -1,5 +1,3 @@
-package experiments;
-
 import core.DataPoint;
 import core.DecisionTree;
 import core.TreeNode;
@@ -66,5 +64,16 @@ public class PoisonedLabelExperiment {
 		}
 		double diameter = metric.getDiamater();
 		System.out.println("Graph diameter is " + diameter);
+		double medianDegree = metric.getMedianDegree();
+		System.out.println("Graph median degree is " + medianDegree);
+
+		double avgInDegree = metric.getAvgInDegree();
+		double avgOutDegree = metric.getAvgOutDegree();
+		System.out.println("avg in degree: " + avgInDegree + " avg out degree:" + avgOutDegree);
+
+		double avgClusCoeff = metric.getAvgClusteringCoeff();
+		double avgBetweenness = metric.getAvgBetweenness();
+		System.out.println("avg clustering coefficient: " + avgClusCoeff + " avg betweenness: " + avgBetweenness);
+
 	}
 }
