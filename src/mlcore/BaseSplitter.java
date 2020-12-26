@@ -37,33 +37,36 @@ public abstract class BaseSplitter {
 	/**
 	 * Finds the best split for a given feature on the given data set.
 	 * 
-	 * @param featureIndex is the id of the current feature. It is used for
-	 *                     accessing feature values in the data set.
-	 * @param dataSet      is the input data.
+	 * @param featureIndex the index of the current feature this function operating on.
+	 * @param dataSet is the input dataset.
+	 * @param startIndex the start index of the sub list that is considered.
+	 * @param endIndex the end index of the sub list that is considered.
 	 */
-	public abstract Split findBestSplit(int featureIndex, List<DataPoint> dataSet);
+	public abstract Split findBestSplit(int featureIndex, List<DataPoint> dataSet, int startIndex, int endIndex);
 
 	/**
 	 * Check if given data is homogeneous. This function returns true if all feature
 	 * values or all labels are equivalent in Epsilon proximity.
 	 * 
-	 * @param featureIndex the index of the current feature this function operating
-	 *                     on.
-	 * @param dataSet      is the input dataset.
+	 * @param featureIndex the index of the current feature this function operating on.
+	 * @param dataSet is the input dataset.
+	 * @param startIndex the start index of the sub list that is considered.
+	 * @param endIndex the end index of the sub list that is considered.
 	 * @return
 	 */
-	protected boolean isHomogenous(int featureIndex, List<DataPoint> dataSet) {
-		if (dataSet == null || dataSet.size() < 1) {
+	protected boolean isHomogenous(int featureIndex, List<DataPoint> dataSet, int startIndex, int endIndex) {
+		int size = endIndex - startIndex + 1;
+		if (dataSet == null || size < 1) {
 			return true;
 		}
-		double initialFeatureValue = dataSet.get(0).getFeature(featureIndex);
-		double initialLabel = dataSet.get(0).getLabel();
+		double initialFeatureValue = dataSet.get(startIndex).getFeature(featureIndex);
+		double initialLabel = dataSet.get(startIndex).getLabel();
 
 		boolean isHomogenousFeatures = true;
 		boolean isHomogenousLabels = true;
 		boolean isHomogenousSoFar = isHomogenousFeatures || isHomogenousLabels;
 
-		for (int i = 1; i < dataSet.size(); i++) {
+		for (int i = startIndex; i <= endIndex; i++) {
 			var currentPoint = dataSet.get(i);
 			isHomogenousFeatures = isHomogenousFeatures
 					&& (Math.abs(currentPoint.getFeature(featureIndex) - initialFeatureValue) < MLContants.EPSILON);

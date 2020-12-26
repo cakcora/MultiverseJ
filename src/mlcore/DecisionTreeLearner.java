@@ -1,13 +1,16 @@
 package mlcore;
 
+import java.util.Arrays;
 import java.util.List;
 
 import core.DataPoint;
-import core.RandomForest;
+import core.DecisionTree;
+import core.TreeNode;
 
 /**
  * Learns single decision tree from a given set of DataPoints and feature set.
- * This class only learns tree for binary classification problem based on entropy.
+ * This class only learns tree for binary classification problem based on
+ * entropy.
  * 
  * @author Huseyincan Kaynak
  * @author Murat Ali Bayir.
@@ -15,86 +18,178 @@ import core.RandomForest;
  */
 public class DecisionTreeLearner {
 
+	/**
+	 * DecisionTree TODO: maybe create a getter function for this.
+	 */
+	private DecisionTree tree;
+
+	/**
+	 * Maximum depth for Decision Tree.
+	 */
+	private int maxDepth;
+
+	/**
+	 * Splitter for binary data.
+	 */
+	private BinaryFeatureSplitter binarySplitter;
+
+	/**
+	 * Splitter for continuous data.
+	 */
+	private ContinuousFeatureSplitter continuousSplitter;
+
+	/**
+	 * Sorting utility for current learner.
+	 */
+	private QuickSort quickSorter;
+
 	public DecisionTreeLearner() {
+		this.quickSorter = new QuickSort();
+	}
+
+	public DecisionTreeLearner(int maxDepth, int minPopulation) {
+		this();
+		this.maxDepth = maxDepth;
+		this.tree = new DecisionTree();
+		this.binarySplitter = new BinaryFeatureSplitter(minPopulation);
+		this.continuousSplitter = new ContinuousFeatureSplitter(minPopulation);
 	}
 
 	/**
-	 * Moves all dataPoints smaller than pivot to the left of the pivot. Also, moves all
-	 * dataPoints larger than pivot to the right of the pivot, Then places pivot into the
-	 * correct position. This function only mutates the positions inside the list that
-	 * lies between startIndex and endIndex namely the following sublist.
-	 * [0... (startIndex) ... (endIdex) ... (data.size()-1)].
+	 * Trains decision tree from given data.
 	 * 
-	 * @param data the input list of data point.
+	 * @param data
+	 * @return
+	 */
+	public DecisionTree train(List<DataPoint> data) {
+		dfs(data);
+		return tree;
+	}
+
+	/**
+	 * DFS Based learner, building Decision Tree with DFS algorithm.
+	 * 
+	 * @param dataSet is the input data set.
+	 */
+	public void dfs(List<DataPoint> dataSet) {
+		boolean[] shouldSplit = new boolean[dataSet.get(0).getFeatures().length];
+		Arrays.fill(shouldSplit, Boolean.TRUE);
+		dfsRecursion(dataSet, 0, dataSet.size() - 1, 0, shouldSplit);
+	}
+
+	/**
+	 * Recursive function to build decision tree in DF manner. Returns the index of
+	 * newly generated node that represents the sublist from startIndex to endIndex.
+	 * 
+	 * @param dataSet     is the input data set.
+	 * @param startIndex  the start index of the sub list that is considered.
+	 * @param endIndex    the end index of the sub list that is considered.
+	 * @param depth       is the current depth that this function is called for.
+	 * @param shouldSplit stores homogeneity of the feature set for remaining data
+	 *                    in [startIndex, endIndex].
+	 */
+	private int dfsRecursion(List<DataPoint> dataSet, int startIndex, int endIndex, int depth, boolean[] shouldSplit) {
+
+		if (depth < this.maxDepth) {
+			var bestSplit = findBestSplit(dataSet, startIndex, endIndex, shouldSplit);
+			if (bestSplit == null) {
+				// Can not split due to feature and data related condition.
+				return makeLeafNode(dataSet, startIndex, endIndex);
+			} else {
+				// Already have a split. We need to call recursively.
+				var pivotPosition = quickSorter.partition(dataSet, startIndex, endIndex, bestSplit.getPivot(),
+						bestSplit.getFeatureId());
+				var currentNode = makeIntermediateNode(bestSplit);
+				currentNode
+						.setLeftChild(dfsRecursion(dataSet, startIndex, pivotPosition, depth + 1, shouldSplit.clone()));
+				currentNode.setRightChild(
+						dfsRecursion(dataSet, pivotPosition + 1, endIndex, depth + 1, shouldSplit.clone()));
+				return currentNode.getId();
+			}
+		} else { // Max depth is reached. Therefore, creating leaf node.
+			return makeLeafNode(dataSet, startIndex, endIndex);
+		}
+
+	}
+
+	/**
+	 * Creates an intermediate node. Then, sets node id, feature id and split value
+	 * of the node.
+	 * 
+	 * @param bestSplit
+	 * @return the newly created intermediate node.
+	 */
+	private TreeNode makeIntermediateNode(Split bestSplit) {
+		var node = new TreeNode(this.tree.getSize(), bestSplit.getFeatureId());
+		node.setSplitValue(bestSplit.getPivot());
+		this.tree.addNode(node);
+		return node;
+	}
+
+	/**
+	 * Makes the current node as leaf node as it can not be splitted further.
+	 * 
+	 * @param data       the input list of data point.
 	 * @param startIndex the start index of the sub list that is considered.
-	 * @param endIndex the end index of the sub list that is considered.
-	 * @param pivot the specific value that is used for partitioning data.
-	 * @param featureIndex the index of current feature (the dimension) that we're considering
-	 *        for this function. 
-	 * @return the correct position of pivot inside the list.
+	 * @param endIndex   the end index of the sub list that is considered.
+	 * @return the index of newly created leaf node.
 	 */
-	public int partition(List<DataPoint> data, int startIndex, int endIndex, double pivot, int featureIndex) {
-		// Check for base conditions.
-		if (data.size() > 0) {
-			// If range is very small where sub array only 1 element.
-			if (startIndex == endIndex) {
-				return startIndex;
-			}
-			else {
-				// Typical case where array list is not empty and have enough data
-				// between startIndex and endIndex.
-				int pivotOriginalIndex = findPivotIndex(data, pivot, featureIndex);
-				swap(data, pivotOriginalIndex, endIndex);
-				int pivotIndex = startIndex;
-				for (int index = startIndex; index < endIndex; index++) {
-					if (data.get(index).getFeature(featureIndex) <= pivot) {
-						swap(data, pivotIndex, index);
-						pivotIndex++;
-					}
+	private int makeLeafNode(List<DataPoint> dataSet, int startIndex, int endIndex) {
+		// Leaf nodes are always appended at the end of the tree.
+		int indexOfCurrentNode = this.tree.getSize();
+		// Leaf nodes does not have any feature index.
+		// Hereby, we're setting feature index to -1.
+		this.tree.addNode(new TreeNode(indexOfCurrentNode, -1));
+		// Leaf nodes does not have any child.
+		this.tree.getNode(indexOfCurrentNode).setRightChild(-1);
+		this.tree.getNode(indexOfCurrentNode).setLeftChild(-1);
+		double sumOfLabels = 0.0d;
+		for (int dataIndex = startIndex; dataIndex <= endIndex; dataIndex++) {
+			sumOfLabels += dataSet.get(dataIndex).getLabel();
+		}
+		double leafLabel = sumOfLabels / (endIndex - startIndex + 1 * 1.0d);
+		this.tree.getNode(indexOfCurrentNode).setValue(leafLabel);
+		this.tree.getNode(indexOfCurrentNode).setPopulation((endIndex - startIndex + 1));
+		this.tree.getNode(indexOfCurrentNode).setSumOfPositiveLabels((int) sumOfLabels);
+		return indexOfCurrentNode;
+	}
+
+	/**
+	 * Finds the best split for features.
+	 * 
+	 * @param dataSet     the input list of data point.
+	 * @param startIndex  the start index of the sub list that is considered.
+	 * @param endIndex    the end index of the sub list that is considered.
+	 * @param shouldSplit stores homogeneity of the feature set for remaining data
+	 *                    in [startIndex, endIndex].
+	 * @return
+	 */
+	private Split findBestSplit(List<DataPoint> dataSet, int startIndex, int endIndex, boolean[] shouldSplit) {
+		Split bestSplit = null;
+		Split split;
+		double bestInformationGainSoFar = 0.0d;
+		for (int featureIndex = 0; featureIndex < dataSet.get(0).getFeatures().length; featureIndex++) {
+			if (shouldSplit[featureIndex]) {
+				if (dataSet.get(startIndex).isCategorical(featureIndex)) {
+					split = binarySplitter.findBestSplit(featureIndex, dataSet, startIndex, endIndex);
+				} else {
+					split = continuousSplitter.findBestSplit(featureIndex, dataSet, startIndex, endIndex);
 				}
-				swap(data, pivotIndex, endIndex);
-				
-				return pivotIndex;
+				// Check if the current at featureIndex can be splitted.
+				if (split != null) {
+					if (bestInformationGainSoFar < split.getInformationGain()) {
+						bestInformationGainSoFar = split.getInformationGain();
+						bestSplit = split;
+					}
+				} else {
+					// This feature can not be splitted.
+					shouldSplit[featureIndex] = false;
+				}
+			} else {
+				continue;
 			}
 		}
-		else {
-			throw new IllegalArgumentException("List is empty: " + data);
-		}
-	}
 
-	/**
-	 * Swaps two data points that are located in left and right indexes.
-	 */
-	private void swap(List<DataPoint> data, int leftIndex, int rightIndex) {
-		DataPoint temp = data.get(leftIndex);
-		data.set(leftIndex, data.get(rightIndex));
-		data.set(rightIndex, temp);
+		return bestSplit;
 	}
-	
-	/**
-	 * 
-	 * Finds the index of pivot among data which is list of data points.
-	 * 
-	 * @param data the input list of data point.
-	 * @param pivot the specific value that we're looking for.
-	 * @param featureIndex the index of current feature (the dimension) that we're considering
-	 *        for this function.
-	 * @return the index of the pivot inside the list.
-	 */
-	private int findPivotIndex(List<DataPoint> data, double pivot, int featureIndex) {
-		int pivotIndex = 0;
-		for (int index = 0; index < data.size(); index++) {
-			if (data.get(index).getFeature(featureIndex) == pivot) {
-				pivotIndex = index;
-			}
-		}
-		return pivotIndex;
-	}
-	
-	public RandomForest train(List<DataPoint> data)
-	{
-		// TODO(HuseyinCan).
-		return null;
-	}
-
 }

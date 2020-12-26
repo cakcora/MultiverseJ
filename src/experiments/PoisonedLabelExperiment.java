@@ -1,3 +1,5 @@
+package experiments;
+
 import core.DataPoint;
 import core.DecisionTree;
 import core.TreeNode;

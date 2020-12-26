@@ -53,19 +53,19 @@ public class BinaryFeatureSplitter extends BaseSplitter {
 	}
 
 	@Override
-	public Split findBestSplit(int featureIndex, List<DataPoint> dataSet) {
-
-		if (dataSet.size() < 2 * minimumPopulation) {
+	public Split findBestSplit(int featureIndex, List<DataPoint> dataSet, int startIndex, int endIndex) {
+		int size = endIndex - startIndex + 1;
+		if (size < 2 * minimumPopulation) {
 			return null;
 		}
 
-		if (isHomogenous(featureIndex, dataSet)) {
+		if (isHomogenous(featureIndex, dataSet, startIndex, endIndex)) {
 			return null;
 		}
 
 		var countTable = getCountTable();
 
-		for (int i = 0; i < dataSet.size(); i++) {
+		for (int i = startIndex; i <= endIndex; i++) {
 			var currentPoint = dataSet.get(i);
 			var key = getKey(currentPoint, featureIndex);
 			countTable.put(key, countTable.get(key) + 1);
@@ -75,17 +75,21 @@ public class BinaryFeatureSplitter extends BaseSplitter {
 				countTable.get(CountTableKey.ON_POSITIVE) + countTable.get(CountTableKey.OFF_POSITIVE),
 				countTable.get(CountTableKey.ON_NEGATIVE) + countTable.get(CountTableKey.OFF_NEGATIVE));
 
+		// Compute the ratio of the 'ON' features.
 		var onRatio = 1.0d * (countTable.get(CountTableKey.ON_POSITIVE) + countTable.get(CountTableKey.ON_NEGATIVE));
 		onRatio = onRatio / (dataSet.size() * 1.0d);
+		// Compute the entropy of data set that has 'ON' Features by using positive and negative labels.
 		var onEntropy = entropyComputer.computeEntropy(countTable.get(CountTableKey.ON_POSITIVE),
 				countTable.get(CountTableKey.ON_NEGATIVE));
 
+		// Compute the ratio of the 'OFF' features.
 		var offRatio = 1.0d * (countTable.get(CountTableKey.OFF_POSITIVE) + countTable.get(CountTableKey.OFF_NEGATIVE));
 		offRatio = offRatio / (dataSet.size() * 1.0d);
+		// Compute the entropy of data set that has 'OFF' Features by using positive and negative labels.
 		var offEntropy = entropyComputer.computeEntropy(countTable.get(CountTableKey.OFF_POSITIVE),
 				countTable.get(CountTableKey.OFF_NEGATIVE));
 
-		// Compute new Entropy.
+		// Compute the new Entropy.
 		var newEntropy = (onRatio * onEntropy) + (offRatio * offEntropy);
 
 		var result = new Split(featureIndex);
