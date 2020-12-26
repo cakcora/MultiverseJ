@@ -36,6 +36,9 @@ public class Split {
 		this.featureId = featureId;
 	}
 	
+	public int getFeatureId() {
+		return featureId;
+	}
 	
 	/**
 	 * Returns information gain for current split.

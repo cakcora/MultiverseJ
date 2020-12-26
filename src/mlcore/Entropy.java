@@ -1,8 +1,5 @@
 package mlcore;
 
-import java.util.List;
-
-import core.DataPoint;
 import core.MLContants;
 
 /**

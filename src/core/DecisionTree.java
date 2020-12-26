@@ -43,6 +43,15 @@ public class DecisionTree {
 		}
 		return null;
 	}
+	
+	/**
+	 * Gets size of the nodes list.
+	 * 
+	 * @return tree size.
+	 */
+	public int getSize() {
+		return nodes.size();
+	}
 
 	/**
 	 * Predicts the probability for given features.

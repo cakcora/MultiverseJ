@@ -1,5 +1,6 @@
 package mlcoreTest;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -34,7 +35,7 @@ public class ContinuousFeatureSplitterTests {
 		dataPoints.add(new DataPoint(new double[] { 2.5d }, 0.0d));
 
 		var splitter = new ContinuousFeatureSplitter(1);
-		var result = splitter.findBestSplit(0, dataPoints);
+		var result = splitter.findBestSplit(0, dataPoints, 0, dataPoints.size() - 1);
 		assertNotNull(result);
 		assertEquals(1.7d, result.getPivot(), Math.pow(10, -9));
 	}
@@ -53,7 +54,7 @@ public class ContinuousFeatureSplitterTests {
 		dataPoints.add(new DataPoint(new double[] { 5.9d }, 0.0d));
 
 		var splitter = new ContinuousFeatureSplitter(1);
-		var result = splitter.findBestSplit(0, dataPoints);
+		var result = splitter.findBestSplit(0, dataPoints, 0, dataPoints.size() - 1);
 		assertNotNull(result);
 		assertEquals(1.2d, result.getPivot(), Math.pow(10, -9));
 	}
@@ -70,9 +71,24 @@ public class ContinuousFeatureSplitterTests {
 		dataPoints.add(new DataPoint(new double[] { 1.6d }, 0.0d));
 
 		var splitter = new ContinuousFeatureSplitter(1);
-		var result = splitter.findBestSplit(0, dataPoints);
+		var result = splitter.findBestSplit(0, dataPoints, 0, dataPoints.size() - 1);
 		assertNotNull(result);
 		assertEquals(1.5d, result.getPivot(), Math.pow(10, -9));
+	}
+	
+	@Test
+	@DisplayName("Homogenous")
+	void testDataWithHomogenous() {
+
+		var dataPoints = new ArrayList<DataPoint>();
+		dataPoints.add(new DataPoint(new double[] { 5.9d }, 0.0d));
+		dataPoints.add(new DataPoint(new double[] { 2.2d }, 0.0d));
+		dataPoints.add(new DataPoint(new double[] { 2.5d }, 0.0d));
+
+		var splitter = new ContinuousFeatureSplitter(1);
+		var result = splitter.findBestSplit(0, dataPoints, 0, dataPoints.size() - 1);
+		assertNull(result);
+		
 	}
 
 }
