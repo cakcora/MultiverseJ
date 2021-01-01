@@ -1,5 +1,6 @@
 import core.DataPoint;
 import core.DecisionTree;
+import core.RandomForest;
 import core.TreeNode;
 import edu.uci.ics.jung.graph.DirectedSparseMultigraph;
 import graphcore.GraphExtractor;
@@ -43,6 +44,11 @@ public class PoisonedLabelExperiment {
 			System.out.print(" " + feature);
 		}
 		System.out.println();
+
+		RandomForest rf = new RandomForest(dataPoints);
+		for (String message : rf.getInfoMessages()) {
+			System.out.println(message);
+		}
 		// miraculously learn a decision tree
 		DecisionTree dt = new DecisionTree();
 		TreeNode node = new TreeNode(0, 1);
