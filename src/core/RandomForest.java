@@ -99,4 +99,23 @@ public class RandomForest {
     public HashSet<String> getInfoMessages() {
         return information;
     }
+
+    /**
+     * Set the number of trees in the random forest
+     *
+     * @param treeCount number of trees
+     */
+    public void setNumTrees(int treeCount) {
+        this.numTrees = treeCount;
+    }
+
+    // set the number of data points to sample for bagging at each decision tree
+    public void setSampleSize(int sampleSize) {
+        this.maxSamples = sampleSize;
+    }
+
+    // set the number of features to sample at each step
+    public void setNumFeatures(int featureSize) {
+        this.maxFeatures = featureSize;
+    }
 }
