@@ -1,5 +1,3 @@
-package experiments;
-
 import core.DataPoint;
 import core.DecisionTree;
 import core.TreeNode;
@@ -35,6 +33,10 @@ public class PoisonedLabelExperiment {
 		List<DataPoint> dataPoints = csvLoader.loadCSV(csvFile);
 		String[] featureNames = csvLoader.getFeatureNames();
 		String[] names = csvLoader.getFeatureNames();
+
+		for (String message : csvLoader.getInformation()) {
+			System.out.println(message);
+		}
 		System.out.println("Dataset has " + dataPoints.size() + " data points");
 		System.out.println("Each data point has " + featureNames.length + " features:");
 		for (String feature : featureNames) {
@@ -58,7 +60,7 @@ public class PoisonedLabelExperiment {
 		DirectedSparseMultigraph<Integer, Integer> graph = extractor.getGraph();
 
 		GraphMetrics metric = new GraphMetrics();
-		metric.computerAllMetrices(graph);
+		metric.computeAllMetrices(graph);
 		long[] counts = metric.getTriadicCounts(graph);
 		for (int i = 0; i < counts.length; i++) {
 			if (counts[i] > 0)

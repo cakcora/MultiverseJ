@@ -42,7 +42,7 @@ public class GraphMetrics {
     private double avgSizeOfWeaklyConndComps;
 
 
-    public void computerAllMetrices(DirectedSparseMultigraph<Integer, Integer> graph) {
+    public void computeAllMetrices(DirectedSparseMultigraph<Integer, Integer> graph) {
         //1- avInDegree: average in degree of $G_j$ vertices
         // 3- mavgOutDegre: average out degree of $G_j$ vertices
 
@@ -86,13 +86,15 @@ public class GraphMetrics {
             avgSizeOfWeaklyConndComps += component.size();
         }
         avgSizeOfWeaklyConndComps = avgSizeOfWeaklyConndComps / numberOfWeaklyConndComps;
-        // 6- numWeakCluster: number of strongly connected components on $G_j$
+        // 6- numStrongCluster: number of strongly connected components on $G_j$
 
         // 7- avgStrCompSize: average size of strong connected components on $G_j$
         // 8- meanDist: mean distance between node pairs on the directed graph $G_j$
         meanDistance = getAverage(distanceMap.values());
         // 9- medHub: mean hub scores of nodes on the undirected graph $G_j$
+        // pass
         // 10- medAuth: median hub scores of nodes on the undirected graph $G_j$
+        // pass
 
         //11 TriadicCensus is a standard social network tool that counts, for each of the different possible
         // configurations of three vertices, the number of times that that configuration occurs in the given graph

@@ -12,19 +12,26 @@ import java.util.*;
 public class CSVLoader {
 
 	/**
-	 * TODO(Cuneyt): Explain what this state is used for?
+	 * We use featureStats to create one hot encoded data features.
+	 * Each feature will have unique values, and we will expand the feature
+	 * into multiple one hot encoded features based on these unique values.
 	 */
 	private FeatureStat featureStats;
 
 	/**
-	 * TODO(Cuneyt): Explain what this state is used for?
+	 * options will define file reading parameters, such as the character
+	 * that separates features in a line. At least two options are required: the separating character
+	 * and the quoting character used in the data file.
 	 */
 	private LoaderOptions options;
 
 	/**
-	 * The column index of the of the y-label in char seperated input training file.
+	 * The column index of the of the y-label in char separated input training file.
 	 */
 	private int labelIndex;
+
+	// a set of information messages generated during loading the file
+	private HashSet<String> information = new HashSet<>();
 
 	public CSVLoader(int labelIndex, LoaderOptions options) {
 		this.featureStats = new FeatureStat();
@@ -37,7 +44,6 @@ public class CSVLoader {
 	 * categorical features.
 	 *
 	 * @param csvFile is the csv file being read.
-	 * @param options contains information about parsing characters
 	 * @return list of data points from the csv file
 	 * @throws FileNotFoundException if the file does not exist
 	 */
@@ -60,8 +66,7 @@ public class CSVLoader {
 		Scanner scanner = new Scanner(new File(csvFile));
 		// Is the first row the data header in all CSV files?
 		String headerString = scanner.nextLine().replaceAll(String.valueOf(options.getQuoter()), "");
-		String[] headerArray = headerString.split(String.valueOf(options.getSeparator()));
-		featureStats.featureNames = headerArray;
+		featureStats.featureNames = headerString.split(String.valueOf(options.getSeparator()));
 		var lines = new ArrayList<List<String>>();
 		while (scanner.hasNext()) {
 			List<String> line = readLine(scanner.nextLine(), options.getSeparator(), options.getQuoter());
@@ -84,10 +89,19 @@ public class CSVLoader {
 			throw new Exception("There are no data points to shape.");
 		}
 		featureStats.initialize(numberOfFeatures);
-
+		var labelEncodingMap = new HashMap<String, Double>();
 		for (int featureIndex = 0; featureIndex < numberOfFeatures; featureIndex++) {
-			if (featureIndex == labelIndex)
+			if (featureIndex == labelIndex) {
+				for (List<String> line : lines) {
+					String originalLabel = line.get(featureIndex);
+					if (!labelEncodingMap.containsKey(originalLabel)) {
+						labelEncodingMap.put(originalLabel, (double) labelEncodingMap.size());
+					}
+				}
+				featureStats.setLabelEncoding(labelEncodingMap);
+				this.addInformationMessage("Label has " + labelEncodingMap.size() + " unique values");
 				continue;
+			}
 			Set<String> uniqueVals = new HashSet<>();
 			for (List<String> line : lines) {
 				uniqueVals.add(line.get(featureIndex));
@@ -125,44 +139,61 @@ public class CSVLoader {
 		double oneHotExists = 1.0;
 		double oneHotNotExists = 0.0;
 		int numberOfTotalFeatures = featureStats.getNumberOfFinalFeatures();
+		var labelMap = featureStats.getLabelEncoding();
+
 		for (List<String> line : lines) {
 			boolean[] featureTypes = new boolean[numberOfTotalFeatures];
 			ArrayList<Double> featureValueList = new ArrayList<>();
+			double label = -1;
+			// we use a globalIndex param to keep track of how original feature indices
+			// change after we insert one-hot encoded features
 			int globalIndex = 0;
 			for (int featureIndex = 0; featureIndex < numberOfFeatures; featureIndex++) {
+				// take care of the label
 				if (featureIndex == labelIndex) {
-					continue;
-				}
+					String originalLabel = line.get(featureIndex);
+					label = labelMap.get(originalLabel);
+				} else {
+					// one-hot encode categorical features of the file.
+					if (!featureStats.isContinuousFeature[featureIndex]) {
+						Map<String, Integer> featureMap = featureStats.getEncodedValues(featureIndex);
+						int numberOfOneHotColumnsForThisFeature = featureMap.size();
+						int numberOfFeatureValues = featureStats.numberOfUniqueValuesPerFeature[featureIndex];
 
-				// Handle categorical features.
-				if (!featureStats.isContinuousFeature[featureIndex]) {
-					Map<String, Integer> featureMap = featureStats.getEncodedValues(featureIndex);
-					int numberOfOneHotColumns = featureMap.size();
-					int numberOfFeatureValues = featureStats.numberOfUniqueValuesPerFeature[featureIndex];
-					if (numberOfFeatureValues < options.getIgnoreThreshold()) {
-						// TODO(Cuneyt): Add comment to explain logic below.
-						var categoricalFeatureValue = line.get(featureIndex);
-						int relativeIndex = featureMap.get(categoricalFeatureValue);
-						for (int i = 0; i < numberOfOneHotColumns; i++) {
-							featureTypes[globalIndex] = true;
-							if (i == relativeIndex) {
-								featureValueList.add(oneHotExists);
-							} else {
-								featureValueList.add(oneHotNotExists);
+						//if the feature has too many unique values, one hot encoding would create too many
+						// new features. We should ignore such features.
+						if (numberOfFeatureValues < options.getIgnoreThreshold()) {
+							//get the value of this line
+							var categoricalFeatureValue = line.get(featureIndex);
+							// get the relative index of the feature value in one-hot encoding
+							int relativeIndex = featureMap.get(categoricalFeatureValue);
+							//we will set the relative index as 1 and all other indices as 0
+							for (int oneHotIndex = 0; oneHotIndex < numberOfOneHotColumnsForThisFeature; oneHotIndex++) {
+								featureTypes[globalIndex] = true;
+								if (oneHotIndex == relativeIndex) {
+									featureValueList.add(oneHotExists);
+								} else {
+									featureValueList.add(oneHotNotExists);
+								}
+								globalIndex++;
 							}
-							globalIndex++;
+						} else {
+							this.addInformationMessage("feature index " + featureIndex +
+									" is ignored because it has too many (" + numberOfFeatureValues + ") unique values");
 						}
+					} else { // this is a continuous feature that does not require one-hot encoding.
+						featureValueList.add(Double.parseDouble(line.get(featureIndex)));
+						// set the feature type as non-categorical
+						featureTypes[globalIndex] = false;
+						globalIndex++;
 					}
-				} else { // Continuous Feature.
-					featureValueList.add(Double.parseDouble(line.get(featureIndex)));
-					featureTypes[globalIndex] = false;
-					globalIndex++;
 				}
 			}
 			double[] featureVector = featureValueList.stream().mapToDouble(i -> i).toArray();
 			DataPoint dataPoint = new DataPoint(featureVector);
-			dataPoint.setLabel(Double.parseDouble(line.get(labelIndex)));
+			dataPoint.setLabel(label);
 			dataPoint.setFeatureTypes(featureTypes);
+
 			points.add(dataPoint);
 		}
 		// we will create new feature names for all on hot encoded features
@@ -179,6 +210,15 @@ public class CSVLoader {
 		featureStats.featureNames = newFeatureNames.toArray(new String[0]);
 
 		return points;
+	}
+
+	/**
+	 * Adds an info message while loading the file.
+	 *
+	 * @param message a string description of the message
+	 */
+	private void addInformationMessage(String message) {
+		this.information.add(message);
 	}
 
 	/**
@@ -207,6 +247,15 @@ public class CSVLoader {
 	}
 
 	/**
+	 * Retrieve warnings that were generated while loading the file
+	 *
+	 * @return a set of warning messages
+	 */
+	public HashSet<String> getInformation() {
+		return this.information;
+	}
+
+	/**
 	 * A helper class to store feature information to be used in one hot encoding.
 	 */
 	private class FeatureStat {
@@ -230,11 +279,20 @@ public class CSVLoader {
 		 * Stores encodings of one hot encoded features. The outer key is the feature
 		 * index in the original file. The inner map stores feature value to relative
 		 * index of new one hot feature in the same raw feature.
-		 * 
-		 * TODO(Cuneyt): Simple Example is needed. 2 Raw feature. First is continuous
-		 * and second is category.
+		 * <p>
+		 * |city|state|age|label|
+		 * |Ardahan|DoguAnadolu|39|0|
+		 * |Seattle|Washington|40|1|
+		 * <p>
+		 * is encoded to
+		 * |city:Ardahan|city:Seattle|state:DoguAnadolu|state:Washington|age|label|
+		 * |1|0|1|0|39|0|
+		 * |0|1|0|1|40|1|
 		 */
-		private Map<Integer, Map<String, Integer>> oneHotEncodings;
+		private Map<Integer, Map<String, Integer>> oneHotFeatureEncodings;
+
+		// labels are encoded to double values and stored in labelEncodingMap
+		private HashMap<String, Double> labelEncodingMap;
 
 		public String[] getFeatureNames() {
 			return featureNames;
@@ -246,16 +304,16 @@ public class CSVLoader {
 		public void initialize(int numberOfFeatures) {
 			this.numberOfUniqueValuesPerFeature = new int[numberOfFeatures];
 			this.isContinuousFeature = new boolean[numberOfFeatures];
-			this.oneHotEncodings = new HashMap<>();
+			this.oneHotFeatureEncodings = new HashMap<>();
 			this.numberOfFeatures = numberOfFeatures;
 		}
 
 		public void saveEncoding(int featureIndex, Map<String, Integer> fEncoder) {
-			oneHotEncodings.put(featureIndex, fEncoder);
+			oneHotFeatureEncodings.put(featureIndex, fEncoder);
 		}
 
 		public Map<String, Integer> getEncodedValues(int featureIndex) {
-			return oneHotEncodings.get(featureIndex);
+			return oneHotFeatureEncodings.get(featureIndex);
 		}
 
 		public int getNumberOfFeatures() {
@@ -263,21 +321,41 @@ public class CSVLoader {
 		}
 
 		/**
-		 * TODO(Cuneyt): Add comment.
-		 * 
-		 * @param featureIndex
-		 * @return
+		 * Function to query if a feature has been encoded.
+		 * @param featureIndex index of the feature
+		 * @return true if the feature has been encoded, alse otherwise
 		 */
 		public boolean isEncoded(int featureIndex) {
-			return !oneHotEncodings.isEmpty() && oneHotEncodings.containsKey(featureIndex);
+			return !oneHotFeatureEncodings.isEmpty() && oneHotFeatureEncodings.containsKey(featureIndex);
 		}
 
 		public int getNumberOfFinalFeatures() {
 			int total = isContinuousFeature.length;
-			for (Integer key : oneHotEncodings.keySet()) {
-				total += oneHotEncodings.get(key).size() - 1;
+			for (Integer key : oneHotFeatureEncodings.keySet()) {
+				total += oneHotFeatureEncodings.get(key).size() - 1;
 			}
 			return total;
 		}
+
+		/**
+		 * Retrieve label encodings
+		 *
+		 * @return a map of original label values and their encoded values
+		 */
+		public HashMap<String, Double> getLabelEncoding() {
+			return this.labelEncodingMap;
+		}
+
+		/**
+		 * save encodings of label values in labelEncodingMap
+		 * @param labelMap original label value-> encoded label value
+		 */
+		public void setLabelEncoding( HashMap<String, Double> labelMap) {
+			this.labelEncodingMap=labelMap;
+		}
+
+
+
 	}
+
 }
