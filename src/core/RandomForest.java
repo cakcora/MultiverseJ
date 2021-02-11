@@ -46,6 +46,7 @@ public class RandomForest {
             throw new RuntimeException("Dataset has no data points");
         }
 
+
         int featureCount = dataPoints.get(0).getFeatures().length;
         // number of features to use in each bootstrapping step
         if(maxFeatures==0) {
@@ -60,8 +61,9 @@ public class RandomForest {
             Set<Integer> sampledFeatures = sampleFeatures(maxFeatures,featureCount);
             DecisionTreeLearner dt = new DecisionTreeLearner();
             dt.setFeatures(sampledFeatures);
-            dt.train(baggedDataset);
-            //decisionTrees.add(dt.getTree()); missing method
+            DecisionTree decisionTree = dt.train(baggedDataset);
+            //save the tree
+            decisionTrees.add(decisionTree);
         }
     }
 
@@ -136,6 +138,7 @@ public class RandomForest {
      */
     public void setNumTrees(int treeCount) {
         this.numTrees = treeCount;
+        this.decisionTrees = new ArrayList<>();
     }
 
     // set the number of data points to sample for bagging at each decision tree
@@ -146,5 +149,9 @@ public class RandomForest {
     // set the number of features to sample at each step
     public void setNumFeatures(int featureSize) {
         this.maxFeatures = featureSize;
+    }
+
+    public List<DecisionTree> getDecisionTrees() {
+        return decisionTrees;
     }
 }

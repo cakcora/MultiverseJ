@@ -125,4 +125,8 @@ public class DataPoint {
 	{
 		return this.isCategorical[featureIndex];
 	}
+
+	public boolean[] getCategorical() {
+		return isCategorical;
+	}
 }

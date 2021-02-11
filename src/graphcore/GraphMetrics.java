@@ -40,13 +40,14 @@ public class GraphMetrics {
     private double meanDistance;
     private int numberOfWeaklyConndComps;
     private double avgSizeOfWeaklyConndComps;
+    private int vertexCount;
 
 
     public void computeAllMetrices(DirectedSparseMultigraph<Integer, Integer> graph) {
         //1- avInDegree: average in degree of $G_j$ vertices
         // 3- mavgOutDegre: average out degree of $G_j$ vertices
 
-        int vertexCount = graph.getVertexCount();
+        this.vertexCount = graph.getVertexCount();
         var degrees = new int[vertexCount];
         int index = 0;
         avgInDegree = 0;
@@ -111,6 +112,20 @@ public class GraphMetrics {
         //13 Clustering coefficient
         Map<Integer, Double> clusteringCoeff = Metrics.clusteringCoefficients(graph);
         avgClusteringCoeff = getAverage(clusteringCoeff.values());
+
+        long[] counts = getTriadicCounts(graph);
+        for (int i = 0; i < counts.length; i++) {
+            if (counts[i] > 0)
+                System.out.println("Graph motif " + i + ": " + counts[i]);
+        }
+        this.diameter = getDiamater();
+
+        this.medianDegree = getMedianDegree();
+
+        this.avgInDegree = getAvgInDegree();
+        this.avgOutDegree = getAvgOutDegree();
+
+        this.avgBetweenness = getAvgBetweenness();
     }
 
     private <T> double getAverage(Collection<T> myList) {
@@ -148,5 +163,24 @@ public class GraphMetrics {
 
     public double getAvgClusteringCoeff() {
         return avgClusteringCoeff;
+    }
+
+    @Override
+    public String toString() {
+        return "GraphMetrics{" +
+                "diameter=" + diameter +
+                ", avgInDegree=" + avgInDegree +
+                ", avgOutDegree=" + avgOutDegree +
+                ", medianDegree=" + medianDegree +
+                ", avgBetweenness=" + avgBetweenness +
+                ", avgClusteringCoeff=" + avgClusteringCoeff +
+                ", meanDistance=" + meanDistance +
+                ", numberOfWeaklyConndComps=" + numberOfWeaklyConndComps +
+                ", avgSizeOfWeaklyConndComps=" + avgSizeOfWeaklyConndComps +
+                '}';
+    }
+
+    public int getVertexCount() {
+        return vertexCount;
     }
 }

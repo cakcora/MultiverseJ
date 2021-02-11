@@ -3,12 +3,12 @@ package experiments;
 import core.DataPoint;
 import core.DecisionTree;
 import core.RandomForest;
-import core.TreeNode;
 import edu.uci.ics.jung.graph.DirectedSparseMultigraph;
 import graphcore.GraphExtractor;
 import graphcore.GraphMetrics;
 import loader.CSVLoader;
 import loader.LoaderOptions;
+import poisoner.LabelFlippingPoisoner;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class PoisonedLabelExperiment {
 		int labelIndex = Integer.parseInt(args[1]);
 		options.featureIgnoreThreshold(20);
 		char separator = options.getSeparator();
-		if(separator !=' '&&separator!=','&&separator!='\t')
+		if (separator != ' ' && separator != ',' && separator != '\t')
 			System.out.println("Column separator is not set as a comma, space or tab character. Are you sure about that?");
 		var csvLoader = new CSVLoader(labelIndex, options);
 		List<DataPoint> dataPoints = csvLoader.loadCSV(csvFile);
@@ -49,50 +49,37 @@ public class PoisonedLabelExperiment {
 		}
 		System.out.println();
 
-		RandomForest rf = new RandomForest();
-		rf.setNumTrees(100);
-		rf.setSampleSize(100);
-		rf.setNumFeatures(5);
-		rf.train(dataPoints);
-
-		for (String message : rf.getInfoMessages()) {
-			System.out.println(message);
+		//poisoning starts
+		for (int poisonLevel = 0; poisonLevel <= 49; poisonLevel++) {
+			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner();
+			List posionedDataPoints = poisoner.poison(dataPoints,poisonLevel);
+			RandomForest rf = new RandomForest();
+			rf.setNumTrees(100);
+			rf.setSampleSize(100);
+			rf.setNumFeatures(5);
+			rf.train(posionedDataPoints);
+			for (String message : rf.getInfoMessages()) {
+				System.out.println(message);
+			}
+			for (DecisionTree dt : rf.getDecisionTrees()) {
+				// extract a graph from the tree
+				GraphMetrics metric = computeGraphMetrics(dt);
+				if (metric.getVertexCount() > 0)
+					System.out.println(metric.toString());
+			}
 		}
-		// miraculously learn a decision tree
-		DecisionTree dt = new DecisionTree();
-		TreeNode node = new TreeNode(0, 1);
-		TreeNode nodeL = new TreeNode(1, 2);
-		TreeNode nodeR = new TreeNode(2, 3);
-		node.setLeftChild(1);
-		node.setRightChild(2);
-		dt.addNode(node);
-		dt.addNode(nodeL);
-		dt.addNode(nodeR);
-		dt.addNode(node);
+	}
 
-		// extract a graph from the tree
+
+
+	private static GraphMetrics computeGraphMetrics(DecisionTree dt) {
 		GraphExtractor extractor = new GraphExtractor(dt);
 		DirectedSparseMultigraph<Integer, Integer> graph = extractor.getGraph();
-
 		GraphMetrics metric = new GraphMetrics();
-		metric.computeAllMetrices(graph);
-		long[] counts = metric.getTriadicCounts(graph);
-		for (int i = 0; i < counts.length; i++) {
-			if (counts[i] > 0)
-				System.out.println("Graph motif " + i + ": " + counts[i]);
+		if(graph.getVertexCount()<=1){
+			System.out.println("Graph of the decision tree does not have enough nodes");
 		}
-		double diameter = metric.getDiamater();
-		System.out.println("Graph diameter is " + diameter);
-		double medianDegree = metric.getMedianDegree();
-		System.out.println("Graph median degree is " + medianDegree);
-
-		double avgInDegree = metric.getAvgInDegree();
-		double avgOutDegree = metric.getAvgOutDegree();
-		System.out.println("avg in degree: " + avgInDegree + " avg out degree:" + avgOutDegree);
-
-		double avgClusCoeff = metric.getAvgClusteringCoeff();
-		double avgBetweenness = metric.getAvgBetweenness();
-		System.out.println("avg clustering coefficient: " + avgClusCoeff + " avg betweenness: " + avgBetweenness);
-
+		else metric.computeAllMetrices(graph);
+		return metric;
 	}
 }
