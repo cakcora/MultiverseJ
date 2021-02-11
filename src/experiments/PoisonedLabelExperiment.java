@@ -70,8 +70,6 @@ public class PoisonedLabelExperiment {
 		}
 	}
 
-
-
 	private static GraphMetrics computeGraphMetrics(DecisionTree dt) {
 		GraphExtractor extractor = new GraphExtractor(dt);
 		DirectedSparseMultigraph<Integer, Integer> graph = extractor.getGraph();
