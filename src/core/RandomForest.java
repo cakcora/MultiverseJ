@@ -2,10 +2,7 @@ package core;
 
 import mlcore.DecisionTreeLearner;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Represents Random Forest object.
@@ -49,17 +46,47 @@ public class RandomForest {
             throw new RuntimeException("Dataset has no data points");
         }
 
-        int numFeatures = dataPoints.get(0).getFeatures().length;
+        int featureCount = dataPoints.get(0).getFeatures().length;
         // number of features to use in each bootstrapping step
-        maxFeatures = (numFeatures > 1) ? (int) Math.sqrt(numFeatures) : 1;
-
+        if(maxFeatures==0) {
+            //maxFeatures has not been set. In that case we will use the sqrt number of features
+            maxFeatures = (featureCount > 1) ? (int) Math.sqrt(featureCount) : 1;
+        }
 
         for (int tree = 0; tree < numTrees; tree++) {
+            //sample data points
             List<DataPoint> baggedDataset = sampleData(dataPoints);
+            //sample data features to be used in the DT
+            Set<Integer> sampledFeatures = sampleFeatures(maxFeatures,featureCount);
             DecisionTreeLearner dt = new DecisionTreeLearner();
+            dt.setFeatures(sampledFeatures);
             dt.train(baggedDataset);
             //decisionTrees.add(dt.getTree()); missing method
         }
+    }
+
+    /**
+     * Sample a sampleThisMany number of features to be used in a decision tree.
+     * @param sampleThisMany we will return this many features
+     * @param fromThisMany is the number of all available features
+     * @return ids of features
+     */
+
+
+    private Set<Integer> sampleFeatures(int sampleThisMany, int fromThisMany) {
+        HashSet<Integer> features = new HashSet<>();
+        if(sampleThisMany>=fromThisMany){
+            information.add("DT requested "+sampleThisMany+" but we have "+fromThisMany+" features overall.");
+            for (int i = 0; i < fromThisMany; i++) {
+                features.add(i);
+            }
+        }else {
+            Random r = new Random();
+            while (features.size() != sampleThisMany) {
+                features.add(r.nextInt(fromThisMany));
+            }
+        }
+       return features;
     }
 
     /**

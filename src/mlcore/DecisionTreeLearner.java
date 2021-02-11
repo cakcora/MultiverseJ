@@ -1,7 +1,9 @@
 package mlcore;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import core.DataPoint;
 import core.DecisionTree;
@@ -39,6 +41,10 @@ public class DecisionTreeLearner {
 	private ContinuousFeatureSplitter continuousSplitter;
 
 	/**
+	 * Features that will be used to train this decision tree
+	 */
+	private Set<Integer> features;
+	/**
 	 * Sorting utility for current learner.
 	 */
 	private QuickSort quickSorter;
@@ -58,22 +64,34 @@ public class DecisionTreeLearner {
 	/**
 	 * Trains decision tree from given data.
 	 * 
-	 * @param data
-	 * @return
+	 * @param data is a set of data points
+	 * @return a decision tree
 	 */
 	public DecisionTree train(List<DataPoint> data) {
-		dfs(data);
+		// a boolean array to tell the DT that this feature can be used in a split
+		boolean[] shouldSplit = new boolean[data.get(0).getFeatures().length];
+
+		if(this.features!=null){
+			//we must be learning a DT in a random forest
+			Arrays.fill(shouldSplit, Boolean.FALSE);
+			 for(int featureId: this.features){
+			 	shouldSplit[featureId]=true;//use this feature
+			 }
+		} else {
+			//we are learning a standard DT that uses all features.
+			Arrays.fill(shouldSplit, Boolean.TRUE);
+		}
+		dfs(data,shouldSplit);
 		return tree;
 	}
 
 	/**
 	 * DFS Based learner, building Decision Tree with DFS algorithm.
-	 * 
+	 *
 	 * @param dataSet is the input data set.
+	 * @param shouldSplit indicates whether a feature can be used in learning this DT
 	 */
-	public void dfs(List<DataPoint> dataSet) {
-		boolean[] shouldSplit = new boolean[dataSet.get(0).getFeatures().length];
-		Arrays.fill(shouldSplit, Boolean.TRUE);
+	public void dfs(List<DataPoint> dataSet, boolean[] shouldSplit) {
 		dfsRecursion(dataSet, 0, dataSet.size() - 1, 0, shouldSplit);
 	}
 
@@ -129,7 +147,7 @@ public class DecisionTreeLearner {
 	/**
 	 * Makes the current node as leaf node as it can not be splitted further.
 	 * 
-	 * @param data       the input list of data point.
+	 * @param dataSet       the input list of data point.
 	 * @param startIndex the start index of the sub list that is considered.
 	 * @param endIndex   the end index of the sub list that is considered.
 	 * @return the index of newly created leaf node.
@@ -152,6 +170,14 @@ public class DecisionTreeLearner {
 		this.tree.getNode(indexOfCurrentNode).setPopulation((endIndex - startIndex + 1));
 		this.tree.getNode(indexOfCurrentNode).setSumOfPositiveLabels((int) sumOfLabels);
 		return indexOfCurrentNode;
+	}
+
+	/**
+	 * Set the subset of features that can be used by this decision tree.
+	 * @param features integer ids of features
+	 */
+	public void setFeatures(Set<Integer> features){
+		this.features = features;
 	}
 
 	/**

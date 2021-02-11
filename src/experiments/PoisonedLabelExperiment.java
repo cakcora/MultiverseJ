@@ -1,3 +1,5 @@
+package experiments;
+
 import core.DataPoint;
 import core.DecisionTree;
 import core.RandomForest;
@@ -29,7 +31,9 @@ public class PoisonedLabelExperiment {
 		String csvFile = args[0];
 		int labelIndex = Integer.parseInt(args[1]);
 		options.featureIgnoreThreshold(20);
-
+		char separator = options.getSeparator();
+		if(separator !=' '&&separator!=','&&separator!='\t')
+			System.out.println("Column separator is not set as a comma, space or tab character. Are you sure about that?");
 		var csvLoader = new CSVLoader(labelIndex, options);
 		List<DataPoint> dataPoints = csvLoader.loadCSV(csvFile);
 		String[] featureNames = csvLoader.getFeatureNames();
@@ -41,7 +45,7 @@ public class PoisonedLabelExperiment {
 		System.out.println("Dataset has " + dataPoints.size() + " data points");
 		System.out.println("Each data point has " + featureNames.length + " features:");
 		for (String feature : featureNames) {
-			System.out.print(" " + feature);
+			//System.out.print(" " + feature);
 		}
 		System.out.println();
 
