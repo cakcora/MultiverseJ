@@ -49,10 +49,12 @@ public class PoisonedLabelExperiment {
 		}
 		System.out.println();
 
-		RandomForest rf = new RandomForest(dataPoints);
+		RandomForest rf = new RandomForest();
 		rf.setNumTrees(100);
 		rf.setSampleSize(100);
 		rf.setNumFeatures(5);
+		rf.train(dataPoints);
+
 		for (String message : rf.getInfoMessages()) {
 			System.out.println(message);
 		}

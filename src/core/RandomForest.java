@@ -33,14 +33,14 @@ public class RandomForest {
     private HashSet<String> information = new HashSet<String>();
 
     // size of sampling for each bootstrap step.
-    private int maxFeatures;
+    private int maxFeatures=0;
 
     /**
      * Trains numTrees decision trees
      *
      * @param dataPoints a set of data points
      */
-    public RandomForest(List<DataPoint> dataPoints) {
+    public void train(List<DataPoint> dataPoints) {
         //sanity checks on the data
         if (dataPoints == null || dataPoints.isEmpty()) {
             throw new RuntimeException("Dataset has no data points");
@@ -64,6 +64,8 @@ public class RandomForest {
             //decisionTrees.add(dt.getTree()); missing method
         }
     }
+
+
 
     /**
      * Sample a sampleThisMany number of features to be used in a decision tree.
