@@ -6,7 +6,10 @@ import core.DataPoint;
 import java.util.*;
 
 public class LabelFlippingPoisoner {
-
+    private Random random;
+    public LabelFlippingPoisoner(long seed){
+        random = new Random(seed);
+    }
     /**
      * A function to inject poison to the data set. the poison is untargeted label flipping.
      * @param dataPoints to be poisoned
@@ -19,7 +22,6 @@ public class LabelFlippingPoisoner {
         }
         // compute how many data points we should poison
         int poisonSize = (int) Math.ceil(dataPoints.size() * poisonLevel/100.0);
-        Random random = new Random();
         ArrayList<DataPoint> poisonedDataPoints = new ArrayList<>();
         //create a new dataset to be poisoned
         for (DataPoint dataPoint : dataPoints) {

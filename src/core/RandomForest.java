@@ -34,6 +34,7 @@ public class RandomForest {
 
     // size of sampling for each bootstrap step.
     private int maxFeatures=0;
+    private int minPopulation;
 
     /**
      * Trains numTrees decision trees
@@ -59,7 +60,7 @@ public class RandomForest {
             List<DataPoint> baggedDataset = sampleData(dataPoints);
             //sample data features to be used in the DT
             Set<Integer> sampledFeatures = sampleFeatures(maxFeatures,featureCount);
-            DecisionTreeLearner dt = new DecisionTreeLearner();
+            DecisionTreeLearner dt = new DecisionTreeLearner(this.maxDepth,this.minPopulation);
             dt.setFeatures(sampledFeatures);
             DecisionTree decisionTree = dt.train(baggedDataset);
             //save the tree
@@ -153,5 +154,13 @@ public class RandomForest {
 
     public List<DecisionTree> getDecisionTrees() {
         return decisionTrees;
+    }
+
+    public void setMaxDepth(int depth) {
+        this.maxDepth =depth;
+    }
+
+    public void setMinPopulation(int population) {
+        this.minPopulation=population;
     }
 }

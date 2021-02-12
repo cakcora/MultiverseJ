@@ -23,7 +23,7 @@ public class DecisionTreeLearner {
 	/**
 	 * DecisionTree TODO: maybe create a getter function for this.
 	 */
-	private DecisionTree tree = new DecisionTree();
+	private DecisionTree tree;
 
 	/**
 	 * Maximum depth for Decision Tree.

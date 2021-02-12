@@ -14,7 +14,6 @@ import java.util.List;
 
 public class PoisonedLabelExperiment {
 	public static void main(String[] args) throws Exception {
-
 		LoaderOptions options = new LoaderOptions();
 		if (args.length < 3) {
 			System.out.println("Expecting filename, index of the label column, separator char and quote char");
@@ -45,18 +44,21 @@ public class PoisonedLabelExperiment {
 		System.out.println("Dataset has " + dataPoints.size() + " data points");
 		System.out.println("Each data point has " + featureNames.length + " features:");
 		for (String feature : featureNames) {
-			//System.out.print(" " + feature);
+			System.out.print(" " + feature);
 		}
 		System.out.println();
 
 		//poisoning starts
+
 		for (int poisonLevel = 0; poisonLevel <= 49; poisonLevel++) {
-			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner();
+			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner(poisonLevel);
 			List posionedDataPoints = poisoner.poison(dataPoints,poisonLevel);
 			RandomForest rf = new RandomForest();
 			rf.setNumTrees(100);
 			rf.setSampleSize(100);
 			rf.setNumFeatures(5);
+			rf.setMaxDepth(6);
+			rf.setMinPopulation(10);
 			rf.train(posionedDataPoints);
 			for (String message : rf.getInfoMessages()) {
 				System.out.println(message);
@@ -66,6 +68,8 @@ public class PoisonedLabelExperiment {
 				GraphMetrics metric = computeGraphMetrics(dt);
 				if (metric.getVertexCount() > 0)
 					System.out.println(metric.toString());
+
+
 			}
 		}
 	}

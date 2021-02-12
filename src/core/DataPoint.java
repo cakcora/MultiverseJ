@@ -129,4 +129,6 @@ public class DataPoint {
 	public boolean[] getCategorical() {
 		return isCategorical;
 	}
+
+
 }
