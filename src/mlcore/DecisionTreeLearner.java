@@ -1,9 +1,7 @@
 package mlcore;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import core.DataPoint;
 import core.DecisionTree;
@@ -41,57 +39,47 @@ public class DecisionTreeLearner {
 	private ContinuousFeatureSplitter continuousSplitter;
 
 	/**
-	 * Features that will be used to train this decision tree
-	 */
-	private Set<Integer> features;
-	/**
 	 * Sorting utility for current learner.
 	 */
 	private QuickSort quickSorter;
+	
+	/**
+	 * Feature indexes that Tree wil learn.
+	 */
+	private int[] features;
 
 	public DecisionTreeLearner() {
 		this.quickSorter = new QuickSort();
 	}
 
-	public DecisionTreeLearner(int maxDepth, int minPopulation) {
+	public DecisionTreeLearner(int maxDepth, int minPopulation, int[] features) {
 		this();
 		this.maxDepth = maxDepth;
 		this.tree = new DecisionTree();
 		this.binarySplitter = new BinaryFeatureSplitter(minPopulation);
 		this.continuousSplitter = new ContinuousFeatureSplitter(minPopulation);
+		this.features = features;
 	}
 
 	/**
 	 * Trains decision tree from given data.
 	 * 
-	 * @param data is a set of data points
-	 * @return a decision tree
+	 * @param data
+	 * @return
 	 */
 	public DecisionTree train(List<DataPoint> data) {
-		// a boolean array to tell the DT that this feature can be used in a split
-		boolean[] shouldSplit = new boolean[data.get(0).getFeatures().length];
-
-		if(this.features!=null){
-			//we must be learning a DT in a random forest
-			Arrays.fill(shouldSplit, Boolean.FALSE);
-			 for(int featureId: this.features){
-			 	shouldSplit[featureId]=true;//use this feature
-			 }
-		} else {
-			//we are learning a standard DT that uses all features.
-			Arrays.fill(shouldSplit, Boolean.TRUE);
-		}
-		dfs(data,shouldSplit);
+		dfs(data);
 		return tree;
 	}
 
 	/**
 	 * DFS Based learner, building Decision Tree with DFS algorithm.
-	 *
+	 * 
 	 * @param dataSet is the input data set.
-	 * @param shouldSplit indicates whether a feature can be used in learning this DT
 	 */
-	public void dfs(List<DataPoint> dataSet, boolean[] shouldSplit) {
+	public void dfs(List<DataPoint> dataSet) {
+		boolean[] shouldSplit = new boolean[this.features.length];
+		Arrays.fill(shouldSplit, Boolean.TRUE);
 		dfsRecursion(dataSet, 0, dataSet.size() - 1, 0, shouldSplit);
 	}
 
@@ -118,10 +106,9 @@ public class DecisionTreeLearner {
 				var pivotPosition = quickSorter.partition(dataSet, startIndex, endIndex, bestSplit.getPivot(),
 						bestSplit.getFeatureId());
 				var currentNode = makeIntermediateNode(bestSplit);
-				currentNode
-						.setLeftChild(dfsRecursion(dataSet, startIndex, pivotPosition, depth + 1, shouldSplit.clone()));
-				currentNode.setRightChild(
-						dfsRecursion(dataSet, pivotPosition + 1, endIndex, depth + 1, shouldSplit.clone()));
+				// Checking min population to call recursively.
+				currentNode.setLeftChild(dfsRecursion(dataSet, startIndex, pivotPosition, depth + 1, shouldSplit.clone()));
+				currentNode.setRightChild(dfsRecursion(dataSet, pivotPosition + 1, endIndex, depth + 1, shouldSplit.clone()));
 				return currentNode.getId();
 			}
 		} else { // Max depth is reached. Therefore, creating leaf node.
@@ -147,7 +134,7 @@ public class DecisionTreeLearner {
 	/**
 	 * Makes the current node as leaf node as it can not be splitted further.
 	 * 
-	 * @param dataSet       the input list of data point.
+	 * @param data       the input list of data point.
 	 * @param startIndex the start index of the sub list that is considered.
 	 * @param endIndex   the end index of the sub list that is considered.
 	 * @return the index of newly created leaf node.
@@ -157,27 +144,20 @@ public class DecisionTreeLearner {
 		int indexOfCurrentNode = this.tree.getSize();
 		// Leaf nodes does not have any feature index.
 		// Hereby, we're setting feature index to -1.
-		this.tree.addNode(new TreeNode(indexOfCurrentNode, -1));
+		var leafNode = new TreeNode(indexOfCurrentNode, -1);
 		// Leaf nodes does not have any child.
-		this.tree.getNode(indexOfCurrentNode).setRightChild(-1);
-		this.tree.getNode(indexOfCurrentNode).setLeftChild(-1);
+		leafNode.setRightChild(-1);
+		leafNode.setLeftChild(-1);
 		double sumOfLabels = 0.0d;
 		for (int dataIndex = startIndex; dataIndex <= endIndex; dataIndex++) {
 			sumOfLabels += dataSet.get(dataIndex).getLabel();
 		}
 		double leafLabel = sumOfLabels / (endIndex - startIndex + 1 * 1.0d);
-		this.tree.getNode(indexOfCurrentNode).setValue(leafLabel);
-		this.tree.getNode(indexOfCurrentNode).setPopulation((endIndex - startIndex + 1));
-		this.tree.getNode(indexOfCurrentNode).setSumOfPositiveLabels((int) sumOfLabels);
+		leafNode.setValue(leafLabel);
+		leafNode.setPopulation((endIndex - startIndex + 1));
+		leafNode.setSumOfPositiveLabels((int) sumOfLabels);
+		this.tree.addNode(leafNode);
 		return indexOfCurrentNode;
-	}
-
-	/**
-	 * Set the subset of features that can be used by this decision tree.
-	 * @param features integer ids of features
-	 */
-	public void setFeatures(Set<Integer> features){
-		this.features = features;
 	}
 
 	/**
@@ -194,7 +174,7 @@ public class DecisionTreeLearner {
 		Split bestSplit = null;
 		Split split;
 		double bestInformationGainSoFar = 0.0d;
-		for (int featureIndex = 0; featureIndex < dataSet.get(0).getFeatures().length; featureIndex++) {
+		for (int featureIndex : this.features) {
 			if (shouldSplit[featureIndex]) {
 				if (dataSet.get(startIndex).isCategorical(featureIndex)) {
 					split = binarySplitter.findBestSplit(featureIndex, dataSet, startIndex, endIndex);
