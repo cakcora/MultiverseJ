@@ -160,7 +160,7 @@ public class CSVLoader {
 		List<DataPoint> points = new ArrayList<>();
 		var labelMap = featureStats.getLabelEncoding();
 		for (List<String> line : lines) {
-			boolean[] featureTypes = new boolean[featureStats.finalFeatureCount];
+			ArrayList<Boolean> featureTypes = new ArrayList<Boolean>;
 			ArrayList<Double> featureValueList = new ArrayList<>();
 			double encodedlabel = -1;
 			// we use a globalIndex param to keep track of how original feature indices
@@ -177,54 +177,67 @@ public class CSVLoader {
 						// this is a continuous feature that does not require one-hot encoding.
 						featureValueList.add(Double.parseDouble(line.get(featureIndex)));
 						// set the feature type as non-categorical
-						featureTypes[globalIndex] = false;
+						featureTypes.add(false);
 						globalIndex++;
 					}
 					else {
-						Map<String, Integer> featureMap = featureStats.getEncodedValues(featureIndex);
-						int numberOfFeatureValues = featureMap.size();
-
-						//if the feature has too many unique values, one hot encoding would create too many
-						// new features. We should ignore such features.
-						if (numberOfFeatureValues < options.getIgnoreThreshold()){
-							// encode this categorical feature
-
-							double[] arr = encodeFeatureForSingleDataPoint(line, featureIndex);
-							for(int i=0;i<arr.length;i++){
-								featureValueList.add(arr[i]);
-								featureTypes[globalIndex+i]=true;
-							}
-							globalIndex+=arr.length;
-						} else {
-							this.addInformationMessage("feature index " + featureIndex +
-									" is ignored because it has too many (" + numberOfFeatureValues + ") unique values");
-						}
+						globalIndex = encodeForFeature(line, featureTypes, featureValueList, featureIndex);
 					}
 				}
 			}
 			double[] featureVector = featureValueList.stream().mapToDouble(i -> i).toArray();
+			boolean[] featureTypes2 = featureTypes.stream().mapToDouble(i -> i).toArray();
 			DataPoint dataPoint = new DataPoint(featureVector);
 			dataPoint.setLabel(encodedlabel);
-			dataPoint.setFeatureTypes(featureTypes);
+			dataPoint.setFeatureTypes(featureTypes2);
 
 			points.add(dataPoint);
 		}
-		// we will create new feature names for all on hot encoded features
-		var newFeatureNames = new ArrayList<String>();
-		for (int i = 0; i < featureStats.initialFeatureCount; i++) {
-			if (featureStats.isEncoded(i)) {
-				Map<String, Integer> encodedValues = featureStats.getEncodedValues(i);
-				for (String s : encodedValues.keySet()) {
-					newFeatureNames.add(featureStats.featureNames[i] + "_" + s);
-				}
-			} else
-				newFeatureNames.add(featureStats.featureNames[i]);
-		}
-		featureStats.featureNames = newFeatureNames.toArray(new String[0]);
+		updateFeatureNames();
 
 		return points;
 	}
 
+	/**
+	 * keeps feature names of real valued features, and gives new names to one hot encoded features.
+	 */
+	private void updateFeatureNames() {
+		// we will create new feature names for all one hot encoded features
+		var newFeatureNames = new ArrayList<String>();
+		for (int featureIndex = 0; featureIndex < featureStats.initialFeatureCount; featureIndex++) {
+			if (featureStats.isEncoded(featureIndex)) {
+				Map<String, Integer> encodedValues = featureStats.getEncodedValues(featureIndex);
+				for (String s : encodedValues.keySet()) {
+					newFeatureNames.add(featureStats.featureNames[featureIndex] + "_" + s);
+				}
+			} else
+				newFeatureNames.add(featureStats.featureNames[featureIndex]);
+		}
+		featureStats.featureNames = newFeatureNames.toArray(new String[0]);
+	}
+
+	private int encodeForFeature(List<String> line, ArrayList<Boolean> featureTypes, ArrayList<Double> featureValueList, int featureIndex) {
+		Map<String, Integer> featureMap = featureStats.getEncodedValues(featureIndex);
+		int numberOfFeatureValues = featureMap.size();
+
+		int newlyCreatedFeatures =0;
+		//if the feature has too many unique values, one hot encoding would create too many
+		// new features. We should ignore such features.
+		if (numberOfFeatureValues < options.getIgnoreThreshold()){
+			// encode this categorical feature
+
+			double[] arr = encodeFeatureForSingleDataPoint(line, featureIndex);
+			for(int i=0;i<arr.length;i++){
+				featureValueList.add(arr[i]);
+				featureTypes.add(true);
+			}
+			newlyCreatedFeatures = arr.length;
+		} else {
+			this.addInformationMessage("feature index " + featureIndex +
+					" is ignored because it has too many (" + numberOfFeatureValues + ") unique values");
+		}
+		return newlyCreatedFeatures;
+	}
 
 
 	private double[] encodeFeatureForSingleDataPoint(List<String> line, int featureIndex) {
@@ -360,7 +373,9 @@ public class CSVLoader {
 		 * @return true if the feature has been encoded, alse otherwise
 		 */
 		public boolean isEncoded(int featureIndex) {
-			return !oneHotFeatureEncodings.isEmpty() && oneHotFeatureEncodings.containsKey(featureIndex);
+			return !oneHotFeatureEncodings.isEmpty() &&
+					oneHotFeatureEncodings.containsKey(featureIndex) &&
+					oneHotFeatureEncodings.get(featureIndex).size()< options.getIgnoreThreshold();
 		}
 
 		public int getNumberOfFinalFeatures() {

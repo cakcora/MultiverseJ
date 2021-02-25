@@ -78,7 +78,7 @@ public class DecisionTreeLearner {
 	 * @param dataSet is the input data set.
 	 */
 	public void dfs(List<DataPoint> dataSet) {
-		boolean[] shouldSplit = new boolean[this.features.length];
+		boolean[] shouldSplit = new boolean[dataSet.get(0).getFeatures().length];
 		Arrays.fill(shouldSplit, Boolean.TRUE);
 		dfsRecursion(dataSet, 0, dataSet.size() - 1, 0, shouldSplit);
 	}
@@ -134,7 +134,7 @@ public class DecisionTreeLearner {
 	/**
 	 * Makes the current node as leaf node as it can not be splitted further.
 	 * 
-	 * @param data       the input list of data point.
+	 * @param dataSet       the input list of data point.
 	 * @param startIndex the start index of the sub list that is considered.
 	 * @param endIndex   the end index of the sub list that is considered.
 	 * @return the index of newly created leaf node.
