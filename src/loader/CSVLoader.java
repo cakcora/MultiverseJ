@@ -160,7 +160,7 @@ public class CSVLoader {
 		List<DataPoint> points = new ArrayList<>();
 		var labelMap = featureStats.getLabelEncoding();
 		for (List<String> line : lines) {
-			ArrayList<Boolean> featureTypes = new ArrayList<Boolean>;
+			ArrayList<Boolean> featureTypes = new ArrayList<>();
 			ArrayList<Double> featureValueList = new ArrayList<>();
 			double encodedlabel = -1;
 			// we use a globalIndex param to keep track of how original feature indices
@@ -186,10 +186,14 @@ public class CSVLoader {
 				}
 			}
 			double[] featureVector = featureValueList.stream().mapToDouble(i -> i).toArray();
-			boolean[] featureTypes2 = featureTypes.stream().mapToDouble(i -> i).toArray();
 			DataPoint dataPoint = new DataPoint(featureVector);
 			dataPoint.setLabel(encodedlabel);
-			dataPoint.setFeatureTypes(featureTypes2);
+
+			boolean[] op = new boolean[featureTypes.size()];
+			for(int n = 0; n < op.length; n++){
+				op[n] = featureTypes.get(n);
+			}
+			dataPoint.setFeatureTypes(op);
 
 			points.add(dataPoint);
 		}
