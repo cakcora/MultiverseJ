@@ -36,6 +36,13 @@ public class RandomForest {
     private int maxFeatures=0;
     private int minPopulation;
 
+    // random seed
+    Random random;
+
+    public RandomForest(Random random) {
+        this.random = random;
+    }
+
     /**
      * Trains numTrees decision trees
      *
@@ -59,9 +66,8 @@ public class RandomForest {
             //sample data points
             List<DataPoint> baggedDataset = sampleData(dataPoints);
             //sample data features to be used in the DT
-            Set<Integer> sampledFeatures = sampleFeatures(maxFeatures,featureCount);
-            DecisionTreeLearner dt = new DecisionTreeLearner(this.maxDepth,this.minPopulation);
-            dt.setFeatures(sampledFeatures);
+            int[] sampledFeatures = sampleFeatures(maxFeatures,featureCount);
+            DecisionTreeLearner dt = new DecisionTreeLearner(this.maxDepth,this.minPopulation,sampledFeatures);
             DecisionTree decisionTree = dt.train(baggedDataset);
             //save the tree
             decisionTrees.add(decisionTree);
@@ -78,20 +84,24 @@ public class RandomForest {
      */
 
 
-    private Set<Integer> sampleFeatures(int sampleThisMany, int fromThisMany) {
+    private int[] sampleFeatures(int sampleThisMany, int fromThisMany) {
         HashSet<Integer> features = new HashSet<>();
         if(sampleThisMany>=fromThisMany){
+
             information.add("DT requested "+sampleThisMany+" but we have "+fromThisMany+" features overall.");
-            for (int i = 0; i < fromThisMany; i++) {
-                features.add(i);
-            }
-        }else {
-            Random r = new Random();
-            while (features.size() != sampleThisMany) {
-                features.add(r.nextInt(fromThisMany));
-            }
+            sampleThisMany = fromThisMany;
+
         }
-       return features;
+        while (features.size() != sampleThisMany) {
+            features.add(random.nextInt(fromThisMany));
+
+        }
+        int[] arr = new int[features.size()];
+        int index=0;
+        for(int i:features){
+            arr[index++]=i;
+        }
+        return arr;
     }
 
     /**
@@ -148,7 +158,7 @@ public class RandomForest {
     }
 
     // set the number of features to sample at each step
-    public void setNumFeatures(int featureSize) {
+    public void setNumFeaturesToConsiderWhenSplitting(int featureSize) {
         this.maxFeatures = featureSize;
     }
 
@@ -156,11 +166,11 @@ public class RandomForest {
         return decisionTrees;
     }
 
-    public void setMaxDepth(int depth) {
+    public void setMaxTreeDepth(int depth) {
         this.maxDepth =depth;
     }
 
-    public void setMinPopulation(int population) {
+    public void setMinLeafPopulation(int population) {
         this.minPopulation=population;
     }
 }

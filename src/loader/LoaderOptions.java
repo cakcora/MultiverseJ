@@ -2,15 +2,6 @@ package loader;
 
 public class LoaderOptions {
 
-	/*
-	 * Flag to mark a feature as categorical
-	 */
-	public static final boolean CATEGORICAL = false;
-
-	/*
-	 * Flag to mark a feature as real valued
-	 */
-	public static final boolean REAL_VALUED = true;
 
 	/*
 	 * Used in one-hot encoding, if a categorical feature has more than
@@ -24,6 +15,11 @@ public class LoaderOptions {
 	private char separator = ',';
 
 	private char quoter = '\\';
+
+	/*
+	A threshold to convert real-valued features to categorical.
+	 */
+	private int realToFactorThreshold;
 
 	public char getQuoter() {
 		return quoter;
@@ -47,5 +43,13 @@ public class LoaderOptions {
 
 	public int getIgnoreThreshold() {
 		return featureIgnoreThresholdOnUniqueVals;
+	}
+
+    public void convertRealTofactorThreshold(int factorThreshold) {
+		realToFactorThreshold=factorThreshold;
+    }
+
+	public int getFactorThreshold() {
+		return realToFactorThreshold;
 	}
 }

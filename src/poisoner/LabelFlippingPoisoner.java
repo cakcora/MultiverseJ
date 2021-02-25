@@ -7,8 +7,8 @@ import java.util.*;
 
 public class LabelFlippingPoisoner {
     private Random random;
-    public LabelFlippingPoisoner(long seed){
-        random = new Random(seed);
+    public LabelFlippingPoisoner(Random random){
+        this.random = random;
     }
     /**
      * A function to inject poison to the data set. the poison is untargeted label flipping.
