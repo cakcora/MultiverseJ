@@ -86,7 +86,7 @@ public class CSVLoader {
 	 */
 	private void populateFeatureMetaData(List<List<String>> lines) throws Exception {
 		var numberOfDataPoints = lines.size();
-		int numberOfFeatures = ((numberOfDataPoints == 0 ? 0 : lines.get(0).size()));
+		int numberOfFeatures = ((numberOfDataPoints == 0 ? 0 : lines.get(0).size()-1));
 		if (numberOfDataPoints <= 1 || numberOfFeatures <= 1) {
 			throw new Exception("There are no data points to shape.");
 		}

@@ -45,7 +45,7 @@ public class PoisonedLabelExperiment {
 			System.out.println(message);
 		}
 		System.out.println("Dataset has " + dataPoints.size() + " data points");
-		System.out.println("Each data point has " + featureNames.length + " features:");
+		System.out.println("Each data point has " + (featureNames.length) + " features:");
 		for (String feature : featureNames) {
 			System.out.print(" [" + feature+"]");
 		}
@@ -53,7 +53,7 @@ public class PoisonedLabelExperiment {
 
 		//poisoning starts
 		Random random = new Random(151);
-		for (int poisonLevel = 0; poisonLevel <= 49; poisonLevel++) {
+		for (int poisonLevel = 0; poisonLevel <= 1; poisonLevel++) {
 			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner(random);
 			List posionedDataPoints = poisoner.poison(dataPoints,poisonLevel);
 			RandomForest rf = new RandomForest(random);

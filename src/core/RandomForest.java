@@ -86,7 +86,7 @@ public class RandomForest {
 
     private int[] sampleFeatures(int sampleThisMany, int fromThisMany) {
         HashSet<Integer> features = new HashSet<>();
-        if(sampleThisMany>=fromThisMany){
+        if(sampleThisMany>fromThisMany){
 
             information.add("DT requested "+sampleThisMany+" but we have "+fromThisMany+" features overall.");
             sampleThisMany = fromThisMany;
@@ -114,8 +114,8 @@ public class RandomForest {
 
         int size = dataPoints.size();
         if (maxSamples > size) {
-            maxSamples = size;
             this.addInfoMessage("Dataset does not contain " + maxSamples + " data points to bag, will use " + size + " instead");
+            maxSamples = size;
         }
 
         List<DataPoint> baggedDataset = new ArrayList<>();
