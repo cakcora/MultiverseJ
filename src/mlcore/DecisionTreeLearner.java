@@ -79,7 +79,11 @@ public class DecisionTreeLearner {
 	 */
 	public void dfs(List<DataPoint> dataSet) {
 		boolean[] shouldSplit = new boolean[dataSet.get(0).getFeatures().length];
-		Arrays.fill(shouldSplit, Boolean.TRUE);
+		Arrays.fill(shouldSplit, Boolean.FALSE);
+		for(int index:features){
+			shouldSplit[index]=true;
+		}
+
 		dfsRecursion(dataSet, 0, dataSet.size() - 1, 0, shouldSplit);
 	}
 
