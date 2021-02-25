@@ -46,16 +46,19 @@ public class RandomForest {
     /**
      * Trains numTrees decision trees
      *
-     * @param dataPoints a set of data points
+     * @param dataset a set of data points
      */
-    public void train(List<DataPoint> dataPoints) {
+    public void train(Dataset dataset) {
+        List<DataPoint> dataPoints = dataset.getDatapoints();
         //sanity checks on the data
         if (dataPoints == null || dataPoints.isEmpty()) {
             throw new RuntimeException("Dataset has no data points");
         }
 
 
-        int featureCount = dataPoints.get(0).getFeatures().length;
+        Map<Integer, Integer> featureMap = dataset.getFeatureMap();
+        HashSet origFeatures = new HashSet(featureMap.values());
+        int featureCount = origFeatures.size();
         // number of features to use in each bootstrapping step
         if(maxFeatures==0) {
             //maxFeatures has not been set. In that case we will use the sqrt number of features
@@ -66,7 +69,7 @@ public class RandomForest {
             //sample data points
             List<DataPoint> baggedDataset = sampleData(dataPoints);
             //sample data features to be used in the DT
-            int[] sampledFeatures = sampleFeatures(maxFeatures,featureCount);
+            ArrayList<Integer> sampledFeatures = sampleFeatures(maxFeatures,featureCount,featureMap);
             DecisionTreeLearner dt = new DecisionTreeLearner(this.maxDepth,this.minPopulation,sampledFeatures);
             DecisionTree decisionTree = dt.train(baggedDataset);
             //save the tree
@@ -80,11 +83,12 @@ public class RandomForest {
      * Sample a sampleThisMany number of features to be used in a decision tree.
      * @param sampleThisMany we will return this many features
      * @param fromThisMany is the number of all available features
+     * @param featureMap
      * @return ids of features
      */
 
 
-    private int[] sampleFeatures(int sampleThisMany, int fromThisMany) {
+    private ArrayList<Integer> sampleFeatures(int sampleThisMany, int fromThisMany, Map<Integer, Integer> featureMap) {
         HashSet<Integer> features = new HashSet<>();
         if(sampleThisMany>fromThisMany){
 
@@ -94,13 +98,16 @@ public class RandomForest {
         }
         while (features.size() != sampleThisMany) {
             features.add(random.nextInt(fromThisMany));
-
         }
-        int[] arr = new int[features.size()];
-        int index=0;
+        var arr = new ArrayList<Integer>();
         for(int i:features){
-            arr[index++]=i;
+            for(int ch:featureMap.keySet()){
+                if(featureMap.get(ch)==i){
+                    arr.add(ch);
+                }
+            }
         }
+
         return arr;
     }
 

@@ -25,18 +25,14 @@ public class CSVLoader {
 	 */
 	private final LoaderOptions options;
 
-	/**
-	 * The column index of the of the y-label in char separated input training file.
-	 */
-	private final int labelIndex;
-
 	// a set of information messages generated during loading the file
 	private final HashSet<String> information = new HashSet<>();
+	private Map<Integer,Integer> parentMap;
 
-	public CSVLoader(int labelIndex, LoaderOptions options) {
+	public CSVLoader(LoaderOptions options) {
 		this.featureStats = new FeatureStat();
 		this.options = options;
-		this.labelIndex = labelIndex;
+		this.parentMap = new HashMap<>();
 	}
 
 	/**
@@ -49,8 +45,8 @@ public class CSVLoader {
 	 */
 	public List<DataPoint> loadCSV(String csvFile) throws Exception {
 		List<List<String>> lines = readLinesAsString(csvFile);
-		populateFeatureMetaData(lines);
-		return encodeAllDataPointsForAllIndices(lines);
+		extractMetadataForAllFeaturesAndLabel(lines);
+		return encodeAllDataPointsForAllFeaturesAndLabel(lines);
 	}
 
 	/**
@@ -79,12 +75,12 @@ public class CSVLoader {
 	}
 
 	/**
-	 * Populate feature statistics and encodings for categorical features.
+	 * Populate feature statistics and encodings for all features+label.
 	 *
 	 * @param lines is the list of list strings that corresponds to lines of input
 	 *              file.
 	 */
-	private void populateFeatureMetaData(List<List<String>> lines) throws Exception {
+	private void extractMetadataForAllFeaturesAndLabel(List<List<String>> lines) throws Exception {
 		var numberOfDataPoints = lines.size();
 		int numberOfFeatures = ((numberOfDataPoints == 0 ? 0 : lines.get(0).size()-1));
 		if (numberOfDataPoints <= 1 || numberOfFeatures <= 1) {
@@ -92,43 +88,54 @@ public class CSVLoader {
 		}
 		featureStats.initialize(numberOfFeatures);
 		var labelEncodingMap = new HashMap<String, Double>();
-		for (int featureIndex = 0; featureIndex < numberOfFeatures; featureIndex++) {
-			if (featureIndex == labelIndex) {
-				// this feature is the label
-				for (List<String> line : lines) {
-					String originalLabel = line.get(featureIndex);
-					if (!labelEncodingMap.containsKey(originalLabel)) {
-						labelEncodingMap.put(originalLabel, (double) labelEncodingMap.size());
-					}
-				}
-				featureStats.setLabelEncoding(labelEncodingMap);
-				this.addInformationMessage("Label has " + labelEncodingMap.size() + " unique values");
-			}
-			else encodeFeatureForAllDataPoints(lines, featureIndex);
+		for (int colIndex = 0; colIndex < numberOfFeatures; colIndex++) {
+			extractMetadataForSingleFeature(lines, colIndex);
 		}
+		int labelIndex = lines.get(0).size()-1;
+		// encode label
+		for (List<String> line : lines) {
+			String originalLabel = line.get(labelIndex);
+			if (!labelEncodingMap.containsKey(originalLabel)) {
+				labelEncodingMap.put(originalLabel, (double) labelEncodingMap.size());
+			}
+		}
+		featureStats.setLabelEncoding(labelEncodingMap);
+		this.addInformationMessage("Label has " + labelEncodingMap.size() + " unique values");
+
 	}
 
-	private void encodeFeatureForAllDataPoints(List<List<String>> lines, int featureIndex) {
-		Set<String> uniqueVals = new HashSet<>();
+	private void extractMetadataForSingleFeature(List<List<String>> lines, int featureIndex) {
+		Set<String> uniqueVals = new TreeSet<>();
 		for (List<String> line : lines) {
 			uniqueVals.add(line.get(featureIndex));
 		}
 
 		boolean isContinuous = discoverFeatureNature(uniqueVals);
 		featureStats.isContinuousFeature[featureIndex] = isContinuous;
-
-		if (!isContinuous) {
-			Map<String, Integer> encodedValues = new HashMap<>();
-			int oneHotIndex = 0;
-			for (String uniqueFeatureVal : uniqueVals) {
-				encodedValues.put(uniqueFeatureVal, oneHotIndex++);
-			}
-			featureStats.saveEncoding(featureIndex, encodedValues);
-			featureStats.finalFeatureCount +=encodedValues.size();
-		}
-		else{
+		int countSoFar = featureStats.finalFeatureCount;
+		if (isContinuous) {
+			//feature is continuous
+			setFeatureParent(countSoFar,countSoFar);
 			featureStats.finalFeatureCount +=1;
+		}else {
+			//feature is categorical
+			if(uniqueVals.size()< options.getIgnoreThreshold()) {
+				// we should not ignore this feature
+				var encodedValues = new TreeMap<String,Integer>();
+				int oneHotIndex = 0;
+				int newFeatureIndex =0;
+				for (String uniqueFeatureVal : uniqueVals) {
+					encodedValues.put(uniqueFeatureVal, oneHotIndex++);
+					setFeatureParent(countSoFar+newFeatureIndex,countSoFar);
+					newFeatureIndex++;
+					featureStats.finalFeatureCount +=1;
+				}
+				featureStats.saveEncoding(featureIndex, encodedValues);
+			}else{
+				information.add("Ignoring feature at col "+featureIndex+" because it has too many values.");
+			}
 		}
+
 	}
 
 	/**
@@ -156,42 +163,39 @@ public class CSVLoader {
 	 * @return a list of one hot encoded data points
 	 */
 
-	private List<DataPoint> encodeAllDataPointsForAllIndices(List<List<String>> lines) {
+	private List<DataPoint> encodeAllDataPointsForAllFeaturesAndLabel(List<List<String>> lines) {
 		List<DataPoint> points = new ArrayList<>();
 		var labelMap = featureStats.getLabelEncoding();
+		var usedFeatures = featureStats.getUsedFeatures();
+		//label is the last column in the file
+		int labelIndex = lines.get(0).size()-1;
 		for (List<String> line : lines) {
-			ArrayList<Boolean> featureTypes = new ArrayList<>();
-			ArrayList<Double> featureValueList = new ArrayList<>();
-			double encodedlabel = -1;
-			// we use a globalIndex param to keep track of how original feature indices
-			// change after we insert one-hot encoded features
-			int globalIndex = 0;
-			for (int featureIndex = 0; featureIndex < featureStats.initialFeatureCount; featureIndex++) {
-				if (featureIndex == labelIndex) {
-					// this is the encodedlabel
-					String originalLabel = line.get(featureIndex);
-					encodedlabel = labelMap.get(originalLabel);
-				} else {
-					//this is a feature: CONTINUOUS OR CATEGORICAL
-					if (featureStats.isContinuousFeature[featureIndex]){
-						// this is a continuous feature that does not require one-hot encoding.
-						featureValueList.add(Double.parseDouble(line.get(featureIndex)));
-						// set the feature type as non-categorical
-						featureTypes.add(false);
-						globalIndex++;
-					}
-					else {
-						globalIndex = encodeForFeature(line, featureTypes, featureValueList, featureIndex);
-					}
+			ArrayList<Boolean> featureTypesList = new ArrayList<>();
+			ArrayList<Double> featureValuesList = new ArrayList<>();
+
+			for (int featureIndex:usedFeatures) {
+				if (featureStats.isContinuousFeature[featureIndex]){
+					// this is a continuous feature that does not require one-hot encoding.
+					featureValuesList.add(Double.parseDouble(line.get(featureIndex)));
+					// set the feature type as non-categorical
+					featureTypesList.add(false);
+				}
+				else {
+					//get the value of this line
+					var categoricalFeatureValue = line.get(featureIndex);
+					encodeForFeature(categoricalFeatureValue, featureTypesList, featureValuesList, featureIndex);
 				}
 			}
-			double[] featureVector = featureValueList.stream().mapToDouble(i -> i).toArray();
+			double[] featureVector = featureValuesList.stream().mapToDouble(i -> i).toArray();
 			DataPoint dataPoint = new DataPoint(featureVector);
-			dataPoint.setLabel(encodedlabel);
+			//label encoding
+			String originalLabel = line.get(labelIndex);
+			double encodedLabel = labelMap.get(originalLabel);
+			dataPoint.setLabel(encodedLabel);
 
-			boolean[] op = new boolean[featureTypes.size()];
+			boolean[] op = new boolean[featureTypesList.size()];
 			for(int n = 0; n < op.length; n++){
-				op[n] = featureTypes.get(n);
+				op[n] = featureTypesList.get(n);
 			}
 			dataPoint.setFeatureTypes(op);
 
@@ -208,7 +212,7 @@ public class CSVLoader {
 	private void updateFeatureNames() {
 		// we will create new feature names for all one hot encoded features
 		var newFeatureNames = new ArrayList<String>();
-		for (int featureIndex = 0; featureIndex < featureStats.initialFeatureCount; featureIndex++) {
+		for (int featureIndex : featureStats.getUsedFeatures() ){
 			if (featureStats.isEncoded(featureIndex)) {
 				Map<String, Integer> encodedValues = featureStats.getEncodedValues(featureIndex);
 				for (String s : encodedValues.keySet()) {
@@ -220,31 +224,26 @@ public class CSVLoader {
 		featureStats.featureNames = newFeatureNames.toArray(new String[0]);
 	}
 
-	private int encodeForFeature(List<String> line, ArrayList<Boolean> featureTypes, ArrayList<Double> featureValueList, int featureIndex) {
-		Map<String, Integer> featureMap = featureStats.getEncodedValues(featureIndex);
-		int numberOfFeatureValues = featureMap.size();
-
-		int newlyCreatedFeatures =0;
-		//if the feature has too many unique values, one hot encoding would create too many
-		// new features. We should ignore such features.
-		if (numberOfFeatureValues < options.getIgnoreThreshold()){
-			// encode this categorical feature
-
-			double[] arr = encodeFeatureForSingleDataPoint(line, featureIndex);
-			for(int i=0;i<arr.length;i++){
-				featureValueList.add(arr[i]);
-				featureTypes.add(true);
-			}
-			newlyCreatedFeatures = arr.length;
-		} else {
-			this.addInformationMessage("feature index " + featureIndex +
-					" is ignored because it has too many (" + numberOfFeatureValues + ") unique values");
+	private void encodeForFeature(String categoricalFeatureValue, ArrayList<Boolean> featureTypes, ArrayList<Double> featureValueList, int featureIndex) {
+		// encode this categorical feature
+		double[] arr = encodeFeatureForSingleDataPoint(categoricalFeatureValue, featureIndex);
+		int currIndex = featureTypes.size();
+		for(int i=0;i<arr.length;i++){
+			featureValueList.add(arr[i]);
+			featureTypes.add(true);
 		}
-		return newlyCreatedFeatures;
+	}
+
+	private void setFeatureParent(int featureIndex, int parentIndex) {
+		parentMap.put(featureIndex,parentIndex);
+	}
+	public Map<Integer, Integer> getFeatureMap() {
+		return parentMap;
 	}
 
 
-	private double[] encodeFeatureForSingleDataPoint(List<String> line, int featureIndex) {
+
+	private double[] encodeFeatureForSingleDataPoint(String categoricalFeatureValue, int featureIndex) {
 		double oneHot = 1;
 		double oneCold = 0;
 		// one-hot encode categorical features of data points.
@@ -254,8 +253,6 @@ public class CSVLoader {
 
 		double [] arr = new double[numberOfFeatureValues];
 
-		//get the value of this line
-		var categoricalFeatureValue = line.get(featureIndex);
 		// get the relative index of the feature value in one-hot encoding
 		int relativeIndex = featureMap.get(categoricalFeatureValue);
 		//we will set the relative index as 1 and all other indices as 0
@@ -345,7 +342,7 @@ public class CSVLoader {
 		 * |1|0|1|0|39|0|
 		 * |0|1|0|1|40|1|
 		 */
-		private Map<Integer, Map<String, Integer>> oneHotFeatureEncodings;
+		private Map<Integer, TreeMap<String, Integer>> oneHotFeatureEncodings;
 
 		// labels are encoded to double values and stored in labelEncodingMap
 		private HashMap<String, Double> labelEncodingMap;
@@ -361,7 +358,7 @@ public class CSVLoader {
 			this.finalFeatureCount =0;
 		}
 
-		public void saveEncoding(int featureIndex, Map<String, Integer> fEncoder) {
+		public void saveEncoding(int featureIndex, TreeMap<String, Integer> fEncoder) {
 			oneHotFeatureEncodings.put(featureIndex, fEncoder);
 		}
 
@@ -378,8 +375,7 @@ public class CSVLoader {
 		 */
 		public boolean isEncoded(int featureIndex) {
 			return !oneHotFeatureEncodings.isEmpty() &&
-					oneHotFeatureEncodings.containsKey(featureIndex) &&
-					oneHotFeatureEncodings.get(featureIndex).size()< options.getIgnoreThreshold();
+					oneHotFeatureEncodings.containsKey(featureIndex);
 		}
 
 		public int getNumberOfFinalFeatures() {
@@ -404,7 +400,14 @@ public class CSVLoader {
 		}
 
 
-
+		public Set<Integer> getUsedFeatures() {
+			TreeSet<Integer> integers = new TreeSet<>(oneHotFeatureEncodings.keySet());
+			for(int i =0;i<isContinuousFeature.length;i++){
+				if(isContinuousFeature[i])
+					integers.add(i);
+			}
+			return integers;
+		}
 	}
 
 }

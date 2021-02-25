@@ -1,5 +1,6 @@
 package mlcore;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -46,13 +47,13 @@ public class DecisionTreeLearner {
 	/**
 	 * Feature indexes that Tree wil learn.
 	 */
-	private int[] features;
+	private ArrayList<Integer> features;
 
 	public DecisionTreeLearner() {
 		this.quickSorter = new QuickSort();
 	}
 
-	public DecisionTreeLearner(int maxDepth, int minPopulation, int[] features) {
+	public DecisionTreeLearner(int maxDepth, int minPopulation, ArrayList<Integer> features) {
 		this();
 		this.maxDepth = maxDepth;
 		this.tree = new DecisionTree();
