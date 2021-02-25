@@ -146,8 +146,7 @@ public class CSVLoader {
 			//feature has at least one categorical value
 			return false;
 		}
-		if(uniqueVals.size()<options.getFactorThreshold()) return false;
-		return true;
+		return uniqueVals.size() >= options.getFactorThreshold();
 	}
 
 	/**
@@ -334,9 +333,6 @@ public class CSVLoader {
 		// labels are encoded to double values and stored in labelEncodingMap
 		private HashMap<String, Double> labelEncodingMap;
 
-		public String[] getFeatureNames() {
-			return featureNames;
-		}
 
 		// names of features
 		private String[] featureNames;

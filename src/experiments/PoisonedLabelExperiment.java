@@ -31,7 +31,7 @@ public class PoisonedLabelExperiment {
 		String csvFile = args[0];
 		int labelIndex = Integer.parseInt(args[1]);
 		options.featureIgnoreThreshold(20);
-		options.convertRealTofactorThreshold(4);
+		options.convertRealToFactorThreshold(4);
 		char separator = options.getSeparator();
 		if (separator != ' ' && separator != ',' && separator != '\t')
 			System.out.println("Column separator is not set as a comma, space or tab character. Are you sure about that?");
@@ -39,7 +39,6 @@ public class PoisonedLabelExperiment {
 		List<DataPoint> dataPoints = csvLoader.loadCSV(csvFile);
 		String[] featureNames = csvLoader.getFeatureNames();
 
-		String[] names = csvLoader.getFeatureNames();
 
 		for (String message : csvLoader.getInformation()) {
 			System.out.println(message);
@@ -49,6 +48,7 @@ public class PoisonedLabelExperiment {
 		for (String feature : featureNames) {
 			System.out.print(" [" + feature+"]");
 		}
+
 		System.out.println();
 
 		//poisoning starts

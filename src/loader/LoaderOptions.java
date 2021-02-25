@@ -45,7 +45,11 @@ public class LoaderOptions {
 		return featureIgnoreThresholdOnUniqueVals;
 	}
 
-    public void convertRealTofactorThreshold(int factorThreshold) {
+	/**
+	 * Convert a continuous feature if it has less than factorThreshold unique values.
+	 * @param factorThreshold  convert if the feature has this or less values
+	 */
+    public void convertRealToFactorThreshold(int factorThreshold) {
 		realToFactorThreshold=factorThreshold;
     }
 
