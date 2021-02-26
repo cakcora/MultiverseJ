@@ -100,14 +100,15 @@ public class RandomForest {
             features.add(random.nextInt(fromThisMany));
         }
         var arr = new ArrayList<Integer>();
-        for(int i:features){
-            for(int ch:featureMap.keySet()){
-                if(featureMap.get(ch)==i){
-                    arr.add(ch);
+        System.out.println("sampled "+sampleThisMany+" original features: "+features.toString());
+        for(int i:features) {
+                for (int ch : featureMap.keySet()) {
+                    if (featureMap.get(ch) == i) {
+                        arr.add(ch);
+                    }
                 }
-            }
         }
-
+        System.out.println("Fanned-out sampled features are "+arr.toString());
         return arr;
     }
 

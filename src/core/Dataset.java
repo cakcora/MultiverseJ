@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class Dataset {
     private final List<DataPoint> dataPoints;
-    private String[] feeatureNames;
+    private String[] featureNames;
     private Map<Integer, Integer> featureMap;
 
     public Dataset(List<DataPoint> dataPoints) {
@@ -14,11 +14,11 @@ public class Dataset {
     }
 
     public void setFeatureNames(String[] featureNames) {
-        this.feeatureNames= featureNames;
+        this.featureNames = featureNames;
     }
 
     public String[] getFeatureNames() {
-        return feeatureNames;
+        return featureNames;
     }
 
     public void setFeatureParents(Map<Integer, Integer> featureMap) {

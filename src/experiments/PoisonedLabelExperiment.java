@@ -5,12 +5,14 @@ import core.Dataset;
 import core.DecisionTree;
 import core.RandomForest;
 import edu.uci.ics.jung.graph.DirectedSparseMultigraph;
+import edu.uci.ics.jung.graph.util.Pair;
 import graphcore.GraphExtractor;
 import graphcore.GraphMetrics;
 import loader.CSVLoader;
 import loader.LoaderOptions;
 import poisoner.LabelFlippingPoisoner;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -64,11 +66,11 @@ public class PoisonedLabelExperiment {
 			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner(random);
 			Dataset posionedDataset = poisoner.poison(dataset,poisonLevel);
 			RandomForest rf = new RandomForest(random);
-			rf.setNumTrees(1);
+			rf.setNumTrees(2);
 			rf.setSampleSize(100);
-			rf.setNumFeaturesToConsiderWhenSplitting(5);
+			rf.setNumFeaturesToConsiderWhenSplitting(2);
 			rf.setMaxTreeDepth(6);
-			rf.setMinLeafPopulation(10);
+			rf.setMinLeafPopulation(3);
 			rf.train(posionedDataset);
 			for (String message : rf.getInfoMessages()) {
 				System.out.println(message);
@@ -85,6 +87,10 @@ public class PoisonedLabelExperiment {
 	private static GraphMetrics computeGraphMetrics(DecisionTree dt) {
 		GraphExtractor extractor = new GraphExtractor(dt);
 		DirectedSparseMultigraph<Integer, Integer> graph = extractor.getGraph();
+		for(int e: graph.getEdges()){
+			Pair<Integer> vs = graph.getEndpoints(e);
+			System.out.println(vs.getFirst()+"->"+vs.getSecond());
+		}
 		GraphMetrics metric = new GraphMetrics();
 		if(graph.getVertexCount()<=1){
 			System.out.println("Graph of the decision tree does not have enough nodes");

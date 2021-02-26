@@ -115,7 +115,7 @@ public class CSVLoader {
 		int countSoFar = featureStats.finalFeatureCount;
 		if (isContinuous) {
 			//feature is continuous
-			setFeatureParent(countSoFar,countSoFar);
+			setFeatureParent(countSoFar,featureIndex);
 			featureStats.finalFeatureCount +=1;
 		}else {
 			//feature is categorical
@@ -126,7 +126,7 @@ public class CSVLoader {
 				int newFeatureIndex =0;
 				for (String uniqueFeatureVal : uniqueVals) {
 					encodedValues.put(uniqueFeatureVal, oneHotIndex++);
-					setFeatureParent(countSoFar+newFeatureIndex,countSoFar);
+					setFeatureParent(countSoFar+newFeatureIndex,featureIndex);
 					newFeatureIndex++;
 					featureStats.finalFeatureCount +=1;
 				}
