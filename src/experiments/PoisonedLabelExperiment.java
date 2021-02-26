@@ -70,17 +70,21 @@ public class PoisonedLabelExperiment {
 			rf.setSampleSize(100);
 			rf.setNumFeaturesToConsiderWhenSplitting(2);
 			rf.setMaxTreeDepth(6);
-			rf.setMinLeafPopulation(3);
+			rf.setMinLeafPopulation(1);
 			rf.train(posionedDataset);
 			for (String message : rf.getInfoMessages()) {
 				System.out.println(message);
 			}
+
+
 			for (DecisionTree dt : rf.getDecisionTrees()) {
 				// extract a graph from the tree
 				GraphMetrics metric = computeGraphMetrics(dt);
 				if (metric.getVertexCount() > 0)
 					System.out.println(metric.toString());
 			}
+			// variable importance detection - on 2nd level random forest
+
 		}
 	}
 
