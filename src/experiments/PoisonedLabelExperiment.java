@@ -52,23 +52,24 @@ public class PoisonedLabelExperiment {
 			System.out.print(" [" + feature+"]");
 		}
 		System.out.println();
-
-		for(DataPoint s:dataPoints){
-			for(double f: s.getFeatures()){
-				System.out.print(f+" ");
-			}
-			System.out.print("["+s.getLabel()+"]");
-			System.out.println();
-		}
+//
+//		for(DataPoint s:dataPoints){
+//			for(double f: s.getFeatures()){
+//				System.out.print(f+" ");
+//			}
+//			System.out.print("["+s.getLabel()+"]");
+//			System.out.println();
+//		}
 		//poisoning starts
 		Random random = new Random(151);
-		for (int poisonLevel = 0; poisonLevel <= 1; poisonLevel++) {
+		Dataset secondLevelDataset = new Dataset();
+		for (int poisonLevel = 0; poisonLevel <= 5; poisonLevel+=5) {
 			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner(random);
 			Dataset posionedDataset = poisoner.poison(dataset,poisonLevel);
 			RandomForest rf = new RandomForest(random);
 			rf.setNumTrees(2);
-			rf.setSampleSize(100);
-			rf.setNumFeaturesToConsiderWhenSplitting(2);
+			rf.setSampleSize(1000);
+			rf.setNumFeaturesToConsiderWhenSplitting(10);
 			rf.setMaxTreeDepth(6);
 			rf.setMinLeafPopulation(1);
 			rf.train(posionedDataset);
@@ -80,26 +81,34 @@ public class PoisonedLabelExperiment {
 			for (DecisionTree dt : rf.getDecisionTrees()) {
 				// extract a graph from the tree
 				GraphMetrics metric = computeGraphMetrics(dt);
-				if (metric.getVertexCount() > 0)
-					System.out.println(metric.toString());
-			}
-			// variable importance detection - on 2nd level random forest
 
+				if (metric.getVertexCount() > 0) {
+					DataPoint secLvlDataPoint = metric.convert2DataPoint();
+					secLvlDataPoint.setLabel(poisonLevel);
+					secondLevelDataset.add(secLvlDataPoint);
+
+				}
+			}
+		}
+		// variable importance detection - on 2nd level random forest
+		secondLevelDataset.setFeatureNames(GraphMetrics.getMetricNames());
+		for(String f:GraphMetrics.getMetricNames()){
+			System.out.println(f);
 		}
 	}
 
 	private static GraphMetrics computeGraphMetrics(DecisionTree dt) {
 		GraphExtractor extractor = new GraphExtractor(dt);
 		DirectedSparseMultigraph<Integer, Integer> graph = extractor.getGraph();
-		for(int e: graph.getEdges()){
-			Pair<Integer> vs = graph.getEndpoints(e);
-			System.out.println(vs.getFirst()+"->"+vs.getSecond());
-		}
+
 		GraphMetrics metric = new GraphMetrics();
 		if(graph.getVertexCount()<=1){
 			System.out.println("Graph of the decision tree does not have enough nodes");
 		}
-		else metric.computeAllMetrices(graph);
+		else {
+			metric.computeAllMetrices(graph);
+		}
+
 		return metric;
 	}
 }

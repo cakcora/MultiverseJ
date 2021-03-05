@@ -108,7 +108,6 @@ public class RandomForest {
                     }
                 }
         }
-        System.out.println("Fanned-out sampled features are "+arr.toString());
         return arr;
     }
 

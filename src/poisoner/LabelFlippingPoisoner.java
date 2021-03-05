@@ -28,7 +28,7 @@ public class LabelFlippingPoisoner {
         //create a new dataset to be poisoned
         for (DataPoint dataPoint : dataPoints) {
             //Add the object clones
-            poisonedDataPoints.add(Utils.clone(dataPoint));
+            poisonedDataPoints.add(dataPoint.clone());
         }
 
         Set<Integer> poisoned = new HashSet<>();

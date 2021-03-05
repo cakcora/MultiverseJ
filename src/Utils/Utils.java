@@ -2,23 +2,15 @@ package Utils;
 
 import core.DataPoint;
 
+import java.util.Collection;
+
 public class Utils {
-    public static DataPoint clone(DataPoint dataPoint) {
-        DataPoint newDp = new DataPoint();
-        double[] features = dataPoint.getFeatures();
-        double label = dataPoint.getLabel();
-        boolean[] isCategorical = dataPoint.getCategorical();
-
-        double[] newFeatures = new double[features.length];
-        boolean[] newIsCategorical = new boolean[isCategorical.length];
-
-        for (int i = 0; i < newFeatures.length; i++) {
-            newFeatures[i]=features[i];
-            newIsCategorical[i]=isCategorical[i];
+    public static <T> double getAverage(Collection<T> myList) {
+        double avgVal = 0d;
+        int valCount = myList.size();
+        for (T b : myList) {
+            avgVal += (Double) b;
         }
-        newDp.setFeatures(newFeatures);
-        newDp.setFeatureTypes(newIsCategorical);
-        return newDp;
-
+        return avgVal / valCount;
     }
 }

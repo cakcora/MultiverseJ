@@ -1,20 +1,21 @@
 package graphcore;
 
 import com.google.common.base.Function;
+import core.DataPoint;
 import edu.uci.ics.jung.algorithms.cluster.WeakComponentClusterer;
 import edu.uci.ics.jung.algorithms.importance.BetweennessCentrality;
 import edu.uci.ics.jung.algorithms.metrics.Metrics;
 import edu.uci.ics.jung.algorithms.metrics.TriadicCensus;
 import edu.uci.ics.jung.algorithms.shortestpath.DistanceStatistics;
 import edu.uci.ics.jung.graph.DirectedSparseMultigraph;
-
+import Utils.Utils;
 import java.util.*;
 
 public class GraphMetrics {
     // average distances from each node to the rest of the graph
     Map<Integer, Double> distanceMap;
-    //clustering coefficients of nodes
-
+    // how many metrics do we extract?
+    static final int metricFeatureCount = 27;
     // counts of 16 triadic motifs
     //Vladimir Batagelj and Andrej Mrvar,
     // A subquadratic triad census algorithm for large sparse networks with small maximum degree,
@@ -44,8 +45,8 @@ public class GraphMetrics {
 
 
     public void computeAllMetrices(DirectedSparseMultigraph<Integer, Integer> graph) {
-        //1- avInDegree: average in degree of $G_j$ vertices
-        // 3- mavgOutDegre: average out degree of $G_j$ vertices
+        // 1- avInDegree: average in degree of $G_j$ vertices
+        // 2- mavgOutDegre: average out degree of $G_j$ vertices
 
         this.vertexCount = graph.getVertexCount();
         var degrees = new int[vertexCount];
@@ -67,7 +68,7 @@ public class GraphMetrics {
         double oddCaseValue = degrees[(vertexCount) / 2];
         medianDegree = vertexCount % 2 != 0 ? oddCaseValue : evenCaseValue;
 
-        // 2- diameter: diameter of $G_j$
+        // 3- diameter: diameter of $G_j$
         Function<Integer, Double> distances = DistanceStatistics.averageDistances(graph);
         distanceMap = new HashMap<Integer, Double>();
         for (Integer node : graph.getVertices()) {
@@ -91,13 +92,13 @@ public class GraphMetrics {
 
         // 7- avgStrCompSize: average size of strong connected components on $G_j$
         // 8- meanDist: mean distance between node pairs on the directed graph $G_j$
-        meanDistance = getAverage(distanceMap.values());
+        meanDistance = Utils.getAverage(distanceMap.values());
         // 9- medHub: mean hub scores of nodes on the undirected graph $G_j$
         // pass
         // 10- medAuth: median hub scores of nodes on the undirected graph $G_j$
         // pass
 
-        //11 TriadicCensus is a standard social network tool that counts, for each of the different possible
+        // 11 TriadicCensus is a standard social network tool that counts, for each of the different possible
         // configurations of three vertices, the number of times that that configuration occurs in the given graph
         // index 0 is useless in triadic counts
         int numberOfMotifs = 16;
@@ -107,63 +108,27 @@ public class GraphMetrics {
         var ranker = new BetweennessCentrality<Integer, Integer>(graph);
         ranker.evaluate();
         List<Double> betweennessVals = ranker.getRankScores(vertexCount);
-        avgBetweenness = getAverage(betweennessVals);
+        avgBetweenness = Utils.getAverage(betweennessVals);
 
         //13 Clustering coefficient
         Map<Integer, Double> clusteringCoeff = Metrics.clusteringCoefficients(graph);
-        avgClusteringCoeff = getAverage(clusteringCoeff.values());
+        avgClusteringCoeff = Utils.getAverage(clusteringCoeff.values());
 
         long[] counts = getTriadicCounts(graph);
-        for (int i = 0; i < counts.length; i++) {
-            if (counts[i] > 0)
-                System.out.println("Graph motif " + i + ": " + counts[i]);
-        }
-        this.diameter = getDiamater();
 
-        this.medianDegree = getMedianDegree();
-
-        this.avgInDegree = getAvgInDegree();
-        this.avgOutDegree = getAvgOutDegree();
-
-        this.avgBetweenness = getAvgBetweenness();
     }
 
-    private <T> double getAverage(Collection<T> myList) {
-        double avgVal = 0d;
-        int valCount = myList.size();
-        for (T b : myList) {
-            avgVal += (Double) b;
-        }
-        return avgVal / valCount;
-    }
+
 
     public long[] getTriadicCounts(DirectedSparseMultigraph<Integer, Integer> graph) {
         return triadCounts;
     }
 
-    public double getDiamater() {
-        return diameter;
-    }
 
-    public double getMedianDegree() {
-        return medianDegree;
-    }
 
-    public double getAvgInDegree() {
-        return avgInDegree;
-    }
 
-    public double getAvgOutDegree() {
-        return avgOutDegree;
-    }
 
-    public double getAvgBetweenness() {
-        return avgBetweenness;
-    }
 
-    public double getAvgClusteringCoeff() {
-        return avgClusteringCoeff;
-    }
 
     @Override
     public String toString() {
@@ -182,5 +147,65 @@ public class GraphMetrics {
 
     public int getVertexCount() {
         return vertexCount;
+    }
+
+    public DataPoint convert2DataPoint() {
+        DataPoint dp = new DataPoint();
+
+        double [] features = new double[metricFeatureCount];
+        String[] featureNames = new String[metricFeatureCount];
+        Map<Integer, Integer> featureMap = new HashMap<>();
+        int i=0;
+        features[i++]=this.avgBetweenness;
+        featureNames[i]="betweenness";
+        features[i++]=this.avgInDegree;
+        featureNames[i]="avgInDegree";
+        features[i++]=this.avgOutDegree;
+        featureNames[i]="avgOutDegree";
+        features[i++]=this.medianDegree;
+        featureNames[i]="medianDegree";
+        features[i++]=this.diameter;
+        featureNames[i]="diameter";
+        features[i++]= this.avgClusteringCoeff;
+        featureNames[i]="avgClusteringCoeff";
+        features[i++]=this.avgSizeOfWeaklyConndComps;
+        featureNames[i]="avgSizeOfWeaklyConndComps";
+        features[i++]=this.meanDistance;
+        featureNames[i]="meanDistance";
+        features[i++]=this.numberOfWeaklyConndComps;
+        featureNames[i]="numberOfWeaklyConndComps";
+        long[] temp = this.triadCounts;
+        for(long c:temp){
+            features[i++] = (double) c;
+            featureNames[i]= "triad"+c;
+        }
+        features[i++]= this.vertexCount;
+        featureNames[i]="vertexCount";
+
+        for(int j=0;j<features.length;j++){
+            featureMap.put(j,j);
+        }
+
+        return dp;
+    }
+
+    public static String[] getMetricNames() {
+        String[] featureNames = new String[metricFeatureCount];
+        int i=0;
+        featureNames[i++]="betweenness";
+        featureNames[i++]="avgInDegree";
+        featureNames[i++]="avgOutDegree";
+        featureNames[i++]="medianDegree";
+        featureNames[i++]="diameter";
+        featureNames[i++]="avgClusteringCoeff";
+        featureNames[i++]="avgSizeOfWeaklyConndComps";
+        featureNames[i++]="meanDistance";
+        featureNames[i++]="numberOfWeaklyConndComps";
+
+        for(int temp=1;temp<=17;temp++){
+            featureNames[i++]= "triad"+temp;
+        }
+        featureNames[i++]="vertexCount";
+        return featureNames;
     }
 }

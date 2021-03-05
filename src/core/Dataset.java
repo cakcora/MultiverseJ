@@ -1,5 +1,7 @@
 package core;
 
+import javax.xml.crypto.Data;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -10,7 +12,10 @@ public class Dataset {
 
     public Dataset(List<DataPoint> dataPoints) {
         this.dataPoints = dataPoints;
+    }
 
+    public Dataset(){
+        this.dataPoints = new ArrayList<>();
     }
 
     public void setFeatureNames(String[] featureNames) {
@@ -18,6 +23,7 @@ public class Dataset {
     }
 
     public String[] getFeatureNames() {
+
         return featureNames;
     }
 
@@ -31,5 +37,9 @@ public class Dataset {
 
     public List<DataPoint> getDatapoints() {
         return dataPoints;
+    }
+
+    public void add(DataPoint datapoint) {
+        this.dataPoints.add(datapoint);
     }
 }
