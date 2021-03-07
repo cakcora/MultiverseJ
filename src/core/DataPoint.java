@@ -117,6 +117,7 @@ public class DataPoint {
 		return "DataPoint {" + "features= " + Arrays.toString(features) + ", label= " + label + '}';
 	}
 
+
 	/**
 	 * Creates deep copy clone of this data point.
 	  * @return a clone

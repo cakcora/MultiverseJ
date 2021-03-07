@@ -42,4 +42,20 @@ public class Dataset {
     public void add(DataPoint datapoint) {
         this.dataPoints.add(datapoint);
     }
+
+    public Dataset[] split(double perc1, double perc2) {
+        Dataset d1 = new Dataset();
+        Dataset d2 = new Dataset();
+        for(int i=0;i<perc1*this.dataPoints.size();i++){
+            d1.add(this.dataPoints.get(i));
+        }
+        for(int j=0;j<perc2*this.dataPoints.size();j++){
+            d2.add(this.dataPoints.get(j));
+        }
+        d1.setFeatureParents(this.getFeatureMap());
+        d2.setFeatureParents(this.getFeatureMap());
+        d1.setFeatureNames(this.getFeatureNames());
+        d2.setFeatureNames(this.getFeatureNames());
+        return new Dataset[]{d1,d2};
+    }
 }

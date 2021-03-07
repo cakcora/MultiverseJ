@@ -100,7 +100,6 @@ public class RandomForest {
             features.add(random.nextInt(fromThisMany));
         }
         var arr = new ArrayList<Integer>();
-        System.out.println("sampled "+sampleThisMany+" original features: "+features.toString());
         for(int i:features) {
                 for (int ch : featureMap.keySet()) {
                     if (featureMap.get(ch) == i) {
@@ -129,7 +128,8 @@ public class RandomForest {
         Random r = new Random();
         // add data points with replacement
         for (int t = 0; t < maxSamples; t++) {
-            baggedDataset.add(dataPoints.get(r.nextInt(size)));
+            int index = r.nextInt(size);
+            baggedDataset.add(dataPoints.get(index));
         }
         // checking how many duplicates we have sampled from the data
         HashSet<DataPoint> uniques = new HashSet<>();

@@ -10,12 +10,10 @@ import graphcore.GraphExtractor;
 import graphcore.GraphMetrics;
 import loader.CSVLoader;
 import loader.LoaderOptions;
+import mlcore.FeatureImportance;
 import poisoner.LabelFlippingPoisoner;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 public class PoisonedLabelExperiment {
 	public static void main(String[] args) throws Exception {
@@ -37,7 +35,7 @@ public class PoisonedLabelExperiment {
 			System.out.println("Column separator is not set as a comma, space or tab character. Are you sure about that?");
 		var csvLoader = new CSVLoader(options);
 		List<DataPoint> dataPoints = csvLoader.loadCSV(csvFile);
-		Dataset dataset = new Dataset(dataPoints);
+		Dataset dataset = new Dataset(dataPoints.subList(0,5000));
 		dataset.setFeatureNames(csvLoader.getFeatureNames());
 		dataset.setFeatureParents(csvLoader.getFeatureMap());
 
@@ -45,13 +43,9 @@ public class PoisonedLabelExperiment {
 		for (String message : csvLoader.getInformation()) {
 			System.out.println(message);
 		}
-		System.out.println("Dataset has " + dataPoints.size() + " data points");
+		System.out.println("Dataset has " + dataset.getDatapoints().size() + " data points");
 		String[] featureNames = dataset.getFeatureNames();
 		System.out.println("After encoding, each data point has " + (featureNames.length) + " features:");
-		for (String feature : featureNames) {
-			System.out.print(" [" + feature+"]");
-		}
-		System.out.println();
 //
 //		for(DataPoint s:dataPoints){
 //			for(double f: s.getFeatures()){
@@ -63,19 +57,17 @@ public class PoisonedLabelExperiment {
 		//poisoning starts
 		Random random = new Random(151);
 		Dataset secondLevelDataset = new Dataset();
+
 		for (int poisonLevel = 0; poisonLevel <= 5; poisonLevel+=5) {
 			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner(random);
 			Dataset posionedDataset = poisoner.poison(dataset,poisonLevel);
 			RandomForest rf = new RandomForest(random);
-			rf.setNumTrees(2);
+			rf.setNumTrees(50);
 			rf.setSampleSize(1000);
 			rf.setNumFeaturesToConsiderWhenSplitting(10);
 			rf.setMaxTreeDepth(6);
 			rf.setMinLeafPopulation(1);
 			rf.train(posionedDataset);
-			for (String message : rf.getInfoMessages()) {
-				System.out.println(message);
-			}
 
 
 			for (DecisionTree dt : rf.getDecisionTrees()) {
@@ -88,13 +80,36 @@ public class PoisonedLabelExperiment {
 					secondLevelDataset.add(secLvlDataPoint);
 
 				}
+				secondLevelDataset.setFeatureNames(metric.getMetricNames());
 			}
 		}
-		// variable importance detection - on 2nd level random forest
-		secondLevelDataset.setFeatureNames(GraphMetrics.getMetricNames());
-		for(String f:GraphMetrics.getMetricNames()){
-			System.out.println(f);
+		int featureSize = secondLevelDataset.getFeatureNames().length;
+		Map<Integer,Integer> featureMap = new HashMap<>();
+		for(int i=0;i<featureSize;i++){
+			featureMap.put(i,i);
 		}
+		secondLevelDataset.setFeatureParents(featureMap);
+		Utils.Utils.save("c://adultmetrics.txt",secondLevelDataset);
+		Dataset [] split = secondLevelDataset.split(0.8,0.20);
+		Dataset training =split[0];
+
+		// variable importance detection - on 2nd level random forest
+		System.out.println("Second level random forest has "+training.getDatapoints().size()+" data points");
+
+		// in the second level we do not have any one hot encoding, so everyu feature is derived from itself only.
+
+
+		RandomForest rfSecondLevel = new RandomForest(random);
+		rfSecondLevel.setNumTrees(500);
+		rfSecondLevel.setSampleSize(1000);
+		rfSecondLevel.setNumFeaturesToConsiderWhenSplitting(10);
+		rfSecondLevel.setMaxTreeDepth(6);
+		rfSecondLevel.setMinLeafPopulation(1);
+		rfSecondLevel.train(training);
+
+		Dataset test = split[1];
+		FeatureImportance.computeFeatureImportance(rfSecondLevel,test);
+
 	}
 
 	private static GraphMetrics computeGraphMetrics(DecisionTree dt) {
@@ -102,10 +117,8 @@ public class PoisonedLabelExperiment {
 		DirectedSparseMultigraph<Integer, Integer> graph = extractor.getGraph();
 
 		GraphMetrics metric = new GraphMetrics();
-		if(graph.getVertexCount()<=1){
-			System.out.println("Graph of the decision tree does not have enough nodes");
-		}
-		else {
+		if(graph.getVertexCount()>1){
+
 			metric.computeAllMetrices(graph);
 		}
 
