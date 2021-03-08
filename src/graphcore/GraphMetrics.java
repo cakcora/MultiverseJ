@@ -1,5 +1,6 @@
 package graphcore;
 
+import Utils.Utils;
 import com.google.common.base.Function;
 import core.DataPoint;
 import edu.uci.ics.jung.algorithms.cluster.WeakComponentClusterer;
@@ -8,7 +9,7 @@ import edu.uci.ics.jung.algorithms.metrics.Metrics;
 import edu.uci.ics.jung.algorithms.metrics.TriadicCensus;
 import edu.uci.ics.jung.algorithms.shortestpath.DistanceStatistics;
 import edu.uci.ics.jung.graph.DirectedSparseMultigraph;
-import Utils.Utils;
+
 import java.util.*;
 
 import static java.lang.Boolean.FALSE;
@@ -17,13 +18,13 @@ public class GraphMetrics {
     //Vladimir Batagelj and Andrej Mrvar,
     // A subquadratic triad census algorithm for large sparse networks with small maximum degree,
     // University of Ljubljana, http://vlado.fmf.uni-lj.si/pub/networks/doc/triads/triads.pdf
-    Map<String, Double>  metrics = new HashMap<String,Double>();
+    TreeMap<String, Double> metrics = new TreeMap<String, Double>();
 
 
     public void computeAllMetrices(DirectedSparseMultigraph<Integer, Integer> graph) {
         // 1- avInDegree: average in degree of $G_j$ vertices
         // 2- mavgOutDegre: average out degree of $G_j$ vertices
-        metrics= new HashMap<>();
+        metrics = new TreeMap<>();
         int vertexCount = graph.getVertexCount();
         metrics.put("vertexCount", (double) vertexCount);
         var degrees = new int[vertexCount];
@@ -65,7 +66,7 @@ public class GraphMetrics {
         for (Set component : components) {
             avgSizeOfWeaklyConndComps += component.size();
         }
-        metrics.put("avgSizeOfWeaklyConndComps", (double)avgSizeOfWeaklyConndComps / metrics.get("numberOfWeaklyConndComps"));
+        metrics.put("avgSizeOfWeaklyConndComps", avgSizeOfWeaklyConndComps / metrics.get("numberOfWeaklyConndComps"));
 
         // 6- numStrongCluster: number of strongly connected components on $G_j$
 

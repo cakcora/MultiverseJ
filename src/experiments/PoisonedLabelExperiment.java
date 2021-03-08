@@ -5,7 +5,6 @@ import core.Dataset;
 import core.DecisionTree;
 import core.RandomForest;
 import edu.uci.ics.jung.graph.DirectedSparseMultigraph;
-import edu.uci.ics.jung.graph.util.Pair;
 import graphcore.GraphExtractor;
 import graphcore.GraphMetrics;
 import loader.CSVLoader;
@@ -13,7 +12,10 @@ import loader.LoaderOptions;
 import mlcore.FeatureImportance;
 import poisoner.LabelFlippingPoisoner;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 public class PoisonedLabelExperiment {
 	public static void main(String[] args) throws Exception {
@@ -35,7 +37,7 @@ public class PoisonedLabelExperiment {
 			System.out.println("Column separator is not set as a comma, space or tab character. Are you sure about that?");
 		var csvLoader = new CSVLoader(options);
 		List<DataPoint> dataPoints = csvLoader.loadCSV(csvFile);
-		Dataset dataset = new Dataset(dataPoints.subList(0,5000));
+		Dataset dataset = new Dataset(dataPoints);
 		dataset.setFeatureNames(csvLoader.getFeatureNames());
 		dataset.setFeatureParents(csvLoader.getFeatureMap());
 
@@ -58,12 +60,12 @@ public class PoisonedLabelExperiment {
 		Random random = new Random(151);
 		Dataset secondLevelDataset = new Dataset();
 
-		for (int poisonLevel = 0; poisonLevel <= 5; poisonLevel+=5) {
+		for (int poisonLevel = 0; poisonLevel <= 30; poisonLevel += 3) {
 			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner(random);
-			Dataset posionedDataset = poisoner.poison(dataset,poisonLevel);
+			Dataset posionedDataset = poisoner.poison(dataset, poisonLevel);
 			RandomForest rf = new RandomForest(random);
-			rf.setNumTrees(50);
-			rf.setSampleSize(1000);
+			rf.setNumTrees(500);
+			rf.setSampleSize(2000);
 			rf.setNumFeaturesToConsiderWhenSplitting(10);
 			rf.setMaxTreeDepth(6);
 			rf.setMinLeafPopulation(1);
