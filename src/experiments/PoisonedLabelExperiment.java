@@ -13,10 +13,7 @@ import loader.LoaderOptions;
 import mlcore.FeatureImportance;
 import poisoner.LabelFlippingPoisoner;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 public class PoisonedLabelExperiment {
 	public static void main(String[] args) throws Exception {
@@ -41,7 +38,7 @@ public class PoisonedLabelExperiment {
 		Dataset dataset = new Dataset(dataPoints);
 		dataset.setFeatureNames(csvLoader.getFeatureNames());
 		dataset.setFeatureParents(csvLoader.getFeatureMap());
-
+		System.out.println(Arrays.toString(csvLoader.getFeatureNames()));
 
 		for (String message : csvLoader.getInformation()) {
 			System.out.println(message);
@@ -49,14 +46,6 @@ public class PoisonedLabelExperiment {
 		System.out.println("Dataset has " + dataset.getDatapoints().size() + " data points");
 		String[] featureNames = dataset.getFeatureNames();
 		System.out.println("After encoding, each data point has " + (featureNames.length) + " features:");
-//
-//		for(DataPoint s:dataPoints){
-//			for(double f: s.getFeatures()){
-//				System.out.print(f+" ");
-//			}
-//			System.out.print("["+s.getLabel()+"]");
-//			System.out.println();
-//		}
 		//poisoning starts
 		Random random = new Random(151);
 		Dataset secondLevelDataset = new Dataset();
@@ -75,9 +64,11 @@ public class PoisonedLabelExperiment {
 			RandomForest rf = new RandomForest(random);
 			rf.setNumTrees(500);
 			rf.setSampleSize(2000);
-			rf.setNumFeaturesToConsiderWhenSplitting(10);
-			rf.setMaxTreeDepth(6);
-			rf.setMinLeafPopulation(1);
+			var featureSize = new HashSet(dataset.getFeatureMap().values()).size();
+			int splitFeatureSize = (int) Math.ceil(Math.sqrt(featureSize));
+			rf.setNumFeaturesToConsiderWhenSplitting(splitFeatureSize);
+			rf.setMaxTreeDepth(100);
+			rf.setMinLeafPopulation(3);
 			rf.train(posionedDataset);
 
 
