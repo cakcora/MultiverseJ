@@ -202,7 +202,6 @@ public class CSVLoader {
 			points.add(dataPoint);
 		}
 		updateFeatureNames();
-
 		return points;
 	}
 

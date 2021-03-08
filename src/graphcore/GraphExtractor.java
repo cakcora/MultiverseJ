@@ -30,7 +30,6 @@ public class GraphExtractor {
         if (leftChild != -1) {
             int leftFeature = dt.getNode(leftChild).getFeatureID();
             if(leftFeature!=-1) {
-                System.out.println("left edge is " + parentFeature + "\t" + leftFeature);
                 graph.addVertex(leftFeature);
                 graph.addEdge(graph.getEdgeCount(), parentFeature, leftFeature);
                 extractGraph(dt, leftChild);
@@ -39,7 +38,6 @@ public class GraphExtractor {
         if (rightChild != -1) {
             int rightFeature = dt.getNode(rightChild).getFeatureID();
             if (rightFeature != -1) {
-                System.out.println("right edge is " + parentFeature + "\t" + rightFeature);
                 graph.addVertex(rightFeature);
                 graph.addEdge(graph.getEdgeCount(), parentFeature, rightFeature);
                 extractGraph(dt, rightChild);

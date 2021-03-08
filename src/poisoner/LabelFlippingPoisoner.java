@@ -1,13 +1,12 @@
 package poisoner;
 
-import Utils.Utils;
 import core.DataPoint;
 import core.Dataset;
 
 import java.util.*;
 
 public class LabelFlippingPoisoner {
-    private Random random;
+    private final Random random;
     public LabelFlippingPoisoner(Random random){
         this.random = random;
     }
@@ -28,22 +27,21 @@ public class LabelFlippingPoisoner {
         //create a new dataset to be poisoned
         for (DataPoint dataPoint : dataPoints) {
             //Add the object clones
-            poisonedDataPoints.add(Utils.clone(dataPoint));
+            poisonedDataPoints.add(dataPoint.clone());
         }
 
         Set<Integer> poisoned = new HashSet<>();
-        for(int i=0;i<poisonSize;i++){
-            int indexToBePosioned=random.nextInt(poisonSize);
-            while(!poisoned.add(indexToBePosioned)){//was that data point poisoned before?
-                indexToBePosioned=random.nextInt(poisonSize);
+        for(int i=0;i<poisonSize;i++) {
+            int indexToBePoisoned = random.nextInt(poisonSize);
+            while (!poisoned.add(indexToBePoisoned)) {//was that data point poisoned before?
+                indexToBePoisoned = random.nextInt(poisonSize);
             }
-            // we will poison the data point at the indexToBePosioned
-            DataPoint poisonedDataPoint = poisonedDataPoints.get(indexToBePosioned);
+            // we will poison the data point at the indexToBePoisoned
+            DataPoint poisonedDataPoint = poisonedDataPoints.get(indexToBePoisoned);
             double label = poisonedDataPoint.getLabel();
-            if(label==DataPoint.POSITIVE_LABEL){// change the label from + to -
+            if (label == DataPoint.POSITIVE_LABEL) {// change the label from + to -
                 poisonedDataPoint.setLabel(DataPoint.NEGATIVE_LABEL);
-            }
-            else poisonedDataPoint.setLabel(DataPoint.POSITIVE_LABEL);
+            } else poisonedDataPoint.setLabel(DataPoint.POSITIVE_LABEL);
         }
         Dataset pdataset = new Dataset(poisonedDataPoints);
         pdataset.setFeatureParents(dataset.getFeatureMap());

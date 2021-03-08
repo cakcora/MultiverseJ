@@ -5,17 +5,15 @@ import core.Dataset;
 import core.DecisionTree;
 import core.RandomForest;
 import edu.uci.ics.jung.graph.DirectedSparseMultigraph;
-import edu.uci.ics.jung.graph.util.Pair;
+import edu.uci.ics.jung.graph.Graph;
 import graphcore.GraphExtractor;
 import graphcore.GraphMetrics;
 import loader.CSVLoader;
 import loader.LoaderOptions;
+import mlcore.FeatureImportance;
 import poisoner.LabelFlippingPoisoner;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 public class PoisonedLabelExperiment {
 	public static void main(String[] args) throws Exception {
@@ -40,66 +38,99 @@ public class PoisonedLabelExperiment {
 		Dataset dataset = new Dataset(dataPoints);
 		dataset.setFeatureNames(csvLoader.getFeatureNames());
 		dataset.setFeatureParents(csvLoader.getFeatureMap());
-
+		System.out.println(Arrays.toString(csvLoader.getFeatureNames()));
 
 		for (String message : csvLoader.getInformation()) {
 			System.out.println(message);
 		}
-		System.out.println("Dataset has " + dataPoints.size() + " data points");
+		System.out.println("Dataset has " + dataset.getDatapoints().size() + " data points");
 		String[] featureNames = dataset.getFeatureNames();
 		System.out.println("After encoding, each data point has " + (featureNames.length) + " features:");
-		for (String feature : featureNames) {
-			System.out.print(" [" + feature+"]");
-		}
-		System.out.println();
-
-		for(DataPoint s:dataPoints){
-			for(double f: s.getFeatures()){
-				System.out.print(f+" ");
-			}
-			System.out.print("["+s.getLabel()+"]");
-			System.out.println();
-		}
 		//poisoning starts
 		Random random = new Random(151);
-		for (int poisonLevel = 0; poisonLevel <= 1; poisonLevel++) {
+		Dataset secondLevelDataset = new Dataset();
+		Map<Integer, Graph<Integer, Integer>> sampleGraphs = new HashMap<>();
+
+		for (int poisonLevel = 0; poisonLevel <= 30; poisonLevel += 3) {
 			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner(random);
-			Dataset posionedDataset = poisoner.poison(dataset,poisonLevel);
+			Dataset posionedDataset = poisoner.poison(dataset, poisonLevel);
+			int pos = 0;
+			for (DataPoint dp : posionedDataset.getDatapoints()) {
+				if (dp.getLabel() == DataPoint.POSITIVE_LABEL) {
+					pos++;
+				}
+			}
+			System.out.println(poisonLevel + "-level dataset has " + pos + " positive labeled data points.");
 			RandomForest rf = new RandomForest(random);
-			rf.setNumTrees(2);
-			rf.setSampleSize(100);
-			rf.setNumFeaturesToConsiderWhenSplitting(2);
-			rf.setMaxTreeDepth(6);
-			rf.setMinLeafPopulation(1);
+			rf.setNumTrees(500);
+			rf.setSampleSize(2000);
+			var featureSize = new HashSet(dataset.getFeatureMap().values()).size();
+			int splitFeatureSize = (int) Math.ceil(Math.sqrt(featureSize));
+			rf.setNumFeaturesToConsiderWhenSplitting(splitFeatureSize);
+			rf.setMaxTreeDepth(100);
+			rf.setMinLeafPopulation(3);
 			rf.train(posionedDataset);
-			for (String message : rf.getInfoMessages()) {
-				System.out.println(message);
-			}
 
 
-			for (DecisionTree dt : rf.getDecisionTrees()) {
+			List<DecisionTree> decisionTrees = rf.getDecisionTrees();
+			GraphExtractor extractor = new GraphExtractor(decisionTrees.get(0));
+			sampleGraphs.put(poisonLevel, extractor.getGraph());
+
+			for (DecisionTree dt : decisionTrees) {
 				// extract a graph from the tree
-				GraphMetrics metric = computeGraphMetrics(dt);
-				if (metric.getVertexCount() > 0)
-					System.out.println(metric.toString());
-			}
-			// variable importance detection - on 2nd level random forest
 
+				GraphMetrics metric = computeGraphMetrics(dt);
+
+				if (metric.getVertexCount() > 0) {
+					DataPoint secLvlDataPoint = metric.convert2DataPoint();
+					secLvlDataPoint.setLabel(poisonLevel);
+					secondLevelDataset.add(secLvlDataPoint);
+
+				}
+				secondLevelDataset.setFeatureNames(metric.getMetricNames());
+			}
 		}
+		int featureSize = secondLevelDataset.getFeatureNames().length;
+		Map<Integer, Integer> featureMap = new HashMap<>();
+		for (int i = 0; i < featureSize; i++) {
+			featureMap.put(i, i);
+		}
+		secondLevelDataset.setFeatureParents(featureMap);
+		Utils.Utils.save("c://adultmetrics.txt", secondLevelDataset);
+		Utils.Utils.saveGraphs("c://adultGraphs.txt", sampleGraphs);
+
+		Dataset[] split = secondLevelDataset.split(0.8, 0.20);
+		Dataset training = split[0];
+
+		// variable importance detection - on 2nd level random forest
+		System.out.println("Second level random forest has " + training.getDatapoints().size() + " data points");
+
+		// in the second level we do not have any one hot encoding, so everyu feature is derived from itself only.
+
+
+		RandomForest rfSecondLevel = new RandomForest(random);
+		rfSecondLevel.setNumTrees(500);
+		rfSecondLevel.setSampleSize(1000);
+		rfSecondLevel.setNumFeaturesToConsiderWhenSplitting(10);
+		rfSecondLevel.setMaxTreeDepth(6);
+		rfSecondLevel.setMinLeafPopulation(1);
+		rfSecondLevel.train(training);
+
+		Dataset test = split[1];
+		FeatureImportance.computeFeatureImportance(rfSecondLevel,test);
+
 	}
 
 	private static GraphMetrics computeGraphMetrics(DecisionTree dt) {
 		GraphExtractor extractor = new GraphExtractor(dt);
 		DirectedSparseMultigraph<Integer, Integer> graph = extractor.getGraph();
-		for(int e: graph.getEdges()){
-			Pair<Integer> vs = graph.getEndpoints(e);
-			System.out.println(vs.getFirst()+"->"+vs.getSecond());
-		}
+
 		GraphMetrics metric = new GraphMetrics();
-		if(graph.getVertexCount()<=1){
-			System.out.println("Graph of the decision tree does not have enough nodes");
+		if(graph.getVertexCount()>1){
+
+			metric.computeAllMetrices(graph);
 		}
-		else metric.computeAllMetrices(graph);
+
 		return metric;
 	}
 }

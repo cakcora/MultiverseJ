@@ -117,6 +117,30 @@ public class DataPoint {
 		return "DataPoint {" + "features= " + Arrays.toString(features) + ", label= " + label + '}';
 	}
 
+
+	/**
+	 * Creates deep copy clone of this data point.
+	  * @return a clone
+	 */
+	public DataPoint clone() {
+		DataPoint newDp = new DataPoint();
+		double[] features = this.getFeatures();
+		double label = this.getLabel();
+		boolean[] isCategorical = this.getCategorical();
+
+		double[] newFeatures = new double[features.length];
+		boolean[] newIsCategorical = new boolean[isCategorical.length];
+
+		for (int i = 0; i < newFeatures.length; i++) {
+			newFeatures[i]=features[i];
+			newIsCategorical[i]=isCategorical[i];
+		}
+		newDp.setFeatures(newFeatures);
+		newDp.setFeatureTypes(newIsCategorical);
+		newDp.setLabel(label);
+		return newDp;
+
+	}
 	public void setFeatureTypes(boolean[] isCategorical) {
 		this.isCategorical = isCategorical;
 	}
@@ -129,6 +153,7 @@ public class DataPoint {
 	public boolean[] getCategorical() {
 		return isCategorical;
 	}
+
 
 
 }
