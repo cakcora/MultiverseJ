@@ -65,6 +65,13 @@ public class PoisonedLabelExperiment {
 		for (int poisonLevel = 0; poisonLevel <= 30; poisonLevel += 3) {
 			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner(random);
 			Dataset posionedDataset = poisoner.poison(dataset, poisonLevel);
+			int pos = 0;
+			for (DataPoint dp : posionedDataset.getDatapoints()) {
+				if (dp.getLabel() == DataPoint.POSITIVE_LABEL) {
+					pos++;
+				}
+			}
+			System.out.println(poisonLevel + "-level dataset has " + pos + " positive labeled data points.");
 			RandomForest rf = new RandomForest(random);
 			rf.setNumTrees(500);
 			rf.setSampleSize(2000);

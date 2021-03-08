@@ -39,7 +39,7 @@ public class Utils {
 
     public static void saveGraphs(String filePath, Map<Integer, Graph<Integer, Integer>> graphs) throws IOException {
         BufferedWriter wr = new BufferedWriter(new FileWriter(filePath));
-        wr.write("poison\tfrom\tto");
+        wr.write("poison\tfrom\tto\r\n");
         for (Integer poison : graphs.keySet()) {
             Graph<Integer, Integer> graph = graphs.get(poison);
             for (int edge : graph.getEdges()) {
