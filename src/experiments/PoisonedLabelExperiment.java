@@ -51,7 +51,7 @@ public class PoisonedLabelExperiment {
 		Dataset secondLevelDataset = new Dataset();
 		Map<Integer, Graph<Integer, Integer>> sampleGraphs = new HashMap<>();
 
-		for (int poisonLevel = 0; poisonLevel <= 30; poisonLevel += 5) {
+		for (int poisonLevel = 0; poisonLevel <= 45; poisonLevel += 5) {
 			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner(random);
 			Dataset posionedDataset = poisoner.poison(dataset, poisonLevel);
 			int pos = 0;

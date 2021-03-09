@@ -31,8 +31,6 @@ public class LabelFlippingPoisoner {
         }
 
         Set<Integer> poisoned = new HashSet<>();
-        int pos2neg = 0;
-        int neg2pos = 0;
         for (int i = 0; i < poisonSize; i++) {
             int indexToBePoisoned = random.nextInt(poisonSize);
             while (!poisoned.add(indexToBePoisoned)) {//was that data point poisoned before?
@@ -43,10 +41,8 @@ public class LabelFlippingPoisoner {
             double label = poisonedDataPoint.getLabel();
             if (label == DataPoint.POSITIVE_LABEL) {// change the label from + to -
                 poisonedDataPoint.setLabel(DataPoint.NEGATIVE_LABEL);
-                pos2neg++;
             } else {
                 poisonedDataPoint.setLabel(DataPoint.POSITIVE_LABEL);
-                neg2pos++;
             }
         }
         Dataset pdataset = new Dataset(poisonedDataPoints);
