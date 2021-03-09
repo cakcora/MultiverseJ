@@ -27,6 +27,8 @@ public class GraphMetrics {
         metrics = new TreeMap<>();
         int vertexCount = graph.getVertexCount();
         metrics.put("vertexCount", (double) vertexCount);
+        int edgeCount = graph.getEdgeCount();
+        metrics.put("edgeCount", (double) edgeCount);
         var degrees = new int[vertexCount];
         int index = 0;
         double avgInDegree = 0;
@@ -60,7 +62,7 @@ public class GraphMetrics {
         // 4- numWeakCluster: number of weakly connected components on $G_j$
         var wc = new WeakComponentClusterer<Integer, Integer>();
         Set<Set<Integer>> components = wc.apply(graph);
-        metrics.put("numberOfWeaklyConndComps", (double) components.size());
+        //metrics.put("numberOfWeaklyConndComps", (double) components.size()); do not use this, always gives 1.
         // 5- avgWeakCompSize: average size of weakly connected components on $G_j$
         double avgSizeOfWeaklyConndComps = 0d;
         for (Set component : components) {

@@ -37,14 +37,25 @@ public class Utils {
         wr.close();
     }
 
-    public static void saveGraphs(String filePath, Map<Integer, Graph<Integer, Integer>> graphs) throws IOException {
+    public static void saveGraphs(String filePath, Map<Integer, Graph<Integer, Integer>> graphs, Map<Integer, Integer> featureMap, String[] featureNames) throws IOException {
         BufferedWriter wr = new BufferedWriter(new FileWriter(filePath));
         wr.write("poison\tfrom\tto\r\n");
         for (Integer poison : graphs.keySet()) {
             Graph<Integer, Integer> graph = graphs.get(poison);
             for (int edge : graph.getEdges()) {
                 Pair<Integer> endpoints = graph.getEndpoints(edge);
-                wr.write(poison + "\t" + endpoints.getFirst() + "\t" + endpoints.getSecond() + "\r\n");
+                Integer first = endpoints.getFirst();
+                Integer second = endpoints.getSecond();
+                String n1;
+                if (featureNames[first].contains("_"))
+                    n1 = featureNames[first].substring(0, featureNames[first].indexOf("_"));
+                else
+                    n1 = featureNames[first];
+                String n2;
+                if (featureNames[second].contains("_"))
+                    n2 = featureNames[second].substring(0, featureNames[second].indexOf("_"));
+                else n2 = featureNames[second];
+                wr.write(poison + "\t" + n1 + "\t" + n2 + "\r\n");
             }
         }
         wr.close();

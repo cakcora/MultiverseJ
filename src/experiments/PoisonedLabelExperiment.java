@@ -51,7 +51,7 @@ public class PoisonedLabelExperiment {
 		Dataset secondLevelDataset = new Dataset();
 		Map<Integer, Graph<Integer, Integer>> sampleGraphs = new HashMap<>();
 
-		for (int poisonLevel = 0; poisonLevel <= 30; poisonLevel += 3) {
+		for (int poisonLevel = 0; poisonLevel <= 45; poisonLevel += 5) {
 			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner(random);
 			Dataset posionedDataset = poisoner.poison(dataset, poisonLevel);
 			int pos = 0;
@@ -62,10 +62,10 @@ public class PoisonedLabelExperiment {
 			}
 			System.out.println(poisonLevel + "-level dataset has " + pos + " positive labeled data points.");
 			RandomForest rf = new RandomForest(random);
-			rf.setNumTrees(500);
+			rf.setNumTrees(300);
 			rf.setSampleSize(2000);
 			var featureSize = new HashSet(dataset.getFeatureMap().values()).size();
-			int splitFeatureSize = (int) Math.ceil(Math.sqrt(featureSize));
+			int splitFeatureSize = 7;//(int) Math.ceil(Math.sqrt(featureSize));
 			rf.setNumFeaturesToConsiderWhenSplitting(splitFeatureSize);
 			rf.setMaxTreeDepth(100);
 			rf.setMinLeafPopulation(3);
@@ -97,7 +97,8 @@ public class PoisonedLabelExperiment {
 		}
 		secondLevelDataset.setFeatureParents(featureMap);
 		Utils.Utils.save("c://adultmetrics.txt", secondLevelDataset);
-		Utils.Utils.saveGraphs("c://adultGraphs.txt", sampleGraphs);
+		Utils.Utils.saveGraphs("c://adultGraphs.txt", sampleGraphs,
+				secondLevelDataset.getFeatureMap(), dataset.getFeatureNames());
 
 		Dataset[] split = secondLevelDataset.split(0.8, 0.20);
 		Dataset training = split[0];

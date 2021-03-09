@@ -21,8 +21,8 @@ public class LabelFlippingPoisoner {
             return null;
         }
         // compute how many data points we should poison
-        List<DataPoint> dataPoints =  dataset.getDatapoints();
-        int poisonSize = (int) Math.ceil(dataPoints.size() * poisonLevel/100.0);
+        List<DataPoint> dataPoints = dataset.getDatapoints();
+        int poisonSize = (int) Math.ceil(dataPoints.size() * poisonLevel / 100.0);
         ArrayList<DataPoint> poisonedDataPoints = new ArrayList<>();
         //create a new dataset to be poisoned
         for (DataPoint dataPoint : dataPoints) {
@@ -31,7 +31,7 @@ public class LabelFlippingPoisoner {
         }
 
         Set<Integer> poisoned = new HashSet<>();
-        for(int i=0;i<poisonSize;i++) {
+        for (int i = 0; i < poisonSize; i++) {
             int indexToBePoisoned = random.nextInt(poisonSize);
             while (!poisoned.add(indexToBePoisoned)) {//was that data point poisoned before?
                 indexToBePoisoned = random.nextInt(poisonSize);
@@ -41,7 +41,9 @@ public class LabelFlippingPoisoner {
             double label = poisonedDataPoint.getLabel();
             if (label == DataPoint.POSITIVE_LABEL) {// change the label from + to -
                 poisonedDataPoint.setLabel(DataPoint.NEGATIVE_LABEL);
-            } else poisonedDataPoint.setLabel(DataPoint.POSITIVE_LABEL);
+            } else {
+                poisonedDataPoint.setLabel(DataPoint.POSITIVE_LABEL);
+            }
         }
         Dataset pdataset = new Dataset(poisonedDataPoints);
         pdataset.setFeatureParents(dataset.getFeatureMap());
