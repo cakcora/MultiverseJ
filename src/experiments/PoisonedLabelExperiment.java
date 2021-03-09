@@ -62,12 +62,12 @@ public class PoisonedLabelExperiment {
 			}
 			System.out.println(poisonLevel + "-level dataset has " + pos + " positive labeled data points.");
 			RandomForest rf = new RandomForest(random);
-			rf.setNumTrees(3000);
-			rf.setSampleSize(5000);
+			rf.setNumTrees(300);
+			rf.setSampleSize(2000);
 			var featureSize = new HashSet(dataset.getFeatureMap().values()).size();
-			int splitFeatureSize = (int) Math.ceil(Math.sqrt(featureSize));
+			int splitFeatureSize = 7;//(int) Math.ceil(Math.sqrt(featureSize));
 			rf.setNumFeaturesToConsiderWhenSplitting(splitFeatureSize);
-			rf.setMaxTreeDepth(1000);
+			rf.setMaxTreeDepth(100);
 			rf.setMinLeafPopulation(3);
 			rf.train(posionedDataset);
 
