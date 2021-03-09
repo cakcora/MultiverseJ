@@ -43,11 +43,16 @@ public class DecisionTreeLearner {
 	 * Sorting utility for current learner.
 	 */
 	private QuickSort quickSorter;
-	
+
 	/**
-	 * Feature indexes that Tree wil learn.
+	 * Indexes of features that current tree is using.
 	 */
 	private ArrayList<Integer> features;
+
+	/**
+	 * minimum population for split.
+	 */
+	private int minPopulation;
 
 	public DecisionTreeLearner() {
 		this.quickSorter = new QuickSort();
@@ -60,6 +65,7 @@ public class DecisionTreeLearner {
 		this.binarySplitter = new BinaryFeatureSplitter(minPopulation);
 		this.continuousSplitter = new ContinuousFeatureSplitter(minPopulation);
 		this.features = features;
+		this.minPopulation = minPopulation;
 	}
 
 	/**
@@ -81,8 +87,8 @@ public class DecisionTreeLearner {
 	public void dfs(List<DataPoint> dataSet) {
 		boolean[] shouldSplit = new boolean[dataSet.get(0).getFeatures().length];
 		Arrays.fill(shouldSplit, Boolean.FALSE);
-		for(int index:features){
-			shouldSplit[index]=true;
+		for (int index : features) {
+			shouldSplit[index] = true;
 		}
 
 		dfsRecursion(dataSet, 0, dataSet.size() - 1, 0, shouldSplit);
@@ -100,8 +106,8 @@ public class DecisionTreeLearner {
 	 *                    in [startIndex, endIndex].
 	 */
 	private int dfsRecursion(List<DataPoint> dataSet, int startIndex, int endIndex, int depth, boolean[] shouldSplit) {
-
-		if (depth < this.maxDepth) {
+		int size = endIndex - startIndex + 1;
+		if ((depth < this.maxDepth) && (size > this.minPopulation)) {
 			var bestSplit = findBestSplit(dataSet, startIndex, endIndex, shouldSplit);
 			if (bestSplit == null) {
 				// Can not split due to feature and data related condition.
@@ -116,10 +122,10 @@ public class DecisionTreeLearner {
 				currentNode.setRightChild(dfsRecursion(dataSet, pivotPosition + 1, endIndex, depth + 1, shouldSplit.clone()));
 				return currentNode.getId();
 			}
-		} else { // Max depth is reached. Therefore, creating leaf node.
+		} else {
+			// Max depth is reached or population lower than min population. Therefore, creating leaf node.
 			return makeLeafNode(dataSet, startIndex, endIndex);
 		}
-
 	}
 
 	/**
