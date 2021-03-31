@@ -24,6 +24,7 @@ public class Utils {
     public static void save(String filePath, Dataset dataset) throws IOException {
         BufferedWriter wr = new BufferedWriter(new FileWriter(filePath));
         String[] featureNames = dataset.getFeatureNames();
+        wr.write("treeID" + "\t");
         for(String s:featureNames){
             wr.write(s+"\t");
         }
