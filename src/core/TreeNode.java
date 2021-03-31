@@ -1,5 +1,7 @@
 package core;
 
+import java.io.Serializable;
+
 /**
  * Represents single node in the Decision Tree.
  * 
@@ -8,7 +10,7 @@ package core;
  * @author Huseyincan Kaynak
  */
 
-public class TreeNode {
+public class TreeNode implements Serializable{
 
 	/**
 	 * Id of the current Node.
@@ -160,5 +162,42 @@ public class TreeNode {
 		}
 
 	}
+	
+	public String indentation(int depth)
+	{
+		var result = new StringBuffer("");
+		for (int i = 0; i < depth; i++)
+		{
+			// Add 2 spaces for each level.
+			result.append("  ");
+		}
+		return result.toString();
+	}
 
+	public String Print(int depth)
+	{
+		var result = new StringBuffer("");
+		result.append(indentation(depth) + "{");
+		result.append(indentation(depth) + "}");
+		return result.toString();
+	}
+	
+	public String PrintFields(int depth) {
+		var result = new StringBuffer();
+		result.append(indentation(depth) + "  ");
+		result.append(String.format("Id: %d\n", this.id));
+		result.append(indentation(depth) + "  ");
+		result.append(String.format("FeatureId: %d\n", this.featureID));
+		result.append(indentation(depth) + "  ");
+		result.append(String.format("FeatureName: %s\n", this.featureName));
+		result.append(indentation(depth) + "  ");
+		result.append(String.format("SplitValue: %f\n", this.splitValue));
+		result.append(indentation(depth) + "  ");
+		result.append(String.format("Population: %d\n", this.population));
+		result.append(indentation(depth) + "  ");
+		result.append(String.format("SumOfPositiveLabels: %d\n", this.sumOfPositiveLabels));
+		result.append(indentation(depth) + "  ");
+		result.append(String.format("Value: %f\n", this.value));
+		return result.toString();
+	}
 }
