@@ -18,16 +18,14 @@ import java.util.*;
 public class PoisonedLabelExperiment {
 	public static void main(String[] args) throws Exception {
 		LoaderOptions options = new LoaderOptions();
-		if (args.length == 3) {
-			options.setQuoter(args[1].charAt(0));
-			options.setSep(args[2].charAt(0));
 
-		} else{
-			System.out.println(
-					"Error: Expecting filename, separator char and quote char");
-			System.exit(2);
-		}
+		options.setQuoter(args[1].charAt(0));
+		options.setSep(args[2].charAt(0));
+		// run params: C:/Downloads/adult.data " " "," C:/Downloads\ "C://adultmetrics.txt" "c://adultGraphs.txt"
 		String csvFile = args[0];
+		String outputPath = args[3];
+		String metricFile = args[4];
+		String graphFile = args[5];
 		options.featureIgnoreThreshold(20);
 		options.convertRealToFactorThreshold(4);
 		char separator = options.getSeparator();
@@ -50,7 +48,7 @@ public class PoisonedLabelExperiment {
 		Random random = new Random(151);
 		Dataset secondLevelDataset = new Dataset();
 		Map<Integer, Graph<Integer, Integer>> sampleGraphs = new HashMap<>();
-
+		long treeId = 0;
 		for (int poisonLevel = 0; poisonLevel <= 45; poisonLevel += 5) {
 			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner(random);
 			Dataset posionedDataset = poisoner.poison(dataset, poisonLevel);
@@ -78,17 +76,21 @@ public class PoisonedLabelExperiment {
 
 			for (DecisionTree dt : decisionTrees) {
 				// extract a graph from the tree
-
+				treeId++;
+				dt.setID(treeId);
+				dt.writeTree(outputPath);
 				GraphMetrics metric = computeGraphMetrics(dt);
 
 				if (metric.getVertexCount() > 0) {
 					DataPoint secLvlDataPoint = metric.convert2DataPoint();
 					secLvlDataPoint.setLabel(poisonLevel);
+					secLvlDataPoint.setID(treeId);
 					secondLevelDataset.add(secLvlDataPoint);
 
 				}
 				secondLevelDataset.setFeatureNames(metric.getMetricNames());
 			}
+
 		}
 		int featureSize = secondLevelDataset.getFeatureNames().length;
 		Map<Integer, Integer> featureMap = new HashMap<>();
@@ -96,9 +98,9 @@ public class PoisonedLabelExperiment {
 			featureMap.put(i, i);
 		}
 		secondLevelDataset.setFeatureParents(featureMap);
-		Utils.Utils.save("c://adultmetrics.txt", secondLevelDataset);
-		Utils.Utils.saveGraphs("c://adultGraphs.txt", sampleGraphs,
-				secondLevelDataset.getFeatureMap(), dataset.getFeatureNames());
+		Utils.Utils.save(metricFile, secondLevelDataset);
+		Utils.Utils.saveGraphs(graphFile, sampleGraphs,
+				dataset.getFeatureNames());
 
 		Dataset[] split = secondLevelDataset.split(0.8, 0.20);
 		Dataset training = split[0];
@@ -125,10 +127,9 @@ public class PoisonedLabelExperiment {
 	private static GraphMetrics computeGraphMetrics(DecisionTree dt) {
 		GraphExtractor extractor = new GraphExtractor(dt);
 		DirectedSparseMultigraph<Integer, Integer> graph = extractor.getGraph();
-
 		GraphMetrics metric = new GraphMetrics();
-		if(graph.getVertexCount()>1){
-
+		metric.setTreeID(dt.getID());
+		if (graph.getVertexCount() > 1) {
 			metric.computeAllMetrices(graph);
 		}
 

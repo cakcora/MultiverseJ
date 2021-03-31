@@ -1,12 +1,6 @@
 package core;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,11 +13,11 @@ import java.util.List;
  *
  */
 public class DecisionTree implements Serializable {
-	
+
 	/**
 	 * ID for tree. May use select tree from random forest. Also used for writing tree object to file.
 	 */
-	private int id;
+	private long id;
 
 	/**
 	 * Contains nodes of current decision tree.
@@ -100,45 +94,42 @@ public class DecisionTree implements Serializable {
 		}
 		return 0.0;
 	}
-	
-	
-	public String Print(int depth, TreeNode node)
-	{
-		var result = new StringBuffer("");
+
+
+	public String Print(int depth, TreeNode node) {
+		var result = new StringBuffer();
 		result.append(node.indentation(depth) + "{" + "\n");
 		result.append(node.PrintFields(depth));
-		if (node.isLeafNode())
-		{
+		if (node.isLeafNode()) {
 			result.append(node.indentation(depth) + "  Left: {}\n");
 			result.append(node.indentation(depth) + "  Right: {}\n");
 		} else {
 			result.append(node.indentation(depth));
 			result.append("  Left: \n");
 			var leftChild = getNode(node.getLeftChild());
-			result.append(Print(depth+1, leftChild));
+			result.append(Print(depth + 1, leftChild));
 			result.append(node.indentation(depth));
 			result.append("  Right: \n");
 			var rightChild = getNode(node.getRightChild());
-			result.append(Print(depth+1, rightChild));
+			result.append(Print(depth + 1, rightChild));
 		}
 		result.append(node.indentation(depth) + "}" + "\n");
 		return result.toString();
 	}
-	
-	public String Print()
-	{
+
+	public String Print() {
 		return Print(0, nodes.get(0));
 	}
-	
-	public void writeTree() {
+
+	public void writeTree(String path) {
 		try {
 			FileOutputStream fileOutputStream
-		      = new FileOutputStream(this.id + "");
-		    ObjectOutputStream objectOutputStream 
-		      = new ObjectOutputStream(fileOutputStream);
-		    objectOutputStream.writeObject(this);
-		    objectOutputStream.flush();
-		    objectOutputStream.close();
+					= new FileOutputStream(path + this.id + "");
+			ObjectOutputStream objectOutputStream
+					= new ObjectOutputStream(fileOutputStream);
+			objectOutputStream.writeObject(this);
+			objectOutputStream.flush();
+			objectOutputStream.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -150,13 +141,13 @@ public class DecisionTree implements Serializable {
 	public void readTree(String fileName) {
 		try {
 			FileInputStream fileInputStream
-		      = new FileInputStream(fileName);
-		    ObjectInputStream objectInputStream
-		      = new ObjectInputStream(fileInputStream);
-		    DecisionTree readTree = (DecisionTree) objectInputStream.readObject();
-		    this.id = readTree.id;
-		    this.nodes = readTree.getNodes();
-		    objectInputStream.close(); 
+					= new FileInputStream(fileName);
+			ObjectInputStream objectInputStream
+					= new ObjectInputStream(fileInputStream);
+			DecisionTree readTree = (DecisionTree) objectInputStream.readObject();
+			this.id = readTree.id;
+			this.nodes = readTree.getNodes();
+			objectInputStream.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -165,15 +156,15 @@ public class DecisionTree implements Serializable {
 			e.printStackTrace();
 		}
 	}
-	
-	public void setID(int id) {
-		this.id = id;
-	}
-	
-	public int getID() {
+
+	public long getID() {
 		return this.id;
 	}
-	
+
+	public void setID(long id) {
+		this.id = id;
+	}
+
 	public List<TreeNode> getNodes() {
 		return this.nodes;
 	}

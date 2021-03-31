@@ -19,6 +19,8 @@ public class GraphMetrics {
     // A subquadratic triad census algorithm for large sparse networks with small maximum degree,
     // University of Ljubljana, http://vlado.fmf.uni-lj.si/pub/networks/doc/triads/triads.pdf
     TreeMap<String, Double> metrics = new TreeMap<String, Double>();
+    //store the unique tree id of this metric
+    private long treeId;
 
 
     public void computeAllMetrices(DirectedSparseMultigraph<Integer, Integer> graph) {
@@ -138,9 +140,9 @@ public class GraphMetrics {
 
     public String[] getMetricNames() {
         String[] featureNames = new String[metrics.size()];
-        int i=0;
-        for(String s:metrics.keySet()){
-            featureNames[i++]=s;
+        int i = 0;
+        for (String s : metrics.keySet()) {
+            featureNames[i++] = s;
         }
         return featureNames;
     }
@@ -148,5 +150,9 @@ public class GraphMetrics {
     public int getVertexCount() {
         double vertexCount = metrics.get("vertexCount");
         return (int) vertexCount;
+    }
+
+    public void setTreeID(long id) {
+        this.treeId = id;
     }
 }

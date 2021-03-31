@@ -13,26 +13,27 @@ public class DataPoint {
 	/**
 	 * Constant value of the positive label.
      */
-    public static final double POSITIVE_LABEL = 1.0d;
+	public static final double POSITIVE_LABEL = 1.0d;
 
-    /**
-     * Constant value of the negative label.
-     */
-    public static final double NEGATIVE_LABEL = 0.0d;
+	/**
+	 * Constant value of the negative label.
+	 */
+	public static final double NEGATIVE_LABEL = 0.0d;
 
-    private double[] features;
-    private double label;
-    private boolean[] isCategorical;
+	private double[] features;
+	private double label;
+	private boolean[] isCategorical;
+	private long id;
 
-    public DataPoint(double[] features, double label) {
-        this.features = features;
-        this.label = label;
-    }
+	public DataPoint(double[] features, double label) {
+		this.features = features;
+		this.label = label;
+	}
 
 
-    public DataPoint(double[] features) {
-        this.features = features;
-    }
+	public DataPoint(double[] features) {
+		this.features = features;
+	}
 
 	public DataPoint() {
 	}
@@ -78,9 +79,7 @@ public class DataPoint {
 			return false;
 		if (!Arrays.equals(isCategorical, other.isCategorical))
 			return false;
-		if (Double.doubleToLongBits(label) != Double.doubleToLongBits(other.label))
-			return false;
-		return true;
+		return Double.doubleToLongBits(label) == Double.doubleToLongBits(other.label);
 	}
 
 
@@ -141,12 +140,12 @@ public class DataPoint {
 		return newDp;
 
 	}
+
 	public void setFeatureTypes(boolean[] isCategorical) {
 		this.isCategorical = isCategorical;
 	}
-	
-	public boolean isCategorical(int featureIndex)
-	{
+
+	public boolean isCategorical(int featureIndex) {
 		return this.isCategorical[featureIndex];
 	}
 
@@ -154,6 +153,11 @@ public class DataPoint {
 		return isCategorical;
 	}
 
+	public long getID() {
+		return this.id;
+	}
 
-
+	public void setID(long treeId) {
+		this.id = treeId;
+	}
 }

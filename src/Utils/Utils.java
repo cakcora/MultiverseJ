@@ -29,6 +29,7 @@ public class Utils {
         }
         wr.write("label\r\n");
         for (DataPoint dp : dataset.getDatapoints()) {
+            wr.write(dp.getID() + "\t");
             for (double f : dp.getFeatures()) {
                 wr.write(f + "\t");
             }
@@ -37,7 +38,7 @@ public class Utils {
         wr.close();
     }
 
-    public static void saveGraphs(String filePath, Map<Integer, Graph<Integer, Integer>> graphs, Map<Integer, Integer> featureMap, String[] featureNames) throws IOException {
+    public static void saveGraphs(String filePath, Map<Integer, Graph<Integer, Integer>> graphs, String[] featureNames) throws IOException {
         BufferedWriter wr = new BufferedWriter(new FileWriter(filePath));
         wr.write("poison\tfrom\tto\r\n");
         for (Integer poison : graphs.keySet()) {
