@@ -3,7 +3,6 @@ package graphcore;
 import Utils.Utils;
 import com.google.common.base.Function;
 import core.DataPoint;
-import edu.uci.ics.jung.algorithms.cluster.WeakComponentClusterer;
 import edu.uci.ics.jung.algorithms.importance.BetweennessCentrality;
 import edu.uci.ics.jung.algorithms.metrics.Metrics;
 import edu.uci.ics.jung.algorithms.metrics.TriadicCensus;
@@ -19,9 +18,6 @@ public class GraphMetrics {
     // A subquadratic triad census algorithm for large sparse networks with small maximum degree,
     // University of Ljubljana, http://vlado.fmf.uni-lj.si/pub/networks/doc/triads/triads.pdf
     TreeMap<String, Double> metrics = new TreeMap<String, Double>();
-    //store the unique tree id of this metric
-    private long treeId;
-
 
     public void computeAllMetrices(DirectedSparseMultigraph<Integer, Integer> graph) {
         // 1- avInDegree: average in degree of $G_j$ vertices
@@ -61,16 +57,7 @@ public class GraphMetrics {
                 distanceMap.put(node, dist);
         }
         metrics.put("diameter", Collections.max(distanceMap.values()));
-        // 4- numWeakCluster: number of weakly connected components on $G_j$
-        var wc = new WeakComponentClusterer<Integer, Integer>();
-        Set<Set<Integer>> components = wc.apply(graph);
-        //metrics.put("numberOfWeaklyConndComps", (double) components.size()); do not use this, always gives 1.
-        // 5- avgWeakCompSize: average size of weakly connected components on $G_j$
-        double avgSizeOfWeaklyConndComps = 0d;
-        for (Set component : components) {
-            avgSizeOfWeaklyConndComps += component.size();
-        }
-        metrics.put("avgSizeOfWeaklyConndComps", avgSizeOfWeaklyConndComps / metrics.get("numberOfWeaklyConndComps"));
+
 
         // 6- numStrongCluster: number of strongly connected components on $G_j$
 
@@ -101,18 +88,6 @@ public class GraphMetrics {
         metrics.put("avgClusteringCoeff",Utils.getAverage(clusteringCoeff.values()));
 
     }
-
-
-
-
-
-
-
-
-
-
-
-
 
     public DataPoint convert2DataPoint() {
         DataPoint dp = new DataPoint();
@@ -150,9 +125,5 @@ public class GraphMetrics {
     public int getVertexCount() {
         double vertexCount = metrics.get("vertexCount");
         return (int) vertexCount;
-    }
-
-    public void setTreeID(long id) {
-        this.treeId = id;
     }
 }
