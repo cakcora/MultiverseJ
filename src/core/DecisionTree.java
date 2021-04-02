@@ -6,14 +6,13 @@ import java.util.List;
 
 /**
  * Represents Decision Tree object.
- * 
+ *
  * @author Murat Ali Bayir
  * @author Cuneyt Akcora
  * @author Huseyincan Kaynak
- *
  */
 public class DecisionTree implements Serializable {
-
+	private static final long serialVersionUID = 6529685098267757690L;
 	/**
 	 * ID for tree. May use select tree from random forest. Also used for writing tree object to file.
 	 */
@@ -23,6 +22,7 @@ public class DecisionTree implements Serializable {
 	 * Contains nodes of current decision tree.
 	 */
 	private List<TreeNode> nodes;
+	private int poisonLevel;
 
 	public DecisionTree() {
 		nodes = new ArrayList<TreeNode>();
@@ -30,7 +30,7 @@ public class DecisionTree implements Serializable {
 
 	/**
 	 * Add node to the decision Tree.
-	 * 
+	 *
 	 * @param node the node to be added.
 	 */
 	public void addNode(TreeNode node) {
@@ -39,7 +39,7 @@ public class DecisionTree implements Serializable {
 
 	/**
 	 * Gets tree node specified by node index.
-	 * 
+	 *
 	 * @param nodeIndex
 	 * @return corresponding tree node.
 	 */
@@ -49,10 +49,10 @@ public class DecisionTree implements Serializable {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Gets size of the nodes list.
-	 * 
+	 *
 	 * @return tree size.
 	 */
 	public int getSize() {
@@ -61,7 +61,7 @@ public class DecisionTree implements Serializable {
 
 	/**
 	 * Predicts the probability for given features.
-	 * 
+	 *
 	 * @param features is the input array of features.
 	 * @return
 	 */
@@ -75,9 +75,9 @@ public class DecisionTree implements Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * Predict the value of y-label for the given tree.
-	 * 
+	 *
 	 * @param node     is the current tree node.
 	 * @param features
 	 * @return Predicted probability.
@@ -135,18 +135,19 @@ public class DecisionTree implements Serializable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
-	
-	public void readTree(String fileName) {
+
+	public void readTree(String path, String fileName) {
 		try {
 			FileInputStream fileInputStream
-					= new FileInputStream(fileName);
+					= new FileInputStream(path + fileName);
 			ObjectInputStream objectInputStream
 					= new ObjectInputStream(fileInputStream);
 			DecisionTree readTree = (DecisionTree) objectInputStream.readObject();
 			this.id = readTree.id;
 			this.nodes = readTree.getNodes();
+			this.poisonLevel = readTree.getPoisonLevel();
 			objectInputStream.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -167,5 +168,13 @@ public class DecisionTree implements Serializable {
 
 	public List<TreeNode> getNodes() {
 		return this.nodes;
+	}
+
+	public void setPoison(int poisonLevel) {
+		this.poisonLevel = poisonLevel;
+	}
+
+	public int getPoisonLevel() {
+		return this.poisonLevel;
 	}
 }

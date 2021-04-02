@@ -21,7 +21,7 @@ public class PoisonedLabelExperiment {
 
 		options.setQuoter(args[1].charAt(0));
 		options.setSep(args[2].charAt(0));
-		// run params: C:/Downloads/adult.data " " "," C:/Downloads\ "C://adultmetrics.txt" "c://adultGraphs.txt"
+		// run params: C:/Downloads/adult.data " " "," C:/Downloads/trees/ C:/adultMetrics.txt C://adultGraphs.txt
 		String csvFile = args[0];
 		String outputPath = args[3];
 		String metricFile = args[4];
@@ -76,8 +76,9 @@ public class PoisonedLabelExperiment {
 
 			for (DecisionTree dt : decisionTrees) {
 				// extract a graph from the tree
-				treeId++;
+
 				dt.setID(treeId);
+				dt.setPoison(poisonLevel);
 				dt.writeTree(outputPath);
 				GraphMetrics metric = computeGraphMetrics(dt);
 
@@ -86,11 +87,10 @@ public class PoisonedLabelExperiment {
 					secLvlDataPoint.setLabel(poisonLevel);
 					secLvlDataPoint.setID(treeId);
 					secondLevelDataset.add(secLvlDataPoint);
-
 				}
 				secondLevelDataset.setFeatureNames(metric.getMetricNames());
+				treeId++;
 			}
-
 		}
 		int featureSize = secondLevelDataset.getFeatureNames().length;
 		Map<Integer, Integer> featureMap = new HashMap<>();
@@ -108,8 +108,7 @@ public class PoisonedLabelExperiment {
 		// variable importance detection - on 2nd level random forest
 		System.out.println("Second level random forest has " + training.getDatapoints().size() + " data points");
 
-		// in the second level we do not have any one hot encoding, so everyu feature is derived from itself only.
-
+		// in the second level we do not have any one hot encoding, so every feature is derived from itself only.
 
 		RandomForest rfSecondLevel = new RandomForest(random);
 		rfSecondLevel.setNumTrees(500);
@@ -121,7 +120,6 @@ public class PoisonedLabelExperiment {
 
 		Dataset test = split[1];
 		FeatureImportance.computeFeatureImportance(rfSecondLevel,test);
-
 	}
 
 	private static GraphMetrics computeGraphMetrics(DecisionTree dt) {
