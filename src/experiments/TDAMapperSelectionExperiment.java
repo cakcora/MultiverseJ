@@ -80,12 +80,12 @@ public class TDAMapperSelectionExperiment {
                     labels[(int) yhat]++;
                 }
                 double y = dp.getLabel();
-                Integer integer = 0;
-                Integer integer1 = 0;
-                if (treePoisons.containsKey(45)) integer = treePoisons.get(45);
-                if (treePoisons.containsKey(0)) integer1 = treePoisons.get(0);
-                // System.out.println(integer1 + "\t" + integer + "\t" + labels[0] + "\t" + labels[1] + "\t" + y);
-                out.write(integer1 + "\t" + integer + "\t" + labels[0] + "\t" + labels[1] + "\t" + y + "\r\n");
+                Integer dTreesWith0Poison = 0;
+                Integer dTreesWith45Poison = 0;
+                if (treePoisons.containsKey(0)) dTreesWith0Poison = treePoisons.get(0);
+                if (treePoisons.containsKey(45)) dTreesWith45Poison = treePoisons.get(45);
+                // System.out.println(dTreesWith45Poison + "\t" + dTreesWith0Poison + "\t" + labels[0] + "\t" + labels[1] + "\t" + y);
+                out.write(dp.getID() + "\t" + dTreesWith45Poison + "\t" + dTreesWith0Poison + "\t" + labels[0] + "\t" + labels[1] + "\t" + y + "\r\n");
             }
         }
         out.close();

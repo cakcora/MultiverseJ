@@ -12,12 +12,13 @@ for(p in sort(unique(adultGraphs$poison))){
        vertex.color="gold", vertex.size=15,
        vertex.frame.color="gray",
        main=paste(p,"-level poison, edge count ",ecount(gra)),vertex.label.color="black", vertex.label.cex=0.8, vertex.label.dist=2, edge.curved=0.2)
-  deg <- degree(gra, mode="in")
+  
+}
+deg <- degree(gra, mode="in")
 
   deg.dist <- degree_distribution(gra, cumulative=T, mode="in")
   plot( x=0:max(deg), y=1-deg.dist, pch=19, cex=1.2,
         col="orange", xlab="Degree", ylab="Cumulative Frequency")
-}
 
 
 dummy <- read.delim("C:/Users/etr/IdeaProjects/MultiverseJ/dummy.csv", header=FALSE)
@@ -40,4 +41,8 @@ y1_0<-nrow(dummyThre1[dummyThre1$Votes0>dummyThre1$Votes1,])/nrow(dummyThre)
 message(pThreshold,"\t",y0_0,"\t",y0_1,"\t",y1_0,"\t",y1_1)
 }
 
-ddply(dummy,.(purity),summarize,acc=sum(y))
+dummy$concentration<-dummy$Votes1/(dummy$Votes0+dummy$Votes1)
+ggplot(dummy, aes(x=concentration)) + 
+  geom_histogram(binwidth=0.1)
+
+
