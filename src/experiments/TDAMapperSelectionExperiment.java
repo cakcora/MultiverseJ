@@ -57,41 +57,36 @@ public class TDAMapperSelectionExperiment {
         rf.setMinLeafPopulation(3);
         Dataset[] split = dataset.split(0.8, 0.20);
         Dataset test = split[1];
-        System.out.println("Running tda nodes across data points...");
+        System.out.println("test dataset contains " + test.getDatapoints().size() + " datapoints");
+        System.out.println("Running tda nodes on test data points...");
         BufferedWriter out = new BufferedWriter(new FileWriter("dummy.csv"));
         for (TDAcluster cls : clusters) {
             ArrayList<DecisionTree> trees1 = cls.getTrees();
             HashMap<Integer, Integer> treePoisons = new HashMap<>();
             for (DecisionTree tree : trees1) {
-                int poison = 0;
+                int poison = tree.getPoisonLevel();//does not work
                 int id = (int) tree.getID();
-                if (id > 600) poison = 45;
+                if (id > 600) {
+                    poison = 45;
+                }
                 if (!treePoisons.containsKey(poison)) treePoisons.put(poison, 0);
                 treePoisons.put(poison, treePoisons.get(poison) + 1);
             }
-            int majPoisonTreeCount = -1;
-            int maxPoison = -1;
-            for (int pois : treePoisons.keySet()) {
-                Integer countofTrees = treePoisons.get(pois);
-                if (countofTrees > majPoisonTreeCount) {
-                    majPoisonTreeCount = countofTrees;
-                    maxPoison = pois;
-                }
-            }
+
             for (DataPoint dp : test.getDatapoints()) {
                 int[] labels = new int[2];
                 for (DecisionTree tree : trees1) {
-                    int lvl = tree.getPoisonLevel();
-
                     double yhat = tree.predict(dp.getFeatures());
                     labels[(int) yhat]++;
                 }
                 double y = dp.getLabel();
-                System.out.println(majPoisonTreeCount + "\t" + maxPoison + "\t" + labels[0] + "\t" + labels[1] + "\t" + y);
-                out.write(majPoisonTreeCount + "\t" + maxPoison + "\t" + labels[0] + "\t" + labels[1] + "\t" + y);
-
+                Integer integer = 0;
+                Integer integer1 = 0;
+                if (treePoisons.containsKey(45)) integer = treePoisons.get(45);
+                if (treePoisons.containsKey(0)) integer1 = treePoisons.get(0);
+                // System.out.println(integer1 + "\t" + integer + "\t" + labels[0] + "\t" + labels[1] + "\t" + y);
+                out.write(integer1 + "\t" + integer + "\t" + labels[0] + "\t" + labels[1] + "\t" + y + "\r\n");
             }
-
         }
         out.close();
 //        for(int binaryPoisonLevel=0;binaryPoisonLevel<45;binaryPoisonLevel++){
@@ -122,7 +117,7 @@ public class TDAMapperSelectionExperiment {
                     int id = Integer.parseInt(i.trim());
                     Integer j = ids.get(id);
                     dt.readTree(treeDir, j + "");
-                    dt.setID(id);
+                    dt.setID(j);
                     cluster.addTree(dt);
                 }
                 clusters.add(cluster);

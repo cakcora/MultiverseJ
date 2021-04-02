@@ -36,13 +36,17 @@ public class PoisonedLabelExperiment {
 		Dataset dataset = new Dataset(dataPoints);
 		dataset.setFeatureNames(csvLoader.getFeatureNames());
 		dataset.setFeatureParents(csvLoader.getFeatureMap());
+
+		Dataset[] split = dataset.split(0.8, 0.20);
+		Dataset training = split[0];
+
 		System.out.println(Arrays.toString(csvLoader.getFeatureNames()));
 
 		for (String message : csvLoader.getInformation()) {
 			System.out.println(message);
 		}
-		System.out.println("Dataset has " + dataset.getDatapoints().size() + " data points");
-		String[] featureNames = dataset.getFeatureNames();
+		System.out.println("Dataset has " + training.getDatapoints().size() + " data points");
+		String[] featureNames = training.getFeatureNames();
 		System.out.println("After encoding, each data point has " + (featureNames.length) + " features:");
 		//poisoning starts
 		Random random = new Random(151);
@@ -51,7 +55,7 @@ public class PoisonedLabelExperiment {
 		long treeId = 0;
 		for (int poisonLevel = 0; poisonLevel <= 45; poisonLevel += 5) {
 			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner(random);
-			Dataset posionedDataset = poisoner.poison(dataset, poisonLevel);
+			Dataset posionedDataset = poisoner.poison(training, poisonLevel);
 			int pos = 0;
 			for (DataPoint dp : posionedDataset.getDatapoints()) {
 				if (dp.getLabel() == DataPoint.POSITIVE_LABEL) {
@@ -62,7 +66,7 @@ public class PoisonedLabelExperiment {
 			RandomForest rf = new RandomForest(random);
 			rf.setNumTrees(300);
 			rf.setSampleSize(2000);
-			var featureSize = new HashSet(dataset.getFeatureMap().values()).size();
+			var featureSize = new HashSet(training.getFeatureMap().values()).size();
 			int splitFeatureSize = 7;//(int) Math.ceil(Math.sqrt(featureSize));
 			rf.setNumFeaturesToConsiderWhenSplitting(splitFeatureSize);
 			rf.setMaxTreeDepth(100);
@@ -100,10 +104,10 @@ public class PoisonedLabelExperiment {
 		secondLevelDataset.setFeatureParents(featureMap);
 		Utils.Utils.save(metricFile, secondLevelDataset);
 		Utils.Utils.saveGraphs(graphFile, sampleGraphs,
-				dataset.getFeatureNames());
+				training.getFeatureNames());
 
-		Dataset[] split = secondLevelDataset.split(0.8, 0.20);
-		Dataset training = split[0];
+		split = secondLevelDataset.split(0.8, 0.20);
+		training = split[0];
 
 		// variable importance detection - on 2nd level random forest
 		System.out.println("Second level random forest has " + training.getDatapoints().size() + " data points");
