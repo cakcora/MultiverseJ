@@ -77,6 +77,7 @@ public class TDAMapperSelectionExperiment {
                 int[] labels = new int[2];
                 for (DecisionTree tree : trees1) {
                     double yhat = tree.predict(dp.getFeatures());
+                    // softmax
                     labels[(int) yhat]++;
                 }
                 double y = dp.getLabel();
