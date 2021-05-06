@@ -24,7 +24,7 @@ dev.off()
 dummy <- read.delim("C:/Users/etr/IdeaProjects/MultiverseJ/dummy.csv", header=FALSE)
 colnames(dummy)<-c("treeID","Trees0","Trees45","Votes0","Votes1","y")
 
-reg=5
+reg=0
 dummy$homogeneity<-ifelse(dummy$Votes1<=dummy$Votes0,(dummy$Votes0+reg)/(reg+dummy$Votes0+dummy$Votes1),
                      (dummy$Votes1+reg)/(reg+dummy$Votes0+dummy$Votes1))
 
@@ -55,14 +55,15 @@ nrow(dummyThre[dummyThre$y==1,])/nrow(dummyThre)
 for(pThreshold in seq(0,1,0.05)){
 dummyThre<-dummy[dummy$purity>=pThreshold,]
 dummyThre0<-dummyThre[dummyThre$y==0,]
-y0_0<-nrow(dummyThre0[dummyThre0$Votes0>dummyThre0$Votes1,])/nrow(dummyThre)
+y0_0<-nrow(dummyThre0[dummyThre0$Votes0>=dummyThre0$Votes1,])/nrow(dummyThre)
 y0_1<-nrow(dummyThre0[dummyThre0$Votes0<dummyThre0$Votes1,])/nrow(dummyThre)
 
 dummyThre1<-dummyThre[dummyThre$y==1,]
-y1_1<-nrow(dummyThre1[dummyThre1$Votes0<dummyThre1$Votes1,])/nrow(dummyThre)
+y1_1<-nrow(dummyThre1[dummyThre1$Votes0<=dummyThre1$Votes1,])/nrow(dummyThre)
 y1_0<-nrow(dummyThre1[dummyThre1$Votes0>dummyThre1$Votes1,])/nrow(dummyThre)
+total=(y0_0+y0_1+y1_1+y1_0)
 
-message(pThreshold,"\t",y0_0,"\t",y0_1,"\t",y1_0,"\t",y1_1)
+message(pThreshold,"\t",y0_0,"\t",y0_1,"\t",y1_0,"\t",y1_1,"\t",total)
 }
 
 
