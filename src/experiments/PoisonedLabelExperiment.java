@@ -10,7 +10,6 @@ import graphcore.GraphExtractor;
 import graphcore.GraphMetrics;
 import loader.CSVLoader;
 import loader.LoaderOptions;
-import mlcore.FeatureImportance;
 import poisoner.LabelFlippingPoisoner;
 
 import java.util.*;
@@ -103,8 +102,7 @@ public class PoisonedLabelExperiment {
 		}
 		secondLevelDataset.setFeatureParents(featureMap);
 		Utils.Utils.save(metricFile, secondLevelDataset);
-		Utils.Utils.saveGraphs(graphFile, sampleGraphs,
-				training.getFeatureNames());
+		Utils.Utils.saveGraphs(graphFile, sampleGraphs, training.getFeatureNames());
 
 		split = secondLevelDataset.split(0.8, 0.20);
 		training = split[0];
@@ -123,7 +121,8 @@ public class PoisonedLabelExperiment {
 		rfSecondLevel.train(training);
 
 		Dataset test = split[1];
-		FeatureImportance.computeFeatureImportance(rfSecondLevel,test);
+
+
 	}
 
 	private static GraphMetrics computeGraphMetrics(DecisionTree dt) {

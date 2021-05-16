@@ -1,6 +1,5 @@
 package core;
 
-import javax.xml.crypto.Data;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,10 +46,14 @@ public class Dataset {
         Dataset d1 = new Dataset();
         Dataset d2 = new Dataset();
         for(int i=0;i<perc1*this.dataPoints.size();i++){
-            d1.add(this.dataPoints.get(i));
+            DataPoint datapoint = this.dataPoints.get(i);
+            datapoint.setID(i);
+            d1.add(datapoint);
         }
-        for(int j=0;j<perc2*this.dataPoints.size();j++){
-            d2.add(this.dataPoints.get(j));
+        for(int j=0;j<perc2*this.dataPoints.size();j++) {
+            DataPoint datapoint = this.dataPoints.get(j);
+            datapoint.setID(j);
+            d2.add(datapoint);
         }
         d1.setFeatureParents(this.getFeatureMap());
         d2.setFeatureParents(this.getFeatureMap());
