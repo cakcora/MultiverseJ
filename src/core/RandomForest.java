@@ -91,8 +91,9 @@ public class RandomForest {
             prob += tree.predict(dp.getFeatures());
         }
         double v = prob / decisionTrees.size();
-        if (v < 0.0 || v > 1.0) {
-            System.out.println(" Error: invalid prob value:" + v);
+        if (v < 0.0 || v > 1.0 || Double.isNaN(v)) {
+            System.out.println(dp.toString() + " leads to invalid prob value:" + v);
+            return -1;
         }
         return v;
     }
@@ -213,8 +214,10 @@ public class RandomForest {
         for (DataPoint dp : test.getDatapoints()) {
             double prob = evaluate(dp);
             double label = dp.getLabel();
-            SingleEval eval = new SingleEval(prob, label);
-            evaluationData.add(eval);
+            if (prob != -1.0) {
+                SingleEval eval = new SingleEval(prob, label);
+                evaluationData.add(eval);
+            }
         }
         return evaluationData;
     }

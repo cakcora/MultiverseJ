@@ -54,7 +54,7 @@ public class TDAMapperSelectionExperiment {
         rf.setNumTrees(300);
         rf.setSampleSize(2000);
         var featureSize = new HashSet(dataset.getFeatureMap().values()).size();
-        int splitFeatureSize = 7;//(int) Math.ceil(Math.sqrt(featureSize));
+        int splitFeatureSize = (int) Math.ceil(Math.sqrt(featureSize));
         rf.setNumFeaturesToConsiderWhenSplitting(splitFeatureSize);
         rf.setMaxTreeDepth(100);
         rf.setMinLeafPopulation(3);
