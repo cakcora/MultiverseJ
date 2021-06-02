@@ -1,5 +1,6 @@
 package core;
 
+import metrics.SingleEval;
 import mlcore.DecisionTreeLearner;
 
 import java.util.*;
@@ -27,13 +28,13 @@ public class RandomForest {
     public static final int TREE_MIN_SIZE = 1;
     private int numTrees = 500;
     //The minimum number of samples required to split an internal node.
-    private int minSamplesSplit = 2;
+    private final int minSamplesSplit = 2;
     //The minimum number of samples required to be at a leaf node
-    private int minSamplesLeaf = 1;
-    private HashSet<String> information = new HashSet<String>();
+    private final int minSamplesLeaf = 1;
+    private final HashSet<String> information = new HashSet<String>();
 
     // size of sampling for each bootstrap step.
-    private int maxFeatures=0;
+    private int maxFeatures = 0;
     private int minPopulation;
 
     // random seed
@@ -69,20 +70,39 @@ public class RandomForest {
             //sample data points
             List<DataPoint> baggedDataset = sampleData(dataPoints);
             //sample data features to be used in the DT
-            ArrayList<Integer> sampledFeatures = sampleFeatures(maxFeatures,featureCount,featureMap);
-            DecisionTreeLearner dt = new DecisionTreeLearner(this.maxDepth,this.minPopulation,sampledFeatures);
+            ArrayList<Integer> sampledFeatures = sampleFeatures(maxFeatures, featureCount, featureMap);
+            DecisionTreeLearner dt = new DecisionTreeLearner(this.maxDepth, this.minPopulation, sampledFeatures);
             DecisionTree decisionTree = dt.train(baggedDataset);
             //save the tree
             decisionTrees.add(decisionTree);
         }
     }
 
+    /**
+     * Evaluates a data point's label by using all decision trees of the forest.
+     * returns the mean probability value of tree decisions.
+     *
+     * @param dp a single data point
+     * @return mean label probability
+     */
+    public double evaluate(DataPoint dp) {
+        double prob = 0d;
+        for (DecisionTree tree : decisionTrees) {
+            prob += tree.predict(dp.getFeatures());
+        }
+        double v = prob / decisionTrees.size();
+        if (v < 0.0 || v > 1.0) {
+            System.out.println(" Error: invalid prob value:" + v);
+        }
+        return v;
+    }
 
 
     /**
      * Sample a sampleThisMany number of features to be used in a decision tree.
+     *
      * @param sampleThisMany we will return this many features
-     * @param fromThisMany is the number of all available features
+     * @param fromThisMany   is the number of all available features
      * @param featureMap
      * @return ids of features
      */
@@ -174,10 +194,28 @@ public class RandomForest {
     }
 
     public void setMaxTreeDepth(int depth) {
-        this.maxDepth =depth;
+        this.maxDepth = depth;
     }
 
     public void setMinLeafPopulation(int population) {
-        this.minPopulation=population;
+        this.minPopulation = population;
+    }
+
+    /**
+     * Uses the trained random forest to label a test dataset
+     *
+     * @param test dataset to be labeled
+     * @return a set of evaluations
+     */
+
+    public List<SingleEval> evaluate(Dataset test) {
+        List<SingleEval> evaluationData = new ArrayList<>();
+        for (DataPoint dp : test.getDatapoints()) {
+            double prob = evaluate(dp);
+            double label = dp.getLabel();
+            SingleEval eval = new SingleEval(prob, label);
+            evaluationData.add(eval);
+        }
+        return evaluationData;
     }
 }

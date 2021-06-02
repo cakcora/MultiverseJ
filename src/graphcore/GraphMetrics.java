@@ -85,28 +85,33 @@ public class GraphMetrics {
         metrics.put("avgBetweenness", Utils.getAverage(betweennessVals));
         //13 Clustering coefficient
         Map<Integer, Double> clusteringCoeff = Metrics.clusteringCoefficients(graph);
-        metrics.put("avgClusteringCoeff",Utils.getAverage(clusteringCoeff.values()));
+        metrics.put("avgClusteringCoeff", Utils.getAverage(clusteringCoeff.values()));
 
     }
 
+    /**
+     * Converts metrics of a graph to a data point.
+     *
+     * @return a data point
+     */
     public DataPoint convert2DataPoint() {
         DataPoint dp = new DataPoint();
 
         //set all metric types as non-categorical
         int metricFeatureCount = metrics.size();
         boolean[] arr = new boolean[metricFeatureCount];
-        Arrays.fill(arr,FALSE);
+        Arrays.fill(arr, FALSE);
         dp.setFeatureTypes(arr);
 
 
         double [] features = new double[metricFeatureCount];
         Map<Integer, Integer> featureMap = new HashMap<>();
         int i=0;
-       for(String s:metrics.keySet()){
-           featureMap.put(i,i);
-           features[i]=metrics.get(s);
-           i++;
-       }
+        for(String s:metrics.keySet()){
+            featureMap.put(i,i);
+            features[i]=metrics.get(s);
+            i++;
+        }
 
         dp.setFeatures(features);
 

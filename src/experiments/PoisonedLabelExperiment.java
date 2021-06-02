@@ -10,6 +10,7 @@ import graphcore.GraphExtractor;
 import graphcore.GraphMetrics;
 import loader.CSVLoader;
 import loader.LoaderOptions;
+import metrics.MetricComputer;
 import poisoner.LabelFlippingPoisoner;
 
 import java.util.*;
@@ -36,41 +37,48 @@ public class PoisonedLabelExperiment {
 		dataset.setFeatureNames(csvLoader.getFeatureNames());
 		dataset.setFeatureParents(csvLoader.getFeatureMap());
 
-		Dataset[] split = dataset.split(0.8, 0.20);
+		dataset.shuffleDataPoints();
+		Dataset[] split = dataset.split(80);
 		Dataset training = split[0];
+		Dataset test = split[1];
 
-		System.out.println(Arrays.toString(csvLoader.getFeatureNames()));
+		System.out.println("The fanned-out dataset has these features: " + Arrays.toString(csvLoader.getFeatureNames()));
 
 		for (String message : csvLoader.getInformation()) {
 			System.out.println(message);
 		}
-		System.out.println("Dataset has " + training.getDatapoints().size() + " data points");
+		System.out.println("Dataset has " + training.getDatapoints().size() + "/" + test.getDatapoints().size() + " data points for training/test");
 		String[] featureNames = training.getFeatureNames();
-		System.out.println("After encoding, each data point has " + (featureNames.length) + " features:");
+		System.out.println("After encoding, each data point has " + (featureNames.length) + " features");
 		//poisoning starts
 		Random random = new Random(151);
 		Dataset secondLevelDataset = new Dataset();
+		// we will store sample graphs from each poison level to visualize some results in the paper
 		Map<Integer, Graph<Integer, Integer>> sampleGraphs = new HashMap<>();
 		long treeId = 0;
 		for (int poisonLevel = 0; poisonLevel <= 45; poisonLevel += 5) {
 			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner(random);
-			Dataset posionedDataset = poisoner.poison(training, poisonLevel);
+			Dataset poisonedDataset = poisoner.poison(training, poisonLevel);
 			int pos = 0;
-			for (DataPoint dp : posionedDataset.getDatapoints()) {
+			for (DataPoint dp : poisonedDataset.getDatapoints()) {
 				if (dp.getLabel() == DataPoint.POSITIVE_LABEL) {
 					pos++;
 				}
 			}
-			System.out.println(poisonLevel + "-level dataset has " + pos + " positive labeled data points.");
+			System.out.println(poisonLevel + "% poisoned dataset has " + pos + " positive labeled data points.");
 			RandomForest rf = new RandomForest(random);
 			rf.setNumTrees(300);
 			rf.setSampleSize(2000);
 			var featureSize = new HashSet(training.getFeatureMap().values()).size();
-			int splitFeatureSize = 7;//(int) Math.ceil(Math.sqrt(featureSize));
+			int splitFeatureSize = (int) Math.ceil(Math.sqrt(featureSize));
 			rf.setNumFeaturesToConsiderWhenSplitting(splitFeatureSize);
-			rf.setMaxTreeDepth(100);
-			rf.setMinLeafPopulation(3);
-			rf.train(posionedDataset);
+			rf.setMaxTreeDepth(5);
+			rf.setMinLeafPopulation(15);
+			rf.train(poisonedDataset);
+
+			List evaluations = rf.evaluate(test);
+			double auc = new MetricComputer().computeAUC(evaluations);
+			System.out.println("\tRF auc on test data is " + auc);
 
 
 			List<DecisionTree> decisionTrees = rf.getDecisionTrees();
@@ -90,40 +98,28 @@ public class PoisonedLabelExperiment {
 					secLvlDataPoint.setLabel(poisonLevel);
 					secLvlDataPoint.setID(treeId);
 					secondLevelDataset.add(secLvlDataPoint);
+				} else {
+					System.out.println("Error: Graph in poison level " + poisonLevel + " has no nodes?");
 				}
 				secondLevelDataset.setFeatureNames(metric.getMetricNames());
 				treeId++;
 			}
 		}
 		int featureSize = secondLevelDataset.getFeatureNames().length;
+		System.out.println(featureSize + " metrics have been extracted from each decision tree");
+		// we have no fan-out for metric based features, but we still need to record feature parentage.
 		Map<Integer, Integer> featureMap = new HashMap<>();
+		// in the second level we do not have any one hot encoding, so every feature is derived from itself only.
 		for (int i = 0; i < featureSize; i++) {
 			featureMap.put(i, i);
 		}
-		secondLevelDataset.setFeatureParents(featureMap);
+		secondLevelDataset.setFeatureParents(featureMap);// end of feature parentage
+
+		// we will save some files for future usage
 		Utils.Utils.save(metricFile, secondLevelDataset);
 		Utils.Utils.saveGraphs(graphFile, sampleGraphs, training.getFeatureNames());
-
-		split = secondLevelDataset.split(0.8, 0.20);
-		training = split[0];
-
-		// variable importance detection - on 2nd level random forest
-		System.out.println("Second level random forest has " + training.getDatapoints().size() + " data points");
-
-		// in the second level we do not have any one hot encoding, so every feature is derived from itself only.
-
-		RandomForest rfSecondLevel = new RandomForest(random);
-		rfSecondLevel.setNumTrees(500);
-		rfSecondLevel.setSampleSize(1000);
-		rfSecondLevel.setNumFeaturesToConsiderWhenSplitting(10);
-		rfSecondLevel.setMaxTreeDepth(6);
-		rfSecondLevel.setMinLeafPopulation(1);
-		rfSecondLevel.train(training);
-
-		Dataset test = split[1];
-
-
 	}
+
 
 	private static GraphMetrics computeGraphMetrics(DecisionTree dt) {
 		GraphExtractor extractor = new GraphExtractor(dt);

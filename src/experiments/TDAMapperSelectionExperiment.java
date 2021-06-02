@@ -58,7 +58,7 @@ public class TDAMapperSelectionExperiment {
         rf.setNumFeaturesToConsiderWhenSplitting(splitFeatureSize);
         rf.setMaxTreeDepth(100);
         rf.setMinLeafPopulation(3);
-        Dataset[] split = dataset.split(0.8, 0.20);
+        Dataset[] split = dataset.split(80);
         Dataset test = split[1];
         System.out.println("test dataset contains " + test.getDatapoints().size() + " datapoints");
         System.out.println("Running tda nodes on test data points...");

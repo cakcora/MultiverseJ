@@ -1,6 +1,7 @@
 package core;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -42,15 +43,23 @@ public class Dataset {
         this.dataPoints.add(datapoint);
     }
 
-    public Dataset[] split(double perc1, double perc2) {
+    /**
+     * Split the dataset into training and test sets. In order to have verifiable execution, we do not sample
+     * from the dataset. Instead we pick the training data from the first data points.
+     *
+     * @param percentageOfDataPointsTobeSelected size of the split
+     * @return two datasets: training and test
+     */
+    public Dataset[] split(int percentageOfDataPointsTobeSelected) {
         Dataset d1 = new Dataset();
         Dataset d2 = new Dataset();
-        for(int i=0;i<perc1*this.dataPoints.size();i++){
+        int v = (int) Math.ceil(dataPoints.size() * percentageOfDataPointsTobeSelected / 100);
+        for (int i = 0; i < v; i++) {
             DataPoint datapoint = this.dataPoints.get(i);
             datapoint.setID(i);
             d1.add(datapoint);
         }
-        for(int j=0;j<perc2*this.dataPoints.size();j++) {
+        for (int j = v; j < this.dataPoints.size(); j++) {
             DataPoint datapoint = this.dataPoints.get(j);
             datapoint.setID(j);
             d2.add(datapoint);
@@ -59,6 +68,16 @@ public class Dataset {
         d2.setFeatureParents(this.getFeatureMap());
         d1.setFeatureNames(this.getFeatureNames());
         d2.setFeatureNames(this.getFeatureNames());
-        return new Dataset[]{d1,d2};
+        return new Dataset[]{d1, d2};
+    }
+
+    /**
+     * Shuffle the index of data points in a dataset. We need this function to choose
+     * the same training/test split in multiple python/java files. Without shuffling, the data may have a hidden order
+     * that can bias results. After shuffling, we can always use the first 80% of data points as the training set.
+     * This solution is better than storing the test dataset in a file.
+     */
+    public void shuffleDataPoints() {
+        Collections.shuffle(this.dataPoints);
     }
 }
