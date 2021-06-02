@@ -21,7 +21,13 @@ public class TDAMapperSelectionExperiment {
         String edgeFile = args[1];
         String treeDir = args[2];
         String idFile = args[3];
+        String csvFile = args[4];
+        char quoteChar = args[5].charAt(0);
+        char sepChar = args[6].charAt(0);
         String clusterPredictionOutputFile = args[7];
+        int targetPoison1 = Integer.parseInt(args[8]);
+        int targetPoison2 = Integer.parseInt(args[9]);
+
 
         // load tdamapper clusters defined by tdamapper
         System.out.println("Loading tda mapper results...");
@@ -31,9 +37,8 @@ public class TDAMapperSelectionExperiment {
         // load dataset
         System.out.println("Loading dataset...");
         LoaderOptions options = new LoaderOptions();
-        String csvFile = args[4];
-        options.setQuoter(args[5].charAt(0));
-        options.setSep(args[6].charAt(0));
+        options.setQuoter(quoteChar);
+        options.setSep(sepChar);
 
 
         options.featureIgnoreThreshold(20);
@@ -47,12 +52,10 @@ public class TDAMapperSelectionExperiment {
         Dataset dataset = new Dataset(dataPoints);
         dataset.setFeatureNames(csvLoader.getFeatureNames());
         dataset.setFeatureParents(csvLoader.getFeatureMap());
-        System.out.println(Arrays.toString(csvLoader.getFeatureNames()));
 
         Random random = new Random(151);
         RandomForest rf = new RandomForest(random);
         rf.setNumTrees(300);
-        rf.setSampleSize(2000);
         var featureSize = new HashSet(dataset.getFeatureMap().values()).size();
         int splitFeatureSize = (int) Math.ceil(Math.sqrt(featureSize));
         rf.setNumFeaturesToConsiderWhenSplitting(splitFeatureSize);
@@ -60,36 +63,38 @@ public class TDAMapperSelectionExperiment {
         rf.setMinLeafPopulation(3);
         Dataset[] split = dataset.split(80);
         Dataset test = split[1];
-        System.out.println("test dataset contains " + test.getDatapoints().size() + " datapoints");
-        System.out.println("Running tda nodes on test data points...");
+        System.out.println("Test dataset contains " + test.getDatapoints().size() + " datapoints");
         BufferedWriter out = new BufferedWriter(new FileWriter(clusterPredictionOutputFile));
-        int[] epsilons = new int[]{1, 2, 3, 4, 5, 6, 7};
-        for (int epsilon : epsilons) {
-            for (TDAcluster cls : clusters) {
-                ArrayList<DecisionTree> trees1 = cls.getTrees();
-                HashMap<Integer, Integer> treePoisons = new HashMap<>();
-                for (DecisionTree tree : trees1) {
-                    int poison = tree.getPoisonLevel();//does not work
-                    if (!treePoisons.containsKey(poison)) treePoisons.put(poison, 0);
-                    treePoisons.put(poison, treePoisons.get(poison) + 1);
-                }
 
-                for (DataPoint dp : test.getDatapoints()) {
-                    int[] labels = new int[2];
-                    for (DecisionTree tree : trees1) {
-                        double yhat = tree.predict(dp.getFeatures());
-                        int label = (yhat > epsilon / 10d) ? 1 : 0;
-                        labels[label]++;
-                    }
-                    double y = dp.getLabel();
-                    Integer dTreesWith0Poison = 0;
-                    Integer dTreesWith45Poison = 0;
-                    if (treePoisons.containsKey(0)) dTreesWith0Poison = treePoisons.get(0);
-                    if (treePoisons.containsKey(45)) dTreesWith45Poison = treePoisons.get(45);
-                    out.write(epsilon + "\t" + cls.getID() + "\t" + dp.getID() + "\t" + dTreesWith45Poison + "\t" + dTreesWith0Poison + "\t" + labels[0] + "\t" + labels[1] + "\t" + y + "\r\n");
+        for (TDAcluster cls : clusters) {
+            ArrayList<DecisionTree> treesOfACluster = cls.getTrees();
+            HashMap<Integer, Integer> treePoisons = new HashMap<>();
+            for (DecisionTree tree : treesOfACluster) {
+                int poison = tree.getPoisonLevel();
+
+                if (!treePoisons.containsKey(poison)) treePoisons.put(poison, 0);
+                treePoisons.put(poison, treePoisons.get(poison) + 1);
+            }
+
+            for (DataPoint dp : test.getDatapoints()) {
+                double prob = 0d;
+                for (DecisionTree tree : treesOfACluster) {
+                    prob += tree.predict(dp.getFeatures());
                 }
+                double yhat = prob / treesOfACluster.size();
+                double y = dp.getLabel();
+                if (Double.isNaN(yhat)) {
+                    System.out.println(" Data point leads to Nan probability.");
+                    continue;
+                }
+                int dTreesWithPoison1 = 0;
+                int dTreesWithPoison2 = 0;
+                if (treePoisons.containsKey(targetPoison1)) dTreesWithPoison1 = treePoisons.get(targetPoison1);
+                if (treePoisons.containsKey(targetPoison2)) dTreesWithPoison2 = treePoisons.get(targetPoison2);
+                out.write(cls.getID() + "\t" + dp.getID() + "\t" + dTreesWithPoison2 + "\t" + dTreesWithPoison1 + "\t" + yhat + "\t" + y + "\r\n");
             }
         }
+
         out.close();
     }
 

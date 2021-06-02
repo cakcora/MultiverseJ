@@ -2,6 +2,8 @@ package experiments;
 
 import TDA.TDAcluster;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
+import metrics.MetricComputer;
+import metrics.SingleEval;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -35,28 +37,23 @@ class ClusterSelectionExperiment {
         for (int select : new int[]{1, 2, 3, 4, 5, 10})
             for (int targetEpsilon : new int[]{5}) {
                 BufferedReader br = new BufferedReader(new FileReader(clusterPredictionOutputFile));
-
-
                 line = "";
 
                 Map<String, TDAcluster> clusters = new HashMap<>();
 
                 while ((line = br.readLine()) != null) {
                     String[] arr = line.split("\t");
-                    int epsilon = Integer.parseInt((arr[0]));
-                    if (epsilon != targetEpsilon) continue;
-                    String cluster = arr[1];
-                    int vote0 = Integer.parseInt(arr[5]);
-                    int vote1 = Integer.parseInt(arr[6]);
-                    int predicted = vote0 > vote1 ? 0 : 1;
-                    int label = (int) Double.parseDouble(arr[7]);
+
+                    String cluster = arr[0];
+                    int vote0 = Integer.parseInt(arr[2]);
+                    int vote1 = Integer.parseInt(arr[3]);
+                    double predicted = Double.parseDouble(arr[4]);
+                    double label = (int) Double.parseDouble(arr[5]);
                     TDAcluster cls = new TDAcluster();
                     cls.setId(cluster);
                     cls.setTreeCount(vote0 + vote1);
-                    if (clusters.containsKey(cluster)) {
-                        cls = clusters.get(cluster);
-                    }
-                    cls.add(label, predicted == label, (vote0 + vote1));
+
+                    SingleEval eval = new SingleEval(predicted, label);
                     clusters.put(cluster, cls);
 
                 }
@@ -76,20 +73,20 @@ class ClusterSelectionExperiment {
                 }
 
                 // option 2 select greedily
-                PriorityQueue<Double> queue = new PriorityQueue<>(size, Collections.reverseOrder());
-                for (TDAcluster cls : clusters.values()) {
-                    queue.add(cls.getAccuracy());
-                }
-                Set<String> selectedGreedy = new HashSet<>();
-                double last = 0d;
-                for (int n = 0; n < select; n++) {
-                    last = queue.poll();
-                }
-                for (String cluster : clusters.keySet()) {
-                    if (clusters.get(cluster).getAccuracy() >= last)
-                        selectedGreedy.add(clusters.get(cluster).getID());
-                }
-                System.out.println("Greedy clusters: " + selectedGreedy.toString());
+//                PriorityQueue<Double> queue = new PriorityQueue<>(size, Collections.reverseOrder());
+//                for (TDAcluster cls : clusters.values()) {
+//                    queue.add(cls.getAccuracy());
+//                }
+//                Set<String> selectedGreedy = new HashSet<>();
+//                double last = 0d;
+//                for (int n = 0; n < select; n++) {
+//                    last = queue.poll();
+//                }
+//                for (String cluster : clusters.keySet()) {
+//                    if (clusters.get(cluster).getAccuracy() >= last)
+//                        selectedGreedy.add(clusters.get(cluster).getID());
+//                }
+//                System.out.println("Greedy clusters: " + selectedGreedy.toString());
                 System.out.println("Random clusters: " + selectedRandom.toString());
 
                 //option 3 network selection
@@ -97,77 +94,51 @@ class ClusterSelectionExperiment {
 
                 for (TDAcluster cls : clusters.values()) {
                     Collection<String> selectedNeig = graph.getNeighbors(cls.getID());
-                    Set<String> selectedNeighbors = new HashSet<>();
-                    selectedNeighbors.add(cls.getID());
+                    Set<String> selectedClusters = new HashSet<>();
+                    selectedClusters.add(cls.getID());
                     Iterator<String> iterator = selectedNeig.iterator();
                     for (int j = 0; j < select - 1; j++) {
                         if (iterator.hasNext()) {
-                            selectedNeighbors.add(iterator.next());
+                            selectedClusters.add(iterator.next());
                         }
                     }
-                    br = new BufferedReader(new FileReader(clusterPredictionOutputFile));
-                    int[] perfArray = evaluateWithSelected(selectedNeighbors, br, targetEpsilon);
-                    System.out.println("Network " + cls.getID() + "\t" + select + "\t" + selectedNeighbors.size() + "\t" + targetEpsilon / 10.0 + "\t" + (perfArray[0] + perfArray[2] + 0.0) / Arrays.stream(perfArray).sum() + "\t" + perfArray[0] + "\t" + perfArray[1] + "\t" + perfArray[2] + "\t" + perfArray[3] + "\t" + perfArray[4]);
+                    br = new BufferedReader(new FileReader(clusterPredictionOutputFile));// this code reads the file too many times
+                    List<SingleEval> evaluations = evaluateWithSelected(selectedClusters, br);
+                    MetricComputer metric = new MetricComputer();
+                    double auc = metric.computeAUC(evaluations);
+                    double bias = metric.computeBias(evaluations);
+                    double logloss = metric.computeLogLoss(evaluations);
+                    System.out.println("Network " + cls.getID() + "\t" + select + "\t" + selectedClusters.size() + "\t" + targetEpsilon / 10.0 + "\t" + auc + "\t" + bias + "\t" + logloss);
                 }
 
 
-                br = new BufferedReader(new FileReader(clusterPredictionOutputFile));
-                int[] perfArray = evaluateWithSelected(selectedGreedy, br, targetEpsilon);
-                System.out.println("Greedy" + "\t" + select + "\t\t" + targetEpsilon / 10.0 + "\t" + (perfArray[0] + perfArray[2] + 0.0) / Arrays.stream(perfArray).sum() + "\t" + perfArray[0] + "\t" + perfArray[1] + "\t" + perfArray[2] + "\t" + perfArray[3] + "\t" + perfArray[4]);
-
-                br = new BufferedReader(new FileReader(clusterPredictionOutputFile));
-                perfArray = evaluateWithSelected(selectedRandom, br, targetEpsilon);
-                System.out.println("Random" + "\t" + select + "\t\t" + targetEpsilon / 10.0 + "\t" + (perfArray[0] + perfArray[2] + 0.0) / Arrays.stream(perfArray).sum() + "\t" + perfArray[0] + "\t" + perfArray[1] + "\t" + perfArray[2] + "\t" + perfArray[3] + "\t" + perfArray[4]);
+//                br = new BufferedReader(new FileReader(clusterPredictionOutputFile));
+//                int[] perfArray = evaluateWithSelected(selectedGreedy, br, targetEpsilon);
+//                System.out.println("Greedy" + "\t" + select + "\t\t" + targetEpsilon / 10.0 + "\t" + (perfArray[0] + perfArray[2] + 0.0) / Arrays.stream(perfArray).sum() + "\t" + perfArray[0] + "\t" + perfArray[1] + "\t" + perfArray[2] + "\t" + perfArray[3] + "\t" + perfArray[4]);
+//
+//                br = new BufferedReader(new FileReader(clusterPredictionOutputFile));
+//                perfArray = evaluateWithSelected(selectedRandom, br, targetEpsilon);
+//                System.out.println("Random" + "\t" + select + "\t\t" + targetEpsilon / 10.0 + "\t" + (perfArray[0] + perfArray[2] + 0.0) / Arrays.stream(perfArray).sum() + "\t" + perfArray[0] + "\t" + perfArray[1] + "\t" + perfArray[2] + "\t" + perfArray[3] + "\t" + perfArray[4]);
             }
     }
 
-    private static int[] evaluateWithSelected(Set<String> selected, BufferedReader br, int targetEpsilon) throws IOException {
+    private static List<SingleEval> evaluateWithSelected(Set<String> selected, BufferedReader br) throws IOException {
         String line = "";
-        HashMap<Long, Integer> labels = new HashMap<>();
-        HashMap<Long, int[]> dpVotes = new HashMap<>();
+        List<SingleEval> evaluations = new ArrayList<>();
         while ((line = br.readLine()) != null) {
             String[] arr = line.split("\t");
-            int epsilon = Integer.parseInt((arr[0]));
-            if (epsilon != targetEpsilon) continue;
-            String cluster = arr[1];
+            String cluster = arr[0];
             if (!selected.contains(cluster)) continue;
-            long dpID = Long.parseLong(arr[2]);
-            int vote0 = Integer.parseInt(arr[5]);
-            int vote1 = Integer.parseInt(arr[6]);
-            int predicted = vote0 >= vote1 ? 0 : 1;
-            int label = (int) Double.parseDouble(arr[7]);
-            TDAcluster cls = new TDAcluster();
-            cls.setId(cluster);
-            cls.setTreeCount(vote0 + vote1);
-            int[] array = new int[2];
-            if (dpVotes.containsKey(dpID)) {
-                array = dpVotes.get(dpID);
+            double predicted = Double.parseDouble(arr[4]);
+            double label = Double.parseDouble(arr[5]);
+            if (Double.isNaN(predicted) || Double.isNaN(label)) {
+                System.out.println("Error: nan probability values exist in the cluster output file");
             }
-            // strategy 1 all cluster trees vote the same
-            array[predicted] += (vote0 + vote1);
-            // strategy 2 cluster votes as its trees vote
-            //array[0]+=vote0;
-            //array[1]+=vote1;
-            dpVotes.put(dpID, array);
-            labels.put(dpID, label);
+            SingleEval eval = new SingleEval(predicted, label);
+            evaluations.add(eval);
+
         }
-        int[] perfArray = new int[5];
-        int tp = 0, fp = 1, tn = 2, fn = 3, votes = 4;
-        for (long dp : dpVotes.keySet()) {
-            int label = labels.get(dp);
-            int vote0 = dpVotes.get(dp)[0];
-            int vote1 = dpVotes.get(dp)[1];
-            perfArray[votes] = vote0 + vote1;
-            int predicted = vote0 >= vote1 ? 0 : 1;
-            if (label == 1) {
-                if (predicted == 1) {
-                    perfArray[tp]++;
-                } else perfArray[fn]++;
-            } else if (predicted == 1) {
-                perfArray[fp]++;
-            } else perfArray[tn]++;
-        }
-        return perfArray;
+        return evaluations;
     }
 
 

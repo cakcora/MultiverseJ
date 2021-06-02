@@ -13,18 +13,18 @@ public class SingleEval implements Comparable<SingleEval>{
 	/**
 	 * Predicted value for binary classification problem.
 	 */
-	private double predicted;
-	
+	private final double predicted;
+
 	/**
 	 * Actual value for binary classification problem.
 	 */
-	private double actual;
-	
-	
+	private final double actual;
+
+
 	/**
 	 * The bin number for AUC between [0, 999]
 	 */
-	private int binId;
+	private final int binId;
 	
 	public SingleEval(double predicted, double actual)
 	{
@@ -47,12 +47,11 @@ public class SingleEval implements Comparable<SingleEval>{
 
 	@Override
 	public int compareTo(SingleEval that) {
-		if (this.predicted < that.getPredicted())
-		{
+		if (this.predicted < that.getPredicted()) {
 			return -1;
-		} else {
+		} else if (this.predicted > that.getPredicted()) {
 			return 1;
-		}
+		} else return 0;
 	}
 	
 	/**
