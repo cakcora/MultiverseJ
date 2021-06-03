@@ -1,8 +1,12 @@
 package TDA;
 
 import core.DecisionTree;
+import metrics.SingleEval;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TDAcluster {
 
@@ -10,12 +14,11 @@ public class TDAcluster {
     private String clusterID;
     private int treeCount;
     private final int fn = 0;
-    private int tp;
-    private int fp;
-    private int tn;
-    private int quorum;
+    private final Map<String, SingleEval> evals;
+    private double auc;
 
     public TDAcluster() {
+        this.evals = new HashMap<>();
         this.trees = new ArrayList();
     }
 
@@ -40,4 +43,23 @@ public class TDAcluster {
     }
 
 
+    public void addToEvals(String dp, SingleEval eval) {
+        evals.put(dp, eval);
+    }
+
+    public Map<String, SingleEval> getEvals() {
+        return evals;
+    }
+
+    public double getAUC() {
+        return this.auc;
+    }
+
+    public void setAUC(double auc) {
+        this.auc = auc;
+    }
+
+    public List<SingleEval> getEvalProbs() {
+        return new ArrayList<>(evals.values());
+    }
 }

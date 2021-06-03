@@ -88,14 +88,16 @@ public class RandomForest {
     public double evaluate(DataPoint dp) {
         double prob = 0d;
         for (DecisionTree tree : decisionTrees) {
-            prob += tree.predict(dp.getFeatures());
+            double predict = tree.predict(dp.getFeatures());
+            if (predict < 0.0 || predict > 1.0 || Double.isNaN(predict)) {
+                System.out.println("\tError: " + dp.toString() + " leads to invalid prob value:" + predict);
+                System.out.println("\tTree id that causes this issue is " + tree.getID());
+                return -1;
+            }
+            prob += predict;
         }
-        double v = prob / decisionTrees.size();
-        if (v < 0.0 || v > 1.0 || Double.isNaN(v)) {
-            System.out.println(dp.toString() + " leads to invalid prob value:" + v);
-            return -1;
-        }
-        return v;
+
+        return prob / decisionTrees.size();
     }
 
 

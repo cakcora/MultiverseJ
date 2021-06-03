@@ -34,111 +34,133 @@ class ClusterSelectionExperiment {
                 graph.addEdge(graph.getEdgeCount(), clus, cl2);
             }
         }
-        for (int select : new int[]{1, 2, 3, 4, 5, 10})
-            for (int targetEpsilon : new int[]{5}) {
-                BufferedReader br = new BufferedReader(new FileReader(clusterPredictionOutputFile));
-                line = "";
 
-                Map<String, TDAcluster> clusters = new HashMap<>();
+        BufferedReader br = new BufferedReader(new FileReader(clusterPredictionOutputFile));
+        Map<String, TDAcluster> clusters = new HashMap<>();
 
-                while ((line = br.readLine()) != null) {
-                    String[] arr = line.split("\t");
-
-                    String cluster = arr[0];
-                    int vote0 = Integer.parseInt(arr[2]);
-                    int vote1 = Integer.parseInt(arr[3]);
-                    double predicted = Double.parseDouble(arr[4]);
-                    double label = (int) Double.parseDouble(arr[5]);
-                    TDAcluster cls = new TDAcluster();
-                    cls.setId(cluster);
-                    cls.setTreeCount(vote0 + vote1);
-
-                    SingleEval eval = new SingleEval(predicted, label);
-                    clusters.put(cluster, cls);
-
-                }
-                // option 1 select randomly
-                Set<String> selectedRandom = new HashSet<>();
-                int size = clusters.size();
-                for (int n = 0; n < select; n++) {
-
-                    double random = ThreadLocalRandom.current().nextInt(0, size);
-                    Iterator<TDAcluster> iterator = clusters.values().iterator();
-                    while (iterator.hasNext() && random > 1) {
-                        iterator.next();
-                        random--;
-                    }
-                    TDAcluster next = iterator.next();
-                    selectedRandom.add(next.getID());
-                }
-
-                // option 2 select greedily
-//                PriorityQueue<Double> queue = new PriorityQueue<>(size, Collections.reverseOrder());
-//                for (TDAcluster cls : clusters.values()) {
-//                    queue.add(cls.getAccuracy());
-//                }
-//                Set<String> selectedGreedy = new HashSet<>();
-//                double last = 0d;
-//                for (int n = 0; n < select; n++) {
-//                    last = queue.poll();
-//                }
-//                for (String cluster : clusters.keySet()) {
-//                    if (clusters.get(cluster).getAccuracy() >= last)
-//                        selectedGreedy.add(clusters.get(cluster).getID());
-//                }
-//                System.out.println("Greedy clusters: " + selectedGreedy.toString());
-                System.out.println("Random clusters: " + selectedRandom.toString());
-
-                //option 3 network selection
-
-
-                for (TDAcluster cls : clusters.values()) {
-                    Collection<String> selectedNeig = graph.getNeighbors(cls.getID());
-                    Set<String> selectedClusters = new HashSet<>();
-                    selectedClusters.add(cls.getID());
-                    Iterator<String> iterator = selectedNeig.iterator();
-                    for (int j = 0; j < select - 1; j++) {
-                        if (iterator.hasNext()) {
-                            selectedClusters.add(iterator.next());
-                        }
-                    }
-                    br = new BufferedReader(new FileReader(clusterPredictionOutputFile));// this code reads the file too many times
-                    List<SingleEval> evaluations = evaluateWithSelected(selectedClusters, br);
-                    MetricComputer metric = new MetricComputer();
-                    double auc = metric.computeAUC(evaluations);
-                    double bias = metric.computeBias(evaluations);
-                    double logloss = metric.computeLogLoss(evaluations);
-                    System.out.println("Network " + cls.getID() + "\t" + select + "\t" + selectedClusters.size() + "\t" + targetEpsilon / 10.0 + "\t" + auc + "\t" + bias + "\t" + logloss);
-                }
-
-
-//                br = new BufferedReader(new FileReader(clusterPredictionOutputFile));
-//                int[] perfArray = evaluateWithSelected(selectedGreedy, br, targetEpsilon);
-//                System.out.println("Greedy" + "\t" + select + "\t\t" + targetEpsilon / 10.0 + "\t" + (perfArray[0] + perfArray[2] + 0.0) / Arrays.stream(perfArray).sum() + "\t" + perfArray[0] + "\t" + perfArray[1] + "\t" + perfArray[2] + "\t" + perfArray[3] + "\t" + perfArray[4]);
-//
-//                br = new BufferedReader(new FileReader(clusterPredictionOutputFile));
-//                perfArray = evaluateWithSelected(selectedRandom, br, targetEpsilon);
-//                System.out.println("Random" + "\t" + select + "\t\t" + targetEpsilon / 10.0 + "\t" + (perfArray[0] + perfArray[2] + 0.0) / Arrays.stream(perfArray).sum() + "\t" + perfArray[0] + "\t" + perfArray[1] + "\t" + perfArray[2] + "\t" + perfArray[3] + "\t" + perfArray[4]);
-            }
-    }
-
-    private static List<SingleEval> evaluateWithSelected(Set<String> selected, BufferedReader br) throws IOException {
-        String line = "";
-        List<SingleEval> evaluations = new ArrayList<>();
         while ((line = br.readLine()) != null) {
             String[] arr = line.split("\t");
+
             String cluster = arr[0];
-            if (!selected.contains(cluster)) continue;
+            String dp = arr[1];
+            int vote1 = Integer.parseInt(arr[2]);
+            int vote2 = Integer.parseInt(arr[3]);
             double predicted = Double.parseDouble(arr[4]);
-            double label = Double.parseDouble(arr[5]);
-            if (Double.isNaN(predicted) || Double.isNaN(label)) {
-                System.out.println("Error: nan probability values exist in the cluster output file");
-            }
+            double label = (int) Double.parseDouble(arr[5]);
+            TDAcluster cls;
+            if (clusters.containsKey(cluster))
+                cls = clusters.get(cluster);
+            else cls = new TDAcluster();
+            cls.setId(cluster);
+            cls.setTreeCount(vote1 + vote2);
             SingleEval eval = new SingleEval(predicted, label);
-            evaluations.add(eval);
+            cls.addToEvals(dp, eval);
+            clusters.put(cluster, cls);
+        }
+        MetricComputer metricComputer = new MetricComputer();
+        for (String c : clusters.keySet()) {
+            TDAcluster tdAcluster = clusters.get(c);
+            List<SingleEval> evals = tdAcluster.getEvalProbs();
+            double auc = metricComputer.computeAUC(evals);
+            tdAcluster.setAUC(auc);
+        }
+
+        for (int selectThisManyClusters : new int[]{1, 2, 3, 4, 5, 10}) {
+            MetricComputer metric = metricComputer;
+            // option 1 selectThisManyClusters randomly
+            Set<String> selectedRandom = new HashSet<>();
+            int size = clusters.size();
+            for (int n = 0; n < selectThisManyClusters; n++) {
+
+                double random = ThreadLocalRandom.current().nextInt(0, size);
+                Iterator<TDAcluster> iterator = clusters.values().iterator();
+                while (iterator.hasNext() && random > 1) {
+                    iterator.next();
+                    random--;
+                }
+                TDAcluster next = iterator.next();
+                selectedRandom.add(next.getID());
+            }
+
+            // option 2 selectThisManyClusters greedily
+            PriorityQueue<Double> queue = new PriorityQueue<>(size, Collections.reverseOrder());
+
+            for (TDAcluster cls : clusters.values()) {
+                queue.add(metricComputer.computeAUC(cls.getEvalProbs()));
+            }
+            Set<String> selectedGreedy = new HashSet<>();
+            double last = 0d;
+            for (int n = 0; n < selectThisManyClusters; n++) {
+                last = queue.poll();
+            }
+            for (String cluster : clusters.keySet()) {
+                TDAcluster tdAcluster = clusters.get(cluster);
+                if (tdAcluster.getAUC() >= last)
+                    selectedGreedy.add(tdAcluster.getID());
+            }
+            System.out.println("Greedy clusters: " + selectedGreedy.toString());
+            List<SingleEval> evaluationsGreedy = evaluateWithSelected(selectedGreedy, clusters);
+            double auc = metric.computeAUC(evaluationsGreedy);
+            double bias = metric.computeBias(evaluationsGreedy);
+            double logloss = metric.computeLogLoss(evaluationsGreedy);
+            System.out.println("Greedy" + "\t" + selectThisManyClusters + "\t" + auc + "\t" + bias + "\t" + logloss);
+
+            System.out.println("Random clusters: " + selectedRandom.toString());
+            List<SingleEval> evaluationsRandom = evaluateWithSelected(selectedRandom, clusters);
+            auc = metric.computeAUC(evaluationsRandom);
+            bias = metric.computeBias(evaluationsRandom);
+            logloss = metric.computeLogLoss(evaluationsRandom);
+            System.out.println("Random" + "\t" + selectThisManyClusters + "\t" + auc + "\t" + bias + "\t" + logloss);
+
+            //option 3 network selection
+            for (TDAcluster cls : clusters.values()) {
+                Collection<String> selectedNeig = graph.getNeighbors(cls.getID());
+                Set<String> selectedClusters = new HashSet<>();
+                selectedClusters.add(cls.getID());
+                Iterator<String> iterator = selectedNeig.iterator();
+                for (int j = 0; j < selectThisManyClusters - 1; j++) {
+                    if (iterator.hasNext()) {
+                        selectedClusters.add(iterator.next());
+                    }
+                }
+                List<SingleEval> evaluations = evaluateWithSelected(selectedClusters, clusters);
+
+                auc = metric.computeAUC(evaluations);
+                bias = metric.computeBias(evaluations);
+                logloss = metric.computeLogLoss(evaluations);
+                System.out.println("Network " + cls.getID() + "\t" + selectThisManyClusters + "\t" + selectedClusters.size() + "\t" + auc + "\t" + bias + "\t" + logloss);
+            }
 
         }
-        return evaluations;
+
+    }
+
+    private static List<SingleEval> evaluateWithSelected(Set<String> selected, Map<String, TDAcluster> clusters) throws IOException {
+        String line = "";
+        Map<String, SingleEval> probs = new HashMap<>();
+        for (String c : selected) {
+            TDAcluster tda = clusters.get(c);
+            Map<String, SingleEval> evals = tda.getEvals();
+            for (String dp : evals.keySet()) {
+                SingleEval eval = evals.get(dp);
+                if (!probs.containsKey(dp)) {
+                    probs.put(dp, eval);
+                } else {
+                    SingleEval eval2 = probs.get(dp);
+                    double runningSum = eval.getPredicted() + eval2.getPredicted();
+                    probs.put(dp, new SingleEval(runningSum, eval2.getActual()));
+                }
+            }
+        }
+        // recompute mean probabilities
+        int size = selected.size();
+        for (String dp : probs.keySet()) {
+            SingleEval value = probs.get(dp);
+            double prob = value.getPredicted() / size;
+            double label = value.getActual();
+            probs.put(dp, new SingleEval(prob, label));
+        }
+        return new ArrayList<>(probs.values());
     }
 
 
