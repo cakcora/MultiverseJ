@@ -51,6 +51,17 @@ public class BinaryFeatureSplitter extends BaseSplitter {
 		countTable.put(CountTableKey.OFF_NEGATIVE, 0);
 		return countTable;
 	}
+	
+	private boolean isPopulationEnough(Hashtable<CountTableKey, Integer> countTable) {
+		// Compute the population for left and right split.
+		var onPopulation = countTable.get(CountTableKey.ON_POSITIVE) +
+				countTable.get(CountTableKey.ON_NEGATIVE);
+		var offPopulation = countTable.get(CountTableKey.OFF_POSITIVE) +
+				countTable.get(CountTableKey.OFF_NEGATIVE);
+		// if on or off population are smaller than minimum population
+		// we can not split. Then, return null split.	
+		return !(onPopulation < minimumPopulation || offPopulation < minimumPopulation);
+	}
 
 	@Override
 	public Split findBestSplit(int featureIndex, List<DataPoint> dataSet, int startIndex, int endIndex) {
@@ -69,6 +80,13 @@ public class BinaryFeatureSplitter extends BaseSplitter {
 			var currentPoint = dataSet.get(i);
 			var key = getKey(currentPoint, featureIndex);
 			countTable.put(key, countTable.get(key) + 1);
+		}
+		
+		// If there is not enough population in left and right
+		// child splits, then we don't split.
+		if (!isPopulationEnough(countTable))
+		{
+			return null;
 		}
 
 		var originalEntropy = entropyComputer.computeEntropy(

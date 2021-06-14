@@ -2,8 +2,11 @@ package metrics;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Hashtable;
 import java.util.List;
+
+import core.MLContants;
 
 /**
  * Contains functionality to compute area under ROC curve.
@@ -43,7 +46,7 @@ public class MetricComputer {
 		}
 		
 		var result = new ArrayList<BinData>();
-		for (int i = 0; i <= 1000; i++)
+		for (int i = 1000; i >= 0; i--)
 		{
 			if (tabularBins.containsKey(i))
 			{
@@ -60,12 +63,15 @@ public class MetricComputer {
 	 */
 	public double computeAUC(List<SingleEval> evaluationData) {
 		
+		// Sort the evaluation data in ascending order.
 		Collections.sort(evaluationData);
-		var sortedBins = computeBins(evaluationData);
+		// Sorted bins in descending order.
+		var sortedBins = computeBins(evaluationData);		
+		
 		int totalPositive = 0;
 		int totalNegative = 0;
 		// Compute cumulative distribution numbers.
-		for (int i = sortedBins.size() - 1; i >=0; i--) {
+		for (int i = 0; i < sortedBins.size(); i++) {
 			var bin = sortedBins.get(i);
 			totalNegative += bin.getNumberOfNegativeLabels();
 			totalPositive += bin.getNumberOfPositiveLabels();
@@ -100,9 +106,11 @@ public class MetricComputer {
 		
 		for (var data : evaluationData) {
 			if (data.IsPositive()) {
-				logLoss += Math.log(data.getPredicted());
+				logLoss += (Math.abs(data.getPredicted()) < MLContants.PRECISE_EPSILON) ?
+						0.0 : Math.log(data.getPredicted());
 			} else {
-				logLoss += Math.log(1.0d - data.getPredicted());
+				logLoss += (Math.abs(1.0d - data.getPredicted()) < MLContants.PRECISE_EPSILON) ?
+						0.0 : Math.log(1.0d - data.getPredicted());
 			}
 		}
 		
@@ -129,6 +137,27 @@ public class MetricComputer {
 		return Math.abs(totalPredictedPositive - totalTruePositive) / totalTruePositive;
 	}
 	
+	
+	/**
+	 * Order by Descending Bins.
+	 */
+	class BinSorter implements Comparator<BinData>  {
+		
+		public BinSorter(){}
+		
+	    public int compare(BinData left, BinData right) { 
+	    	if (left.binId == right.binId)
+			{
+				return 0;
+			}
+			if (left.binId < right.binId)
+			{
+				return 1;
+			} else {
+				return -1;
+			}
+	    } 
+	}
 	
 	class BinData {
 		/**
@@ -194,6 +223,27 @@ public class MetricComputer {
 			// FPR = (NumberOfNegativeLabels in current bin and right side) / (TotalNegativeLabels).
 			// TotalNegativeLabels = TotalFalsePositiveLabels + TotalTrueNegativeLabels.
 			return (this.numberOfNegativeLabels * 1.0d) / (totalNegativeLabels * 1.0d);
+		}
+		
+		@Override
+		public String toString()
+		{
+			return String.format(
+					"Bin: %d, Pos: %d, Neg: %d",
+					binId,
+					numberOfPositiveLabels,
+					numberOfNegativeLabels);
+		}
+		
+		public String print(int totalPositiveLabels, int totalNegativeLabels)
+		{
+			return String.format(
+					"Bin: %d, Pos: %d, Neg: %d TPR: %f FPR: %f",
+					binId,
+					numberOfPositiveLabels,
+					numberOfNegativeLabels,
+					getTruePositiveRatio(totalPositiveLabels),
+					getFalsePositiveRatio(totalNegativeLabels));
 		}
 	}
 }

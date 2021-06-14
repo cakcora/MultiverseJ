@@ -2,6 +2,8 @@ package core;
 
 import metrics.SingleEval;
 import mlcore.DecisionTreeLearner;
+import Utils.*;
+
 
 import java.util.*;
 
@@ -71,7 +73,7 @@ public class RandomForest {
             List<DataPoint> baggedDataset = sampleData(dataPoints);
             //sample data features to be used in the DT
             ArrayList<Integer> sampledFeatures = sampleFeatures(maxFeatures, featureCount, featureMap);
-            DecisionTreeLearner dt = new DecisionTreeLearner(this.maxDepth, this.minPopulation, sampledFeatures);
+            DecisionTreeLearner dt = new DecisionTreeLearner(this.maxDepth, this.minPopulation, Utils.toSortedArray(sampledFeatures));
             DecisionTree decisionTree = dt.train(baggedDataset);
             //save the tree
             decisionTrees.add(decisionTree);

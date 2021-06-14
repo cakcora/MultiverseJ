@@ -26,15 +26,16 @@ public class ContinuousFeatureSplitter extends BaseSplitter {
 		quickSorter = new QuickSort();
 	}
 
-	private LabelCount getLabelStats(List<DataPoint> data) {
+	private LabelCount getLabelStats(List<DataPoint> data, int startIndex, int endIndex) {
 		int numberOfPositiveSamples = 0;
 		int numberOfNegativeSamples = 0;
-		for (DataPoint point : data) {
-			if (point.IsPositive()) {
+		for (int index = startIndex; startIndex <= endIndex; startIndex ++) {
+			if (data.get(startIndex).IsPositive()) {
 				numberOfPositiveSamples++;
 			} else {
 				numberOfNegativeSamples++;
 			}
+			
 		}
 		return new LabelCount(numberOfPositiveSamples, numberOfNegativeSamples);
 	}
@@ -68,7 +69,7 @@ public class ContinuousFeatureSplitter extends BaseSplitter {
 		
 		quickSorter.sort(dataSet, startIndex, endIndex, featureIndex);
 
-		var labelStat = getLabelStats(dataSet);
+		var labelStat = getLabelStats(dataSet, startIndex, endIndex);
 		var initialEntropy = computeEntropy(labelStat);
 
 		var currentLabels = new LabelCount(0, 0);
@@ -77,12 +78,17 @@ public class ContinuousFeatureSplitter extends BaseSplitter {
 		double pivot = Double.MAX_VALUE;
 		double minEntroy = Double.MAX_VALUE;
 
+		// We need to start with startIndex to make sure that
+		// currentLabels are computed properly.
 		for (int i = startIndex; i <= (endIndex - minimumPopulation); i++) {
 			currentLabels.addLabel(dataSet.get(i));
-			if (i >= minimumPopulation) {
+			// We can only split if i >= (startIndex + minimumPopulation) since population
+			// of left split should be more than size of minimumPopulation.
+			if (i >= (startIndex + minimumPopulation)) {
+				// Check the difference for neighbor positions.
 				double diff = dataSet.get(i).getFeature(featureIndex) - dataSet.get(i + 1).getFeature(featureIndex);
 				// We need to split at least one time minimum.
-				if (i == minimumPopulation || (Math.abs(diff) > MLContants.EPSILON)) {
+				if (i == (startIndex + minimumPopulation) || (Math.abs(diff) > MLContants.EPSILON)) {
 					double newEntropy = getWeightedEntropy(currentLabels, labelStat.subtract(currentLabels));
 					if ((initialEntropy - newEntropy) > maxGain) {
 						maxGain = initialEntropy - newEntropy;

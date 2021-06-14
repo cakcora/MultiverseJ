@@ -1,6 +1,5 @@
 package mlcore;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -47,7 +46,7 @@ public class DecisionTreeLearner {
 	/**
 	 * Indexes of features that current tree is using.
 	 */
-	private ArrayList<Integer> features;
+	private int[] features;
 
 	/**
 	 * minimum population for split.
@@ -58,7 +57,7 @@ public class DecisionTreeLearner {
 		this.quickSorter = new QuickSort();
 	}
 
-	public DecisionTreeLearner(int maxDepth, int minPopulation, ArrayList<Integer> features) {
+	public DecisionTreeLearner(int maxDepth, int minPopulation, int[] features) {
 		this();
 		this.maxDepth = maxDepth;
 		this.tree = new DecisionTree();
@@ -145,7 +144,7 @@ public class DecisionTreeLearner {
 	/**
 	 * Makes the current node as leaf node as it can not be splitted further.
 	 * 
-	 * @param dataSet       the input list of data point.
+	 * @param data       the input list of data point.
 	 * @param startIndex the start index of the sub list that is considered.
 	 * @param endIndex   the end index of the sub list that is considered.
 	 * @return the index of newly created leaf node.
