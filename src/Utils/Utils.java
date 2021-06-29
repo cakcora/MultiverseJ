@@ -8,7 +8,9 @@ import edu.uci.ics.jung.graph.util.Pair;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public class Utils {
@@ -62,4 +64,15 @@ public class Utils {
         }
         wr.close();
     }
+    
+    public static int[] toSortedArray(List<Integer> input) {
+		var result = new int[input.size()];
+		int index = 0;
+		for (var item : input) {
+			result[index] = item;
+			index++;
+		}
+		Arrays.sort(result);
+		return result;
+	}
 }

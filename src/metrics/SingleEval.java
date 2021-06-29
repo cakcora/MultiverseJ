@@ -13,18 +13,18 @@ public class SingleEval implements Comparable<SingleEval>{
 	/**
 	 * Predicted value for binary classification problem.
 	 */
-	private final double predicted;
-
+	private double predicted;
+	
 	/**
 	 * Actual value for binary classification problem.
 	 */
-	private final double actual;
-
-
+	private double actual;
+	
+	
 	/**
 	 * The bin number for AUC between [0, 999]
 	 */
-	private final int binId;
+	private int binId;
 	
 	public SingleEval(double predicted, double actual)
 	{
@@ -45,13 +45,28 @@ public class SingleEval implements Comparable<SingleEval>{
 		return binId;
 	}
 
+	/**
+	 * Ascending Order.
+	 */
 	@Override
 	public int compareTo(SingleEval that) {
-		if (this.predicted < that.getPredicted()) {
+		if (Math.abs(this.predicted - that.getPredicted()) < MLContants.PRECISE_EPSILON)
+		{
+			return 0;
+		}
+		if (this.predicted < that.getPredicted())
+		{
 			return -1;
-		} else if (this.predicted > that.getPredicted()) {
+		} else {
 			return 1;
-		} else return 0;
+		}
+	}
+	
+	@Override
+	public String toString()
+	{
+		return String.format("Predicted: %f, Actual: %f, Bin: %d",
+				predicted, actual, binId);
 	}
 	
 	/**
@@ -69,5 +84,6 @@ public class SingleEval implements Comparable<SingleEval>{
 	public boolean IsNegative() {
 		return (Math.abs(this.actual - DataPoint.NEGATIVE_LABEL) < MLContants.EPSILON);
 	}
+
 
 }
