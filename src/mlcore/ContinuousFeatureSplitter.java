@@ -1,6 +1,5 @@
 package mlcore;
 
-import java.util.Comparator;
 import java.util.List;
 
 import core.DataPoint;
@@ -86,15 +85,23 @@ public class ContinuousFeatureSplitter extends BaseSplitter {
 			// of left split should be more than size of minimumPopulation.
 			if (i >= (startIndex + minimumPopulation)) {
 				// Check the difference for neighbor positions.
-				double diff = dataSet.get(i).getFeature(featureIndex) - dataSet.get(i + 1).getFeature(featureIndex);
+				double diff = Math.abs(dataSet.get(i).getFeature(featureIndex) - dataSet.get(i + 1).getFeature(featureIndex));
 				// We need to split at least one time minimum.
-				if (i == (startIndex + minimumPopulation) || (Math.abs(diff) > MLContants.EPSILON)) {
-					double newEntropy = getWeightedEntropy(currentLabels, labelStat.subtract(currentLabels));
-					if ((initialEntropy - newEntropy) > maxGain) {
-						maxGain = initialEntropy - newEntropy;
-						pivot = dataSet.get(i).getFeature(featureIndex);
-						minEntroy = newEntropy;
-						isSplitFound = true;
+				if (i == (startIndex + minimumPopulation) || (Math.abs(diff) > MLContants.PRECISE_EPSILON)) {
+					int tempStart = i;
+					while (diff < MLContants.PRECISE_EPSILON && i < (endIndex-1)) {
+						i++;
+						diff =  Math.abs(dataSet.get(tempStart).getFeature(featureIndex) - dataSet.get(i + 1).getFeature(featureIndex));
+					}
+					// Make sure we have enough data on right hand side.
+					if ((endIndex - i + 1) > minimumPopulation) {
+						double newEntropy = getWeightedEntropy(currentLabels, labelStat.subtract(currentLabels));
+						if ((initialEntropy - newEntropy) > maxGain) {
+							maxGain = initialEntropy - newEntropy;
+							pivot = dataSet.get(i).getFeature(featureIndex);
+							minEntroy = newEntropy;
+							isSplitFound = true;
+						}
 					}
 				}
 			}
