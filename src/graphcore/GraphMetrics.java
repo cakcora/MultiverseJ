@@ -128,7 +128,8 @@ public class GraphMetrics {
     }
 
     public int getVertexCount() {
-        double vertexCount = metrics.get("vertexCount");
-        return (int) vertexCount;
+        if (metrics.containsKey("vertexCount")) {
+            return metrics.get("vertexCount").intValue();
+        } else return 0;
     }
 }
