@@ -17,12 +17,13 @@ public class LabelFlippingPoisoner {
      * @return a newly created, poisoned data set
      */
     public Dataset poison(Dataset dataset, int poisonLevel) {
-        if(poisonLevel<0||poisonLevel>100){
+        if (poisonLevel < 0 || poisonLevel > 100) {
             return null;
         }
         // compute how many data points we should poison
         List<DataPoint> dataPoints = dataset.getDatapoints();
-        int poisonSize = (int) Math.ceil(dataPoints.size() * poisonLevel / 100.0);
+        int dataSize = dataPoints.size();
+        int poisonSize = (int) Math.ceil(dataSize * poisonLevel / 100.0);
         ArrayList<DataPoint> poisonedDataPoints = new ArrayList<>();
         //create a new dataset to be poisoned
         for (DataPoint dataPoint : dataPoints) {
@@ -32,9 +33,9 @@ public class LabelFlippingPoisoner {
 
         Set<Integer> poisoned = new HashSet<>();
         for (int i = 0; i < poisonSize; i++) {
-            int indexToBePoisoned = random.nextInt(poisonSize);
+            int indexToBePoisoned = random.nextInt(dataSize);
             while (!poisoned.add(indexToBePoisoned)) {//was that data point poisoned before?
-                indexToBePoisoned = random.nextInt(poisonSize);
+                indexToBePoisoned = random.nextInt(dataSize);
             }
             // we will poison the data point at the indexToBePoisoned
             DataPoint poisonedDataPoint = poisonedDataPoints.get(indexToBePoisoned);

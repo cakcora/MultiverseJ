@@ -65,7 +65,7 @@ public class PoisonedLabelExperiment {
 					pos++;
 				}
 			}
-			System.out.println(poisonLevel + "% poisoned dataset has " + pos + " positive labeled data points.");
+			System.out.println(poisonLevel + "% poisoned training dataset has " + pos + " positive labeled data points.");
 			RandomForest rf = new RandomForest(random);
 			rf.setNumTrees(300);
 			rf.setSampleSize(2000);
