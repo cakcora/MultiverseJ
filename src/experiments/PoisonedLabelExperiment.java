@@ -125,9 +125,9 @@ public class PoisonedLabelExperiment {
 		GraphExtractor extractor = new GraphExtractor(dt);
 		DirectedSparseMultigraph<Integer, Integer> graph = extractor.getGraph();
 		GraphMetrics metric = new GraphMetrics();
-		if (graph.getVertexCount() > 1) {
-			metric.computeAllMetrices(graph);
-		}
+
+		metric.computeAllMetrices(graph);
+
 
 		return metric;
 	}

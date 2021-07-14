@@ -65,7 +65,7 @@ class ClusterSelectionExperiment {
             tdAcluster.setAUC(auc);
         }
 
-        for (int selectThisManyClusters : new int[]{1, 2, 3, 4, 5, 10}) {
+        for (int selectThisManyClusters : new int[]{1, 2, 3, 4, 5, 10, 20, 50}) {
             MetricComputer metric = metricComputer;
             // option 1 selectThisManyClusters randomly
             Set<String> selectedRandom = new HashSet<>();
@@ -98,25 +98,27 @@ class ClusterSelectionExperiment {
                 if (tdAcluster.getAUC() >= last)
                     selectedGreedy.add(tdAcluster.getID());
             }
-            System.out.println("Greedy clusters: " + selectedGreedy.toString());
+            //System.out.println("Greedy clusters: " + selectedGreedy.toString());
             List<SingleEval> evaluationsGreedy = evaluateWithSelected(selectedGreedy, clusters);
-            double auc = metric.computeAUC(evaluationsGreedy);
+            double greedyAUC = metric.computeAUC(evaluationsGreedy);
             double bias = metric.computeBias(evaluationsGreedy);
             double logloss = metric.computeLogLoss(evaluationsGreedy);
-            System.out.println("Greedy" + "\t" + selectThisManyClusters + "\t" + auc + "\t" + bias + "\t" + logloss);
+            System.out.println("Greedy" + "\t" + selectThisManyClusters + "\t\t" + greedyAUC + "\t" + bias + "\t" + logloss);
 
-            System.out.println("Random clusters: " + selectedRandom.toString());
+            //System.out.println("Random clusters: " + selectedRandom.toString());
             List<SingleEval> evaluationsRandom = evaluateWithSelected(selectedRandom, clusters);
-            auc = metric.computeAUC(evaluationsRandom);
+            double randomAUC = metric.computeAUC(evaluationsRandom);
             bias = metric.computeBias(evaluationsRandom);
             logloss = metric.computeLogLoss(evaluationsRandom);
-            System.out.println("Random" + "\t" + selectThisManyClusters + "\t" + auc + "\t" + bias + "\t" + logloss);
+            System.out.println("Random" + "\t" + selectThisManyClusters + "\t\t" + randomAUC + "\t" + bias + "\t" + logloss);
 
             //option 3 network selection
+            double maxTDA = 0;
             for (TDAcluster cls : clusters.values()) {
-                Collection<String> selectedNeig = graph.getNeighbors(cls.getID());
+                String id = cls.getID();
+                Collection<String> selectedNeig = graph.getNeighbors(id);
                 Set<String> selectedClusters = new HashSet<>();
-                selectedClusters.add(cls.getID());
+                selectedClusters.add(id);
                 Iterator<String> iterator = selectedNeig.iterator();
                 for (int j = 0; j < selectThisManyClusters - 1; j++) {
                     if (iterator.hasNext()) {
@@ -125,10 +127,13 @@ class ClusterSelectionExperiment {
                 }
                 List<SingleEval> evaluations = evaluateWithSelected(selectedClusters, clusters);
 
-                auc = metric.computeAUC(evaluations);
+                double tdaAUC = metric.computeAUC(evaluations);
                 bias = metric.computeBias(evaluations);
                 logloss = metric.computeLogLoss(evaluations);
-                System.out.println("Network " + cls.getID() + "\t" + selectThisManyClusters + "\t" + selectedClusters.size() + "\t" + auc + "\t" + bias + "\t" + logloss);
+                if (tdaAUC > maxTDA) {
+                    maxTDA = tdaAUC;
+                    System.out.println("Network " + id + "\t" + selectThisManyClusters + "\t" + selectedClusters.size() + "\t" + tdaAUC + "\t" + bias + "\t" + logloss);
+                }
             }
 
         }
