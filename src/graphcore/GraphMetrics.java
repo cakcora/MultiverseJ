@@ -56,15 +56,20 @@ public class GraphMetrics {
             if (!Double.isNaN(dist))
                 distanceMap.put(node, dist);
         }
-        metrics.put("diameter", Collections.max(distanceMap.values()));
+        if (distanceMap.isEmpty()) {
+            metrics.put("diameter", Double.MAX_VALUE);
+            metrics.put("diameter", Double.MAX_VALUE);
+        } else {
+            metrics.put("diameter", Collections.max(distanceMap.values()));
+            metrics.put("meanDistance", Utils.getAverage(distanceMap.values()));
+        }
 
 
         // 6- numStrongCluster: number of strongly connected components on $G_j$
 
         // 7- avgStrCompSize: average size of strong connected components on $G_j$
         // 8- meanDist: mean distance between node pairs on the directed graph $G_j$
-        double meanDistance = Utils.getAverage(distanceMap.values());
-        metrics.put("meanDistance",Utils.getAverage(distanceMap.values()));
+
 
         // 9- medHub: mean hub scores of nodes on the undirected graph $G_j$
         // pass

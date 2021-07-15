@@ -116,13 +116,15 @@ class ClusterSelectionExperiment {
             double maxTDA = 0;
             for (TDAcluster cls : clusters.values()) {
                 String id = cls.getID();
-                Collection<String> selectedNeig = graph.getNeighbors(id);
                 Set<String> selectedClusters = new HashSet<>();
                 selectedClusters.add(id);
-                Iterator<String> iterator = selectedNeig.iterator();
-                for (int j = 0; j < selectThisManyClusters - 1; j++) {
-                    if (iterator.hasNext()) {
-                        selectedClusters.add(iterator.next());
+                Collection<String> selectedNeig = graph.getNeighbors(id);
+                if (selectedNeig != null) {
+                    Iterator<String> iterator = selectedNeig.iterator();
+                    for (int j = 0; j < selectThisManyClusters - 1; j++) {
+                        if (iterator.hasNext()) {
+                            selectedClusters.add(iterator.next());
+                        }
                     }
                 }
                 List<SingleEval> evaluations = evaluateWithSelected(selectedClusters, clusters);

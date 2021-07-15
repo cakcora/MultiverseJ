@@ -68,7 +68,7 @@ public class PoisonedLabelExperiment {
 			System.out.println(poisonLevel + "% poisoned training dataset has " + pos + " positive labeled data points.");
 			RandomForest rf = new RandomForest(random);
 			rf.setNumTrees(300);
-			rf.setSampleSize(2000);
+			//rf.setSampleSize(2000);
 			var featureSize = new HashSet(training.getFeatureMap().values()).size();
 			int splitFeatureSize = (int) Math.ceil(Math.sqrt(featureSize));
 			rf.setNumFeaturesToConsiderWhenSplitting(splitFeatureSize);
@@ -93,13 +93,14 @@ public class PoisonedLabelExperiment {
 				dt.writeTree(outputPath);
 				GraphMetrics metric = computeGraphMetrics(dt);
 
-				if (metric.getVertexCount() > 0) {
+				int vertexCount = metric.getVertexCount();
+				if (vertexCount > 1) {
 					DataPoint secLvlDataPoint = metric.convert2DataPoint();
 					secLvlDataPoint.setLabel(poisonLevel);
 					secLvlDataPoint.setID(treeId);
 					secondLevelDataset.add(secLvlDataPoint);
 				} else {
-					System.out.println("Error: Graph in poison level " + poisonLevel + " has no nodes?");
+					System.out.println("Error: Tree " + treeId + " in poison level " + poisonLevel + " has " + vertexCount + " node(s)?");
 				}
 				secondLevelDataset.setFeatureNames(metric.getMetricNames());
 				treeId++;
