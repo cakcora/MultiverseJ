@@ -17,6 +17,20 @@ import java.util.*;
  */
 public class TDAMapperSelectionExperiment {
     public static void main(String[] args) throws Exception {
+
+
+        /*  run params:
+         C:/multiverse/clusterNodes.csv
+C:/multiverse/clusterLinks.csv
+C:/multiverse/trees/
+C://multiverse/clusternodeIDs.csv
+"C:/data\Multiverse Data Research\03 The knote Authentication Dataset\data_banknote_authentication.txt"
+" "
+","
+C:/multiverse/clusteroutput.txt
+0
+45
+         */
         String nodeFile = args[0];
         String edgeFile = args[1];
         String treeDir = args[2];

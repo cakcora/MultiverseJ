@@ -17,11 +17,18 @@ import java.util.*;
 
 public class PoisonedLabelExperiment {
 	public static void main(String[] args) throws Exception {
+		/* param list
+		 * "C:\data\Multiverse Data Research\03 The knote Authentication Dataset\data_banknote_authentication.txt"
+		 * " "
+		 * ","
+		 * C://multiverse/trees/
+		 * "C://multiverse/metrics.txt"
+		 * "C://multiverse/graphs.txt"
+		 */
 		LoaderOptions options = new LoaderOptions();
 
 		options.setQuoter(args[1].charAt(0));
 		options.setSep(args[2].charAt(0));
-		// run params: C:/Downloads/adult.data " " "," C:/Downloads/trees/ C:/adultMetrics.txt C://adultGraphs.txt
 		String csvFile = args[0];
 		String outputPath = args[3];
 		String metricFile = args[4];
