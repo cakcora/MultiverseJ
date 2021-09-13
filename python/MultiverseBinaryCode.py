@@ -27,7 +27,7 @@ mapper = km.KeplerMapper()
 scaler = MinMaxScaler(feature_range=(0, 1))
 
 Xfilt = scaler.fit_transform(Xfilt)
-lens = mapper.fit_transform(Xfilt, projection="knn_distance_10")#sklearn.manifold.TSNE())
+lens = mapper.fit_transform(Xfilt, projection=sklearn.manifold.TSNE())
 cls = len(set(yfilt))
 
 graph = mapper.map(
