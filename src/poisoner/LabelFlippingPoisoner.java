@@ -42,7 +42,7 @@ public class LabelFlippingPoisoner {
             double label = poisonedDataPoint.getLabel();
             if (label == DataPoint.POSITIVE_LABEL) {// change the label from + to -
                 poisonedDataPoint.setLabel(DataPoint.NEGATIVE_LABEL);
-            } else {
+            } else{
                 poisonedDataPoint.setLabel(DataPoint.POSITIVE_LABEL);
             }
         }

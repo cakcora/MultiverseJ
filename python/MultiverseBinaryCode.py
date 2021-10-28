@@ -7,8 +7,8 @@ import kmapper as km
 import sklearn
 import csv
 
-abs_dir_path = "C:/multiverse/"
-metricFile = "C:/multiverse/metrics.txt"
+abs_dir_path = "C:/Users/win_10/Desktop/MyProject/Multiverse/Results"
+metricFile = "C:/Users/win_10/Desktop/MyProject/Multiverse/Results/metrics.txt"
 
 dataset = pd.read_csv(metricFile,sep="\t",header=0)
 firstPoisonLevel = 0.0

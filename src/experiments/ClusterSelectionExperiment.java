@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-class ClusterSelectionExperiment {
+public class ClusterSelectionExperiment {
     public static void main(String[] args) throws IOException {
         String clusterPredictionOutputFile = args[0];
         String edgeFile = args[1];

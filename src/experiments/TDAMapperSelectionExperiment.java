@@ -75,8 +75,10 @@ C:/multiverse/clusteroutput.txt
         rf.setNumFeaturesToConsiderWhenSplitting(splitFeatureSize);
         rf.setMaxTreeDepth(100);
         rf.setMinLeafPopulation(3);
-        Dataset[] split = dataset.split(80);
+
+        Dataset[] split = dataset.randomSplit(20 , false);
         Dataset test = split[1];
+
         System.out.println("Test dataset contains " + test.getDatapoints().size() + " datapoints");
         BufferedWriter out = new BufferedWriter(new FileWriter(clusterPredictionOutputFile));
 
