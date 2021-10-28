@@ -7,16 +7,16 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="CuneytRunningProject_Refine" />
+        <module name="Multiverse" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="CuneytRunningProject_Refine" target="1.11" />
+      <module name="Multiverse" target="1.11" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="CuneytRunningProject_Refine" options="--add-exports java.base/jdk.internal.logger=ALL-UNNAMED" />
+      <module name="Multiverse" options="--add-exports java.base/jdk.internal.logger=ALL-UNNAMED" />
     </option>
   </component>
 </project>

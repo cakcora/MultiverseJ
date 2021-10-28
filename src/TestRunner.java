@@ -4,11 +4,11 @@ import experiments.ClusterSelectionExperiment;
 public class TestRunner {
     public static void main(String[] args) throws Exception {
         // Change before run
-        String projectPath = "C:\\Users\\win_10\\Desktop\\MyProject\\CuneytRunningProject\\";
+        String projectPath = "C:\\Users\\win_10\\Desktop\\MyProject\\Multiverse\\";
 
         // Variables for Poisoned Function Run
         String[] argArrayPoisoned =new String[] {
-                projectPath +"data\\adult.data", " ",
+                projectPath +"data\\Diabetes\\diabetes.data", " ",
                 "," , projectPath +"\\trees\\trees"
                 , projectPath +"Results\\metrics.txt"
                 , projectPath +"Results\\graphs.txt"};
@@ -37,10 +37,10 @@ public class TestRunner {
 
 
         // for running Poisoned uncomment it
-        //RunPoisonedLabelExperiment(argArrayPoisoned);
+        RunPoisonedLabelExperiment(argArrayPoisoned);
 
         // for running TDAMap uncomment it
-        RunTDAMapper(argArrayTDAMapper);
+        //RunTDAMapper(argArrayTDAMapper);
 
         // for running ClusterSelectionExperiment uncomment it
         //RunClusterSelectionExperiment(argArrayClusterSelection);
