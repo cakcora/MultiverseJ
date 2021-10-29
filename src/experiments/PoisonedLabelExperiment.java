@@ -45,9 +45,10 @@ public class PoisonedLabelExperiment {
 		dataset.setFeatureParents(csvLoader.getFeatureMap());
 
 		dataset.shuffleDataPoints();
-		Dataset[] split = dataset.split(80);
-		Dataset training = split[0];
+		Dataset[] split = dataset.randomSplit(20 , false);
 		Dataset test = split[1];
+		Dataset training = split[0];
+
 
 		System.out.println("The fanned-out dataset has these features: " + Arrays.toString(csvLoader.getFeatureNames()));
 
