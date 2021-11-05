@@ -2,6 +2,10 @@ import experiments.PoisonedLabelExperiment;
 import experiments.TDAMapperSelectionExperiment;
 import experiments.ClusterSelectionExperiment;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 
 /**
@@ -23,7 +27,7 @@ public class BatchRunner {
         HashMap  <Integer , String[]> sampleVariablesPoisoner = new HashMap<Integer, String[]>();
         // Variables for Poisoned Function Run
         String[] argArrayPoisoned =new String[] {
-                projectPath +"data\\Bank-note\\bn.data", " ",
+                projectPath +"data\\Sonar(Small)\\test.data", " ",
                 "," , projectPath +"\\trees\\trees"
                 , projectPath +"Results\\metrics.txt"
                 , projectPath +"Results\\graphs.txt"};
@@ -36,7 +40,7 @@ public class BatchRunner {
                 projectPath +"Results\\clusterLinks.csv",
                 projectPath +"\\trees\\trees",
                 projectPath +"Results\\clusternodeIDs.csv",
-                projectPath +"data\\Bank-note\\bn.data",
+                projectPath +"data\\Sonar(Small)\\test.data",
                 " ",
                 ",",
                 projectPath +"clusterOutPut\\clusteroutput.txt",
@@ -62,8 +66,25 @@ public class BatchRunner {
 
             // for running Python MultiverseBinaryCode.py
             System.out.print("\n ---- RUNNING Python BINARY CODE ----");
-            Process p = Runtime.getRuntime().exec("python python/MultiverseBinaryCode.py");
-            int exitVal = p.waitFor();
+
+            Process p = Runtime.getRuntime().exec("python " + projectPath+"python\\MultiverseBinaryCode.py" );
+            BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String ret =  in.readLine();
+            System.out.println("value is : "+ret);
+
+//            ProcessBuilder pb = new ProcessBuilder("python", projectPath+"python\\MultiverseBinaryCode.py");
+//            pb.redirectOutput(new File("output.txt"));
+//            Process process = pb.start();
+//            process.waitFor();
+//            System.out.println("exitValue()>>"+process.exitValue());
+//            ProcessBuilder.Redirect output = pb.redirectOutput();
+//            File outputFile = output.file();
+//            BufferedReader br = new BufferedReader(new FileReader(outputFile));
+//            String st;
+//            while ((st = br.readLine()) != null) {
+//                System.out.println(st);
+//            }
+
             System.out.print("\n ---- Python BINARY CODE FINISHED ----");
 
             // for running TDAMap uncomment it
