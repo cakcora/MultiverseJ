@@ -24,6 +24,7 @@ public class PoisonedLabelExperiment {
 		 * C://multiverse/trees/
 		 * "C://multiverse/metrics.txt"
 		 * "C://multiverse/graphs.txt"
+		 * * seed (such as 27)
 		 */
 		LoaderOptions options = new LoaderOptions();
 
@@ -33,6 +34,7 @@ public class PoisonedLabelExperiment {
 		String outputPath = args[3];
 		String metricFile = args[4];
 		String graphFile = args[5];
+		int seed = Integer.parseInt(args[6]);
 		options.featureIgnoreThreshold(20);
 		options.convertRealToFactorThreshold(4);
 		char separator = options.getSeparator();
@@ -44,8 +46,9 @@ public class PoisonedLabelExperiment {
 		dataset.setFeatureNames(csvLoader.getFeatureNames());
 		dataset.setFeatureParents(csvLoader.getFeatureMap());
 
-		dataset.shuffleDataPoints();
-		Dataset[] split = dataset.randomSplit(20 , false);
+		Random rnd = new Random(seed);
+		dataset.shuffleDataPoints(rnd);
+		Dataset[] split = dataset.split(20);
 		Dataset test = split[1];
 		Dataset training = split[0];
 

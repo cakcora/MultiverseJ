@@ -30,6 +30,7 @@ C://multiverse/clusternodeIDs.csv
 C:/multiverse/clusteroutput.txt
 0
 45
+seed
          */
         String nodeFile = args[0];
         String edgeFile = args[1];
@@ -41,7 +42,7 @@ C:/multiverse/clusteroutput.txt
         String clusterPredictionOutputFile = args[7];
         int targetPoison1 = Integer.parseInt(args[8]);
         int targetPoison2 = Integer.parseInt(args[9]);
-
+        int seed = Integer.parseInt(args[10]);
 
         // load tdamapper clusters defined by tdamapper
         System.out.println("Loading tda mapper results...");
@@ -75,8 +76,9 @@ C:/multiverse/clusteroutput.txt
         rf.setNumFeaturesToConsiderWhenSplitting(splitFeatureSize);
         rf.setMaxTreeDepth(100);
         rf.setMinLeafPopulation(3);
-
-        Dataset[] split = dataset.randomSplit(20 , false);
+        Random rnd = new Random(seed);
+        dataset.shuffleDataPoints(rnd);
+        Dataset[] split = dataset.split(20);
         Dataset test = split[1];
 
         System.out.println("Test dataset contains " + test.getDatapoints().size() + " datapoints");
