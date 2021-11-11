@@ -35,6 +35,9 @@ public class PoisonedLabelExperiment {
 		String metricFile = args[4];
 		String graphFile = args[5];
 		int seed = Integer.parseInt(args[6]);
+		int poisonFirst = Integer.parseInt(args[7]);
+		int poisonLast = Integer.parseInt(args[8]);
+		int poisonInc = Integer.parseInt(args[9]);
 		options.featureIgnoreThreshold(20);
 		options.convertRealToFactorThreshold(4);
 		char separator = options.getSeparator();
@@ -48,9 +51,9 @@ public class PoisonedLabelExperiment {
 
 		Random rnd = new Random(seed);
 		dataset.shuffleDataPoints(rnd);
-		Dataset[] split = dataset.split(20);
-		Dataset test = split[1];
-		Dataset training = split[0];
+		Dataset[] partsOfData = dataset.split(20);
+		Dataset test = partsOfData[1];
+		Dataset training = partsOfData[0];
 
 
 		System.out.println("The fanned-out dataset has these features: " + Arrays.toString(csvLoader.getFeatureNames()));
@@ -67,7 +70,7 @@ public class PoisonedLabelExperiment {
 		// we will store sample graphs from each poison level to visualize some results in the paper
 		Map<Integer, Graph<Integer, Integer>> sampleGraphs = new HashMap<>();
 		long treeId = 0;
-		for (int poisonLevel = 0; poisonLevel <= 45; poisonLevel += 5) {
+		for (int poisonLevel = poisonFirst; poisonLevel <= poisonLast; poisonLevel += poisonInc) {
 			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner(random);
 			Dataset poisonedDataset = poisoner.poison(training, poisonLevel);
 			int pos = 0;

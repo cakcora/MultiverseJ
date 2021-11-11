@@ -67,7 +67,7 @@ public class Dataset {
         d2.setFeatureParents(this.getFeatureMap());
         d1.setFeatureNames(this.getFeatureNames());
         d2.setFeatureNames(this.getFeatureNames());
-        return new Dataset[]{d1, d2};
+        return new Dataset[]{d2, d1};
     }
 
 

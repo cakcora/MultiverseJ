@@ -5,9 +5,7 @@ import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import metrics.MetricComputer;
 import metrics.SingleEval;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -15,7 +13,8 @@ public class ClusterSelectionExperiment {
     public static void main(String[] args) throws IOException {
         String clusterPredictionOutputFile = args[0];
         String edgeFile = args[1];
-
+        String resultFile = args[2];
+        BufferedWriter wr = new BufferedWriter(new FileWriter(resultFile));
         BufferedReader rd = new BufferedReader(new FileReader(edgeFile));
         UndirectedSparseGraph<String, Integer> graph = new UndirectedSparseGraph();
         String line = "";
@@ -104,6 +103,7 @@ public class ClusterSelectionExperiment {
             double bias = metric.computeBias(evaluationsGreedy);
             double logloss = metric.computeLogLoss(evaluationsGreedy);
             System.out.println("Greedy" + "\t" + selectThisManyClusters + "\t\t" + greedyAUC + "\t" + bias + "\t" + logloss);
+            wr.write("Greedy" + "\t" + selectThisManyClusters + "\t\t" + greedyAUC + "\t" + bias + "\t" + logloss + "\r\n");
 
             //System.out.println("Random clusters: " + selectedRandom.toString());
             List<SingleEval> evaluationsRandom = evaluateWithSelected(selectedRandom, clusters);
@@ -111,6 +111,7 @@ public class ClusterSelectionExperiment {
             bias = metric.computeBias(evaluationsRandom);
             logloss = metric.computeLogLoss(evaluationsRandom);
             System.out.println("Random" + "\t" + selectThisManyClusters + "\t\t" + randomAUC + "\t" + bias + "\t" + logloss);
+            wr.write("Random" + "\t" + selectThisManyClusters + "\t\t" + randomAUC + "\t" + bias + "\t" + logloss + "\r\n");
 
             //option 3 network selection
             double maxTDA = 0;
@@ -135,10 +136,12 @@ public class ClusterSelectionExperiment {
                 if (tdaAUC > maxTDA) {
                     maxTDA = tdaAUC;
                     System.out.println("Network " + id + "\t" + selectThisManyClusters + "\t" + selectedClusters.size() + "\t" + tdaAUC + "\t" + bias + "\t" + logloss);
+                    wr.write("Network " + id + "\t" + selectThisManyClusters + "\t" + selectedClusters.size() + "\t" + tdaAUC + "\t" + bias + "\t" + logloss + "\r\n");
                 }
             }
 
         }
+        wr.close();
 
     }
 
