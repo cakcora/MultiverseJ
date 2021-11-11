@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Multiverse.iml" filepath="$PROJECT_DIR$/Multiverse.iml" />
+      <module fileurl="file://$PROJECT_DIR$/MultiverseJ.iml" filepath="$PROJECT_DIR$/MultiverseJ.iml" />
     </modules>
   </component>
 </project>
