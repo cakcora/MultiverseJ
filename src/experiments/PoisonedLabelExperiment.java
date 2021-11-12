@@ -51,17 +51,18 @@ public class PoisonedLabelExperiment {
 
 		Random rnd = new Random(seed);
 		dataset.shuffleDataPoints(rnd);
-		Dataset[] partsOfData = dataset.split(20);
-		Dataset test = partsOfData[1];
-		Dataset training = partsOfData[0];
+		Dataset[] partsOfData = dataset.split(80, 10, 10);
 
+		Dataset training = partsOfData[0];
+		Dataset validation = partsOfData[1];
+		Dataset test = partsOfData[2];
 
 		System.out.println("The fanned-out dataset has these features: " + Arrays.toString(csvLoader.getFeatureNames()));
 
 		for (String message : csvLoader.getInformation()) {
 			System.out.println(message);
 		}
-		System.out.println("Dataset has " + training.getDatapoints().size() + "/" + test.getDatapoints().size() + " data points for training/test");
+		System.out.println("Dataset has " + training.getDatapoints().size() + "/" + validation.getDatapoints().size() + "/" + test.getDatapoints().size() + " data points for training/validation/test");
 		String[] featureNames = training.getFeatureNames();
 		System.out.println("After encoding, each data point has " + (featureNames.length) + " features");
 		//poisoning starts

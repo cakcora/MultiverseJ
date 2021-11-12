@@ -44,30 +44,42 @@ public class Dataset {
      * Split the dataset into training and test sets. In order to have verifiable execution, we do not sample
      * from the dataset. Instead we pick the training data from the first data points.
      *
-     *
-     * @param percentageOfDataPointsTobeSelected size of the split
+     * @param training   size of the split
+     * @param validation size of the split
+     * @param test       size of the split
      * @return two datasets: training and test
      */
-    public Dataset[] split(int percentageOfDataPointsTobeSelected) {
-        Dataset d1 = new Dataset();
-        Dataset d2 = new Dataset();
-        int v = (int) Math.ceil(dataPoints.size() * percentageOfDataPointsTobeSelected / 100);
-
-        for (int i = 0; i < v; i++) {
+    public Dataset[] split(int training, int validation, int test) {
+        if ((training + validation + test) != 100) {
+            return null;
+        }
+        Dataset trainingData = new Dataset();
+        Dataset validationData = new Dataset();
+        Dataset testData = new Dataset();
+        int v1 = (int) Math.ceil(dataPoints.size() * training / 100);
+        int v2 = (int) Math.ceil(dataPoints.size() * validation / 100);
+        for (int i = 0; i < v1; i++) {
             DataPoint datapoint = this.dataPoints.get(i);
             datapoint.setID(i);
-            d1.add(datapoint);
+            trainingData.add(datapoint);
         }
-        for (int j = v; j < this.dataPoints.size(); j++) {
+        for (int j = v1; j < (v1 + v2); j++) {
             DataPoint datapoint = this.dataPoints.get(j);
             datapoint.setID(j);
-            d2.add(datapoint);
+            validationData.add(datapoint);
         }
-        d1.setFeatureParents(this.getFeatureMap());
-        d2.setFeatureParents(this.getFeatureMap());
-        d1.setFeatureNames(this.getFeatureNames());
-        d2.setFeatureNames(this.getFeatureNames());
-        return new Dataset[]{d2, d1};
+        for (int k = (v1 + v2); k < this.dataPoints.size(); k++) {
+            DataPoint datapoint = this.dataPoints.get(k);
+            datapoint.setID(k);
+            testData.add(datapoint);
+        }
+        trainingData.setFeatureParents(this.getFeatureMap());
+        validationData.setFeatureParents(this.getFeatureMap());
+        testData.setFeatureParents(this.getFeatureMap());
+        trainingData.setFeatureNames(this.getFeatureNames());
+        validationData.setFeatureNames(this.getFeatureNames());
+        testData.setFeatureNames(this.getFeatureNames());
+        return new Dataset[]{trainingData, validationData, testData};
     }
 
 

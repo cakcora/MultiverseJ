@@ -14,7 +14,7 @@ public class ClusterSelectionExperiment {
         String clusterPredictionOutputFile = args[0];
         String edgeFile = args[1];
         String resultFile = args[2];
-        BufferedWriter wr = new BufferedWriter(new FileWriter(resultFile));
+        BufferedWriter wr = new BufferedWriter(new FileWriter(resultFile, true));
         BufferedReader rd = new BufferedReader(new FileReader(edgeFile));
         UndirectedSparseGraph<String, Integer> graph = new UndirectedSparseGraph();
         String line = "";
@@ -41,11 +41,13 @@ public class ClusterSelectionExperiment {
             String[] arr = line.split("\t");
 
             String cluster = arr[0];
-            String dp = arr[1];
-            int vote1 = Integer.parseInt(arr[2]);
-            int vote2 = Integer.parseInt(arr[3]);
-            double predicted = Double.parseDouble(arr[4]);
-            double label = (int) Double.parseDouble(arr[5]);
+            String type = arr[1];
+
+            String dp = arr[2];
+            int vote1 = Integer.parseInt(arr[3]);
+            int vote2 = Integer.parseInt(arr[4]);
+            double predicted = Double.parseDouble(arr[5]);
+            double label = (int) Double.parseDouble(arr[6]);
             TDAcluster cls;
             if (clusters.containsKey(cluster))
                 cls = clusters.get(cluster);
@@ -53,22 +55,31 @@ public class ClusterSelectionExperiment {
             cls.setId(cluster);
             cls.setTreeCount(vote1 + vote2);
             SingleEval eval = new SingleEval(predicted, label);
-            cls.addToEvals(dp, eval);
+            if (type.equalsIgnoreCase("validation")) {
+                cls.addToValidationEvals(dp, eval);
+            } else if (type.equalsIgnoreCase("test")) {
+                cls.addToTestEvals(dp, eval);
+            }
             clusters.put(cluster, cls);
         }
         MetricComputer metricComputer = new MetricComputer();
         for (String c : clusters.keySet()) {
             TDAcluster tdAcluster = clusters.get(c);
-            List<SingleEval> evals = tdAcluster.getEvalProbs();
-            double auc = metricComputer.computeAUC(evals);
-            tdAcluster.setAUC(auc);
+            List<SingleEval> evals = tdAcluster.getValidationEvalProbs();
+            double auc_validation = metricComputer.computeAUC(evals);
+            tdAcluster.setValidationAUC(auc_validation);
+
+            evals = tdAcluster.getTestEvalProbs();
+            double auc_test = metricComputer.computeAUC(evals);
+            tdAcluster.setTestAUC(auc_test);
         }
 
-        for (int selectThisManyClusters : new int[]{1, 2, 3, 4, 5, 10, 20, 50}) {
+        for (int selectThisManyClusters : new int[]{1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 500}) {
             MetricComputer metric = metricComputer;
             // option 1 selectThisManyClusters randomly
             Set<String> selectedRandom = new HashSet<>();
             int size = clusters.size();
+            if (selectThisManyClusters > size) break;
             for (int n = 0; n < selectThisManyClusters; n++) {
 
                 double random = ThreadLocalRandom.current().nextInt(0, size);
@@ -85,7 +96,7 @@ public class ClusterSelectionExperiment {
             PriorityQueue<Double> queue = new PriorityQueue<>(size, Collections.reverseOrder());
 
             for (TDAcluster cls : clusters.values()) {
-                queue.add(metricComputer.computeAUC(cls.getEvalProbs()));
+                queue.add(metricComputer.computeAUC(cls.getValidationEvalProbs()));
             }
             Set<String> selectedGreedy = new HashSet<>();
             double last = 0d;
@@ -94,7 +105,7 @@ public class ClusterSelectionExperiment {
             }
             for (String cluster : clusters.keySet()) {
                 TDAcluster tdAcluster = clusters.get(cluster);
-                if (tdAcluster.getAUC() >= last)
+                if (tdAcluster.getValidationAUC() >= last)
                     selectedGreedy.add(tdAcluster.getID());
             }
             //System.out.println("Greedy clusters: " + selectedGreedy.toString());
@@ -102,7 +113,7 @@ public class ClusterSelectionExperiment {
             double greedyAUC = metric.computeAUC(evaluationsGreedy);
             double bias = metric.computeBias(evaluationsGreedy);
             double logloss = metric.computeLogLoss(evaluationsGreedy);
-            System.out.println("Greedy" + "\t" + selectThisManyClusters + "\t\t" + greedyAUC + "\t" + bias + "\t" + logloss);
+            //System.out.println("Greedy" + "\t" + selectThisManyClusters + "\t\t" + greedyAUC + "\t" + bias + "\t" + logloss);
             wr.write("Greedy" + "\t" + selectThisManyClusters + "\t\t" + greedyAUC + "\t" + bias + "\t" + logloss + "\r\n");
 
             //System.out.println("Random clusters: " + selectedRandom.toString());
@@ -110,7 +121,7 @@ public class ClusterSelectionExperiment {
             double randomAUC = metric.computeAUC(evaluationsRandom);
             bias = metric.computeBias(evaluationsRandom);
             logloss = metric.computeLogLoss(evaluationsRandom);
-            System.out.println("Random" + "\t" + selectThisManyClusters + "\t\t" + randomAUC + "\t" + bias + "\t" + logloss);
+            //System.out.println("Random" + "\t" + selectThisManyClusters + "\t\t" + randomAUC + "\t" + bias + "\t" + logloss);
             wr.write("Random" + "\t" + selectThisManyClusters + "\t\t" + randomAUC + "\t" + bias + "\t" + logloss + "\r\n");
 
             //option 3 network selection
@@ -135,7 +146,7 @@ public class ClusterSelectionExperiment {
                 logloss = metric.computeLogLoss(evaluations);
                 if (tdaAUC > maxTDA) {
                     maxTDA = tdaAUC;
-                    System.out.println("Network " + id + "\t" + selectThisManyClusters + "\t" + selectedClusters.size() + "\t" + tdaAUC + "\t" + bias + "\t" + logloss);
+                    //System.out.println("Network " + id + "\t" + selectThisManyClusters + "\t" + selectedClusters.size() + "\t" + tdaAUC + "\t" + bias + "\t" + logloss);
                     wr.write("Network " + id + "\t" + selectThisManyClusters + "\t" + selectedClusters.size() + "\t" + tdaAUC + "\t" + bias + "\t" + logloss + "\r\n");
                 }
             }
@@ -150,7 +161,7 @@ public class ClusterSelectionExperiment {
         Map<String, SingleEval> probs = new HashMap<>();
         for (String c : selected) {
             TDAcluster tda = clusters.get(c);
-            Map<String, SingleEval> evals = tda.getEvals();
+            Map<String, SingleEval> evals = tda.getTestEvals();
             for (String dp : evals.keySet()) {
                 SingleEval eval = evals.get(dp);
                 if (!probs.containsKey(dp)) {

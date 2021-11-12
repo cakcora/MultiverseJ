@@ -78,10 +78,10 @@ seed
         rf.setMinLeafPopulation(3);
         Random rnd = new Random(seed);
         dataset.shuffleDataPoints(rnd);
-        Dataset[] split = dataset.split(20);
-        Dataset test = split[1];
-
-        System.out.println("Test dataset contains " + test.getDatapoints().size() + " datapoints");
+        Dataset[] split = dataset.split(80, 10, 10);
+        Dataset validation = split[1];
+        Dataset test = split[2];
+        System.out.println("Validation dataset contains " + validation.getDatapoints().size() + " datapoints");
         BufferedWriter out = new BufferedWriter(new FileWriter(clusterPredictionOutputFile));
 
         for (TDAcluster cls : clusters) {
@@ -93,7 +93,25 @@ seed
                 if (!treePoisons.containsKey(poison)) treePoisons.put(poison, 0);
                 treePoisons.put(poison, treePoisons.get(poison) + 1);
             }
-
+            // using trees on validation data
+            for (DataPoint dp : validation.getDatapoints()) {
+                double prob = 0d;
+                for (DecisionTree tree : treesOfACluster) {
+                    prob += tree.predict(dp.getFeatures());
+                }
+                double yhat = prob / treesOfACluster.size();
+                double y = dp.getLabel();
+                if (Double.isNaN(yhat)) {
+                    System.out.println(" Data point leads to Nan probability.");
+                    continue;
+                }
+                int dTreesWithPoison1 = 0;
+                int dTreesWithPoison2 = 0;
+                if (treePoisons.containsKey(targetPoison1)) dTreesWithPoison1 = treePoisons.get(targetPoison1);
+                if (treePoisons.containsKey(targetPoison2)) dTreesWithPoison2 = treePoisons.get(targetPoison2);
+                out.write(cls.getID() + "\tvalidation\t" + dp.getID() + "\t" + dTreesWithPoison2 + "\t" + dTreesWithPoison1 + "\t" + yhat + "\t" + y + "\r\n");
+            }
+            // using trees on test data
             for (DataPoint dp : test.getDatapoints()) {
                 double prob = 0d;
                 for (DecisionTree tree : treesOfACluster) {
@@ -109,7 +127,7 @@ seed
                 int dTreesWithPoison2 = 0;
                 if (treePoisons.containsKey(targetPoison1)) dTreesWithPoison1 = treePoisons.get(targetPoison1);
                 if (treePoisons.containsKey(targetPoison2)) dTreesWithPoison2 = treePoisons.get(targetPoison2);
-                out.write(cls.getID() + "\t" + dp.getID() + "\t" + dTreesWithPoison2 + "\t" + dTreesWithPoison1 + "\t" + yhat + "\t" + y + "\r\n");
+                out.write(cls.getID() + "\ttest\t" + dp.getID() + "\t" + dTreesWithPoison2 + "\t" + dTreesWithPoison1 + "\t" + yhat + "\t" + y + "\r\n");
             }
         }
 

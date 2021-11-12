@@ -21,5 +21,6 @@
     <orderEntry type="library" name="Maven: net.sf.jung:jung-api:2.1.1" level="project" />
     <orderEntry type="library" name="Maven: com.google.guava:guava:19.0" level="project" />
     <orderEntry type="library" name="Maven: net.sf.jung:jung-algorithms:2.1.1" level="project" />
+    <orderEntry type="library" name="Maven: commons-io:commons-io:2.5" level="project" />
   </component>
 </module>
