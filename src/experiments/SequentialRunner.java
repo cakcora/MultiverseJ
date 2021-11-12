@@ -10,87 +10,86 @@ public class SequentialRunner {
     public static void main(String[] args) throws Exception {
         String projectPath = args[0];
 
-        String resultsPath = projectPath + "results/";
+
+        //Excluded datasets because AUC is strangely 1 everywhere. "Mushroom",
+        for (String datasetName : new String[]{"Breast-cancer", "spambase", "credit", "adult", "LR",
+                "Poker", "Nursery", "Connect-4", "Diabetes", "News-popularity"}) {
 
 
-        for (String datasetName : new String[]{"Bank-note", "adult", "LR", "Poker", "Mushroom", "Nursery",
-                "Breast-Cancer", "Connect-4", "Diabetes", "News-popularity"}) {
-
-            String treePath = projectPath + "results/trees/";
-            FileUtils.deleteDirectory(new File(treePath));
-
-            File directory = new File(treePath);
-            if (!directory.exists()) {
-                directory.mkdirs();
-            }
-            // 1 - poisoner experiment
-            System.out.println("############ DATASET " + datasetName + "##############");
-            String dataPath = projectPath + "data/" + datasetName + "/" + datasetName + ".DATA";
-            String expResultsFile = projectPath + "results/" + datasetName + "finalResults.txt";
-            new File(expResultsFile).delete();
-
-            String metricPath = projectPath + "results/" + datasetName + "metrics.txt";
-            String graphsPath = projectPath + "results/" + datasetName + "graphs.txt";
-            String quoter = " ";
-            String sep = ",";
             int poisonFirst = 0;
-            int poisonLast = 45;
-            int poisonIncrementBy = 45;
-            int replicate = 0;
-            String aucFile = resultsPath + datasetName + "VanillaAucOnTestData.txt";
-            new File(aucFile).delete();
-            // replicate experiments
-            while (++replicate < 5) {
-                int seed = (int) (System.currentTimeMillis() / 100000);
+            for (int poisonLast : new int[]{0, 2, 4, 6, 8, 10, 20, 40}) {
+                System.out.println("############ DATASET " + datasetName + "########################################################");
 
-                String[] poisonerArgs = new String[]{dataPath, quoter, sep, treePath, metricPath,
-                        graphsPath, String.valueOf(seed), String.valueOf(poisonFirst),
-                        String.valueOf(poisonLast), String.valueOf(poisonIncrementBy),
-                        datasetName, aucFile};
-                poisonedLabelExp(poisonerArgs);
+                System.out.println("Poisons: " + poisonFirst + " and " + poisonLast);
+                String resultsPath = projectPath + "results/" + poisonFirst + "_" + poisonLast + "/";
+                String treePath = resultsPath + "trees/";
+                FileUtils.deleteDirectory(new File(treePath));
 
-                //2 - Mapper clustering experiment
-                // first got to python (offline) and install pandas, numpy, sklearn
-                String clusterNodes = projectPath + "results/" + datasetName + "clusterNodes.csv";
-                String clusterLinks = projectPath + "results/" + datasetName + "clusterLinks.csv";
-                String nodeIDS = projectPath + "results/" + datasetName + "clusternodeIDs.csv";
+                File directory = new File(treePath);
+                if (!directory.exists()) {
+                    directory.mkdirs();
+                }
+                // 1 - poisoner experiment
+                String dataPath = projectPath + "data/" + datasetName + "/" + datasetName + ".DATA";
+                String expResultsFile = resultsPath + datasetName + "finalResults.txt";
+                new File(expResultsFile).delete();
 
-                new File(clusterNodes).delete();
-                new File(clusterLinks).delete();
-                new File(nodeIDS).delete();
+                String metricPath = resultsPath + datasetName + "metrics.txt";
+                String graphsPath = resultsPath + datasetName + "graphs.txt";
+                String quoter = " ";
+                String sep = ",";
+                int poisonIncrementBy = ((poisonLast == 0) ? 10 : poisonLast);
+                int replicate = 5;
+                String aucFile = resultsPath + datasetName + "VanillaAucOnTestData.txt";
+                new File(aucFile).delete();
+                // replicate experiments
+                while (--replicate > 0) {
+                    int seed = (int) (System.currentTimeMillis() / 100000);
 
-                String command = "python " + projectPath + "python/MultiverseBinaryCode.py " +
-                        resultsPath + " " + metricPath + " " +
-                        poisonFirst + " " + poisonLast + " " + datasetName;
-                // Python execution: System.out.println(command);
-                Process p = Runtime.getRuntime().exec(command);
-                BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
-                String result = in.readLine();
-                System.out.println("result is : " + result);
+                    String[] poisonerArgs = new String[]{dataPath, quoter, sep, treePath, metricPath,
+                            graphsPath, String.valueOf(seed), String.valueOf(poisonFirst),
+                            String.valueOf(poisonLast), String.valueOf(poisonIncrementBy),
+                            datasetName, aucFile};
+                    poisonedLabelExp(poisonerArgs);
 
-                //3 - Mapper cluster selection experiment
+                    //2 - Mapper clustering experiment
+                    // first got to python (offline) and install pandas, numpy, sklearn
+                    String clusterNodes = resultsPath + datasetName + "clusterNodes.csv";
+                    String clusterLinks = resultsPath + datasetName + "clusterLinks.csv";
+                    String nodeIDS = resultsPath + datasetName + "clusternodeIDs.csv";
 
-                String output = projectPath + "clusterOutPut/" + datasetName + "clusteroutput.txt";
-                new File(output).delete();
-                String[] mapperArgs = new String[]{clusterNodes, clusterLinks, treePath, nodeIDS, dataPath,
-                        quoter, sep, output, String.valueOf(poisonFirst), String.valueOf(poisonLast), String.valueOf(seed)};
-                mapperClusterExp(mapperArgs);
+                    String command = "python " + projectPath + "python/MultiverseBinaryCode.py " +
+                            resultsPath + " " + metricPath + " " +
+                            poisonFirst + " " + poisonLast + " " + datasetName;
+                    // Python execution: System.out.println(command);
+                    Process p = Runtime.getRuntime().exec(command);
+                    BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                    String result = in.readLine();
+                    System.out.println("result is : " + result);
 
-                //4 - Cluster performance experiment
+                    //3 - Mapper cluster selection experiment
 
-                String[] clusterArgs = new String[]{output, clusterLinks, expResultsFile};
-                mapperClusterSectionExp(clusterArgs);
+                    String output = resultsPath + datasetName + "clusteroutput.txt";
+                    String[] mapperArgs = new String[]{clusterNodes, clusterLinks, treePath, nodeIDS, dataPath,
+                            quoter, sep, output, String.valueOf(poisonFirst), String.valueOf(poisonLast), String.valueOf(seed)};
+                    mapperClusterExp(mapperArgs);
 
-                new File(clusterNodes).delete();
-                new File(clusterLinks).delete();
-                new File(nodeIDS).delete();
-                new File(output).delete();
-                new File(graphsPath).delete();
-                new File(metricPath).delete();
+                    //4 - Cluster performance experiment
 
+                    String[] clusterArgs = new String[]{output, clusterLinks, expResultsFile, clusterNodes};
+                    mapperClusterSectionExp(clusterArgs);
+
+                    //new File(clusterNodes).delete();
+                    new File(clusterLinks).delete();
+                    //new File(nodeIDS).delete();
+                    new File(output).delete();
+                    new File(graphsPath).delete();
+                    new File(metricPath).delete();
+
+                }
+
+                //delete aux files (todo)
             }
-
-            //delete aux files (todo)
         }
     }
 

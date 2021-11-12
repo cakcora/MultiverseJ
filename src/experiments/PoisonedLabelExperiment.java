@@ -97,9 +97,12 @@ public class PoisonedLabelExperiment {
 			rf.train(poisonedDataset);
 
 			List evaluations = rf.evaluate(test);
-			double auc = new MetricComputer().computeAUC(evaluations);
+			MetricComputer metricComputer = new MetricComputer();
+			double auc = metricComputer.computeAUC(evaluations);
+			double bias = metricComputer.computeBias(evaluations);
+			double logloss = metricComputer.computeLogLoss(evaluations);
 			System.out.println("\tRF auc on test data is " + auc);
-			wr.write(datasetName + "\t" + poisonLevel + "\t" + auc + "\t" + System.currentTimeMillis() + "\r\n");
+			wr.write(datasetName + "\t" + poisonLevel + "\t" + auc + "\t" + bias + "\t" + logloss + "\t" + System.currentTimeMillis() + "\r\n");
 
 			List<DecisionTree> decisionTrees = rf.getDecisionTrees();
 			GraphExtractor extractor = new GraphExtractor(decisionTrees.get(0));

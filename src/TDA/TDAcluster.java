@@ -45,6 +45,9 @@ public class TDAcluster {
         this.treeCount = size;
     }
 
+    public int getTreeCount() {
+        return (this.treeCount);
+    }
 
     public void addToValidationEvals(String dp, SingleEval eval) {
         validationEvals.put(dp, eval);
