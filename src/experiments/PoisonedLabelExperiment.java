@@ -13,6 +13,8 @@ import loader.LoaderOptions;
 import metrics.MetricComputer;
 import poisoner.LabelFlippingPoisoner;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.util.*;
 
 public class PoisonedLabelExperiment {
@@ -38,6 +40,8 @@ public class PoisonedLabelExperiment {
 		int poisonFirst = Integer.parseInt(args[7]);
 		int poisonLast = Integer.parseInt(args[8]);
 		int poisonInc = Integer.parseInt(args[9]);
+		String datasetName = args[10];
+		String aucFile = args[11];
 		options.featureIgnoreThreshold(20);
 		options.convertRealToFactorThreshold(4);
 		char separator = options.getSeparator();
@@ -71,6 +75,7 @@ public class PoisonedLabelExperiment {
 		// we will store sample graphs from each poison level to visualize some results in the paper
 		Map<Integer, Graph<Integer, Integer>> sampleGraphs = new HashMap<>();
 		long treeId = 0;
+		BufferedWriter wr = new BufferedWriter(new FileWriter(aucFile, true));
 		for (int poisonLevel = poisonFirst; poisonLevel <= poisonLast; poisonLevel += poisonInc) {
 			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner(random);
 			Dataset poisonedDataset = poisoner.poison(training, poisonLevel);
@@ -94,7 +99,7 @@ public class PoisonedLabelExperiment {
 			List evaluations = rf.evaluate(test);
 			double auc = new MetricComputer().computeAUC(evaluations);
 			System.out.println("\tRF auc on test data is " + auc);
-
+			wr.write(datasetName + "\t" + poisonLevel + "\t" + auc + "\t" + System.currentTimeMillis() + "\r\n");
 
 			List<DecisionTree> decisionTrees = rf.getDecisionTrees();
 			GraphExtractor extractor = new GraphExtractor(decisionTrees.get(0));
@@ -121,6 +126,7 @@ public class PoisonedLabelExperiment {
 				treeId++;
 			}
 		}
+		wr.close();
 		int featureSize = secondLevelDataset.getFeatureNames().length;
 		System.out.println(featureSize + " metrics have been extracted from each decision tree");
 		// we have no fan-out for metric based features, but we still need to record feature parentage.

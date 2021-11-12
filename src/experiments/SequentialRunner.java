@@ -16,34 +16,39 @@ public class SequentialRunner {
             directory.mkdirs();
         }
 
-        for (String dataset : new String[]{"Bank-note", "adult", "LR", "Poker", "Mushroom", "Nursery",
+        for (String datasetName : new String[]{"Bank-note", "adult", "LR", "Poker", "Mushroom", "Nursery",
                 "Breast-Cancer", "Connect-4", "Diabetes", "News-popularity"}) {
             // 1 - poisoner experiment
-            System.out.println("############ DATASET " + dataset + "##############");
-            String dataPath = projectPath + "data/" + dataset + "/" + dataset + ".DATA";
-            String expResultsFile = projectPath + "results/" + dataset + "finalResults.txt";
+            System.out.println("############ DATASET " + datasetName + "##############");
+            String dataPath = projectPath + "data/" + datasetName + "/" + datasetName + ".DATA";
+            String expResultsFile = projectPath + "results/" + datasetName + "finalResults.txt";
             new File(expResultsFile).delete();
 
-            String metricPath = projectPath + "results/" + dataset + "metrics.txt";
-            String graphsPath = projectPath + "results/" + dataset + "graphs.txt";
+            String metricPath = projectPath + "results/" + datasetName + "metrics.txt";
+            String graphsPath = projectPath + "results/" + datasetName + "graphs.txt";
             String quoter = " ";
             String sep = ",";
             int poisonFirst = 0;
             int poisonLast = 45;
             int poisonIncrementBy = 45;
             int replicate = 0;
+            String aucFile = resultsPath + datasetName + "VanillaAucOnTestData.txt";
+            new File(aucFile).delete();
+            // replicate experiments
             while (++replicate < 5) {
                 int seed = (int) (System.currentTimeMillis() / 100000);
 
                 String[] poisonerArgs = new String[]{dataPath, quoter, sep, treePath, metricPath,
-                        graphsPath, String.valueOf(seed), String.valueOf(poisonFirst), String.valueOf(poisonLast), String.valueOf(poisonIncrementBy)};
+                        graphsPath, String.valueOf(seed), String.valueOf(poisonFirst),
+                        String.valueOf(poisonLast), String.valueOf(poisonIncrementBy),
+                        datasetName, aucFile};
                 poisonedLabelExp(poisonerArgs);
 
                 //2 - Mapper clustering experiment
                 // first got to python (offline) and install pandas, numpy, sklearn
-                String clusterNodes = projectPath + "results/" + dataset + "clusterNodes.csv";
-                String clusterLinks = projectPath + "results/" + dataset + "clusterLinks.csv";
-                String nodeIDS = projectPath + "results/" + dataset + "clusternodeIDs.csv";
+                String clusterNodes = projectPath + "results/" + datasetName + "clusterNodes.csv";
+                String clusterLinks = projectPath + "results/" + datasetName + "clusterLinks.csv";
+                String nodeIDS = projectPath + "results/" + datasetName + "clusternodeIDs.csv";
 
                 new File(clusterNodes).delete();
                 new File(clusterLinks).delete();
@@ -51,7 +56,7 @@ public class SequentialRunner {
 
                 String command = "python " + projectPath + "python/MultiverseBinaryCode.py " +
                         resultsPath + " " + metricPath + " " +
-                        poisonFirst + " " + poisonLast + " " + dataset;
+                        poisonFirst + " " + poisonLast + " " + datasetName;
                 // Python execution: System.out.println(command);
                 Process p = Runtime.getRuntime().exec(command);
                 BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
@@ -60,7 +65,7 @@ public class SequentialRunner {
 
                 //3 - Mapper cluster selection experiment
 
-                String output = projectPath + "clusterOutPut/" + dataset + "clusteroutput.txt";
+                String output = projectPath + "clusterOutPut/" + datasetName + "clusteroutput.txt";
                 new File(output).delete();
                 String[] mapperArgs = new String[]{clusterNodes, clusterLinks, treePath, nodeIDS, dataPath,
                         quoter, sep, output, String.valueOf(poisonFirst), String.valueOf(poisonLast), String.valueOf(seed)};
