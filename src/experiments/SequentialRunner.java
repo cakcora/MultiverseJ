@@ -1,5 +1,7 @@
 package experiments;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -9,15 +11,18 @@ public class SequentialRunner {
         String projectPath = args[0];
 
         String resultsPath = projectPath + "results/";
-        String treePath = projectPath + "results/trees/";
 
-        File directory = new File(treePath);
-        if (!directory.exists()) {
-            directory.mkdirs();
-        }
 
         for (String datasetName : new String[]{"Bank-note", "adult", "LR", "Poker", "Mushroom", "Nursery",
                 "Breast-Cancer", "Connect-4", "Diabetes", "News-popularity"}) {
+
+            String treePath = projectPath + "results/trees/";
+            FileUtils.deleteDirectory(new File(treePath));
+
+            File directory = new File(treePath);
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
             // 1 - poisoner experiment
             System.out.println("############ DATASET " + datasetName + "##############");
             String dataPath = projectPath + "data/" + datasetName + "/" + datasetName + ".DATA";
@@ -75,7 +80,16 @@ public class SequentialRunner {
 
                 String[] clusterArgs = new String[]{output, clusterLinks, expResultsFile};
                 mapperClusterSectionExp(clusterArgs);
+
+                new File(clusterNodes).delete();
+                new File(clusterLinks).delete();
+                new File(nodeIDS).delete();
+                new File(output).delete();
+                new File(graphsPath).delete();
+                new File(metricPath).delete();
+
             }
+
             //delete aux files (todo)
         }
     }
