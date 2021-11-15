@@ -3,5 +3,5 @@
 results/
 /.idea
 /.idea/
-.class
+*.class
 randomIndexes.txt
