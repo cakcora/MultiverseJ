@@ -3,23 +3,23 @@ require(ggplot2)
 projectPath<-"C:/Users/cakcora/IdeaProjects/multiverseJ/"
 #"Bank-note","mushroom"
 datasets<-c("adult", "LR", "Poker","Nursery","connect-4","Breast-cancer", 
-            "Diabetes","Mushroom","spambase","credit"
+            "Diabetes" ,"spambase","credit",
                "News-popularity")
 
 
 allData<-data.frame()
 poison1=0
-maxTrees<-100
+maxTrees<-50
 for(dataset in datasets){
   maxVanillaAUC=0
   maxVanillaLevel=""
   maxMultiverseAUC=0
   maxMultiverseLevel=""
-  for(poison2 in c(0,2,4,6,8,10,20,40)){
+  for(poison2 in c(0)){#},2,4,6,8,10,20,40)){
     resultsPath = paste0(projectPath, "results/",poison1,"_",poison2,"/")
     vanillafile<-paste0(resultsPath,dataset,"finalResults.txt")
     if(!file.exists(vanillafile)) next;
-    multiverseAUC<-read.delim(vanillafile), header=FALSE)
+    multiverseAUC<-read.delim(vanillafile, header=FALSE)
     vanillaAUC<-read.delim(paste0(resultsPath,dataset,"VanillaAucOnTestData.txt"), header=FALSE)
     colnames(vanillaAUC)<-c('dataset','poisonLevel','AUC','bias','loss','time')
     colnames(multiverseAUC)<-c('method','k','kActual','AUC','bias','loss','numTree')
@@ -68,5 +68,5 @@ for(dataset in datasets){
   colnames(multiverseOutput)<-c('cluster','phase','datapointID','poison2trees','poison1trees','yhat','y')
   sumRes3<-ddply(multiverseOutput, .(cluster), summarize,
                  numTrees = mean(poison1trees))
-  hist(sumRes3$numTrees)
+  show(hist(sumRes3$numTrees))
 }

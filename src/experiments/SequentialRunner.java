@@ -5,11 +5,11 @@ import org.apache.commons.io.FileUtils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.util.Random;
 
 public class SequentialRunner {
     public static void main(String[] args) throws Exception {
         String projectPath = args[0];
-
 
         //Excluded datasets because AUC is strangely 1 everywhere. "Mushroom",
         for (String datasetName : new String[]{"Breast-cancer", "spambase", "credit", "adult", "LR",
@@ -43,8 +43,9 @@ public class SequentialRunner {
                 String aucFile = resultsPath + datasetName + "VanillaAucOnTestData.txt";
                 new File(aucFile).delete();
                 // replicate experiments
+                Random r = new Random();
                 while (--replicate > 0) {
-                    int seed = (int) (System.currentTimeMillis() / 100000);
+                    int seed = r.nextInt(100);
 
                     String[] poisonerArgs = new String[]{dataPath, quoter, sep, treePath, metricPath,
                             graphsPath, String.valueOf(seed), String.valueOf(poisonFirst),
