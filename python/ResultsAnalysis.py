@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
         Xfilt = scaler.fit_transform(Xfilt)
         lens = mapper.fit_transform(Xfilt, projection=sklearn.manifold.TSNE())
-        cls = 5#We use cls=5, but this parameter can be further refined.  Its impact on results seems minimal.
+        cls = 5#len(set(yfilt))
 
         graph = mapper.map(
             lens,
@@ -47,6 +47,8 @@ if __name__ == "__main__":
         treeFrame = pd.DataFrame(treeID)
         treeFrame.insert(0, 'New_ID', range(0, 0 + len(treeFrame)))
         treeFrame.to_csv(os.path.join(abs_dir_path, datasetName+"clusternodeIDs.csv"), index=False)
+        mapper.visualize(graph,title="Multiverse Binary", custom_tooltips=treeIDNew,path_html="multiverseBinary.html")
+
 
         with open(os.path.join(abs_dir_path, datasetName+'clusterLinks.csv'), 'w') as csv_file:
             writer = csv.writer(csv_file, delimiter='\t')

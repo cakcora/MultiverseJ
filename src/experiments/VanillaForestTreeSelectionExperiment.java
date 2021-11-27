@@ -1,8 +1,6 @@
 package experiments;
 
 import TDA.TDAcluster;
-import core.DecisionTree;
-import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import metrics.MetricComputer;
 import metrics.SingleEval;
 
@@ -10,77 +8,41 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class ClusterSelectionExperiment {
+//requires results from the VanillaForestTreeSelectionExperiment
+public class VanillaForestTreeSelectionExperiment {
     public static void main(String[] args) throws IOException {
-        String clusterPredictionOutputFile = args[0];
-        String edgeFile = args[1];
-        String resultFile = args[2];
-        String nodeFile = args[3];
-        BufferedWriter wr = new BufferedWriter(new FileWriter(resultFile, true));
-        BufferedReader rd = new BufferedReader(new FileReader(edgeFile));
-        UndirectedSparseGraph<String, Integer> graph = new UndirectedSparseGraph();
-        String line = "";
-        while ((line = rd.readLine()) != null) {
-            if (line.isEmpty()) continue;
-            String[] arr = line.split("\t");
-            String clus = arr[0].trim();
-            String edges = arr[1].replaceAll("\\[", "");
-            edges = edges.replaceAll("\\]", "");
-            edges = edges.replaceAll("'", "");
-            String[] a = edges.split(",");
-            graph.addVertex(clus.trim());
-            for (String cl2 : a) {
-                cl2 = cl2.trim();
-                graph.addVertex(cl2.trim());
-                graph.addEdge(graph.getEdgeCount(), clus, cl2);
-            }
-        }
+        String vanillaPredictionOutputFile = args[0];
+        String vanillaAUCresultFile = args[1];
+        BufferedWriter wr = new BufferedWriter(new FileWriter(vanillaAUCresultFile, true));
 
-        BufferedReader br = new BufferedReader(new FileReader(clusterPredictionOutputFile));
+
+        BufferedReader br = new BufferedReader(new FileReader(vanillaPredictionOutputFile));
         Map<String, TDAcluster> clusters = new HashMap<>();
-
+        String line = "";
         while ((line = br.readLine()) != null) {
             String[] arr = line.split("\t");
 
-            String cluster = arr[0];
+            String treeID = arr[0];
             String type = arr[1];
 
             String dp = arr[2];
-            int vote1 = Integer.parseInt(arr[4]);
-            int vote2 = Integer.parseInt(arr[3]);
-            double predicted = Double.parseDouble(arr[5]);
-            double label = (int) Double.parseDouble(arr[6]);
+            double predicted = Double.parseDouble(arr[3]);
+            double label = (int) Double.parseDouble(arr[4]);
             TDAcluster cls;
-            if (clusters.containsKey(cluster))
-                cls = clusters.get(cluster);
+            if (clusters.containsKey(treeID))
+                cls = clusters.get(treeID);
             else cls = new TDAcluster();
-            cls.setId(cluster);
-            cls.setTreeCount(vote1 + vote2);
+            cls.setId(treeID);
+            cls.setTreeCount(1);//we have a single decision tree in the cluster
             SingleEval eval = new SingleEval(predicted, label);
             if (type.equalsIgnoreCase("validation")) {
                 cls.addToValidationEvals(dp, eval);
             } else if (type.equalsIgnoreCase("test")) {
                 cls.addToTestEvals(dp, eval);
             }
-            clusters.put(cluster, cls);
+            clusters.put(treeID, cls);
         }
 
-        BufferedReader rdNodes = new BufferedReader(new FileReader(nodeFile));
-        while ((line = rdNodes.readLine()) != null) {
-            if (!line.isEmpty()) {
-                var arr = line.split("\t");
-                String clusterID = arr[0];
-                String treeIDs = arr[1].replaceAll("\\[", "");
-                treeIDs = treeIDs.replaceAll("\\]", "");
-                TDAcluster cluster = clusters.get(clusterID);
-                for (String i : treeIDs.split(",")) {
-                    DecisionTree dt = new DecisionTree();
-                    int id = Integer.parseInt(i.trim());
-                    dt.setID(id);
-                    cluster.addTree(dt);
-                }
-            }
-        }
 
         MetricComputer metricComputer = new MetricComputer();
         for (String c : clusters.keySet()) {
@@ -112,7 +74,6 @@ public class ClusterSelectionExperiment {
                 selectedRandom.add(next.getID());
             }
 
-
             // option 2 selectThisManyClusters greedily
             PriorityQueue<Double> queue = new PriorityQueue<>(size, Collections.reverseOrder());
 
@@ -131,7 +92,6 @@ public class ClusterSelectionExperiment {
 
                 }
             }
-            //System.out.println("Greedy clusters: " + selectedGreedy.toString());
             List<SingleEval> evaluationsGreedy = evaluateWithSelected(selectedGreedy, clusters);
             double greedyAUC = metric.computeAUC(evaluationsGreedy);
             double bias = metric.computeBias(evaluationsGreedy);
@@ -142,10 +102,8 @@ public class ClusterSelectionExperiment {
                 gh.addAll(clusters.get(clust).getTrees());
             }
             int greedyCLusterTreeCount = gh.size();
-            //System.out.println("Greedy" + "\t" + selectThisManyClusters + "\t\t" + greedyAUC + "\t" + bias + "\t" + logloss);
-            wr.write("Greedy" + "\t" + selectThisManyClusters + "\t\t" + greedyAUC + "\t" + bias + "\t" + logloss + "\t" + greedyCLusterTreeCount + "\r\n");
+            wr.write("Greedy" + "\t" + selectThisManyClusters + "\t\t" + greedyAUC + "\t" + bias + "\t" + logloss + "\r\n");
 
-            //System.out.println("Random clusters: " + selectedRandom.toString());
             List<SingleEval> evaluationsRandom = evaluateWithSelected(selectedRandom, clusters);
             double randomAUC = metric.computeAUC(evaluationsRandom);
             bias = metric.computeBias(evaluationsRandom);
@@ -155,44 +113,7 @@ public class ClusterSelectionExperiment {
                 gh.addAll(clusters.get(clust).getTrees());
             }
             int randomCLusterTreeCount = gh.size();
-            //System.out.println("Random" + "\t" + selectThisManyClusters + "\t\t" + randomAUC + "\t" + bias + "\t" + logloss);
-            wr.write("Random" + "\t" + selectThisManyClusters + "\t\t" + randomAUC + "\t" + bias + "\t" + logloss + "\t" + randomCLusterTreeCount + "\r\n");
-
-            //option 3 network selection
-            double maxTDA = 0;
-            for (TDAcluster cls : clusters.values()) {
-                String id = cls.getID();
-                Set<String> selectedTDA = new HashSet<>();
-                selectedTDA.add(id);
-                Collection<String> selectedNeig = graph.getNeighbors(id);
-                if (selectedNeig != null) {
-                    Iterator<String> iterator = selectedNeig.iterator();
-                    for (int j = 0; j < selectThisManyClusters - 1; j++) {
-                        if (iterator.hasNext()) {
-                            String nextCluster = iterator.next();
-                            selectedTDA.add(nextCluster);
-
-                        }
-                    }
-                }
-
-                List<SingleEval> evaluations = evaluateWithSelected(selectedTDA, clusters);
-
-                double tdaAUC = metric.computeAUC(evaluations);
-                bias = metric.computeBias(evaluations);
-                logloss = metric.computeLogLoss(evaluations);
-                gh = new HashSet();
-                for (String clust : selectedTDA) {
-                    gh.addAll(clusters.get(clust).getTrees());
-                }
-                int tdaCLusterTreeCount = gh.size();
-                if (tdaAUC > maxTDA) {
-                    maxTDA = tdaAUC;
-                    //System.out.println("Network " + id + "\t" + selectThisManyClusters + "\t" + selectedTDA.size() + "\t" + tdaAUC + "\t" + bias + "\t" + logloss);
-                    wr.write("Network " + id + "\t" + selectThisManyClusters + "\t" + selectedTDA.size() + "\t" + tdaAUC + "\t" + bias + "\t" + logloss + "\t" + tdaCLusterTreeCount + "\r\n");
-                }
-            }
-
+            wr.write("Random" + "\t" + selectThisManyClusters + "\t\t" + randomAUC + "\t" + bias + "\t" + logloss + "\r\n");
         }
         wr.close();
 

@@ -41,7 +41,8 @@ public class PoisonedLabelExperiment {
 		int poisonLast = Integer.parseInt(args[8]);
 		int poisonInc = Integer.parseInt(args[9]);
 		String datasetName = args[10];
-		String aucFile = args[11];
+		String VFAUCFile = args[11];// to save AUC of the VF on test data
+		int numTree = Integer.parseInt(args[12]);
 		options.featureIgnoreThreshold(20);
 		options.convertRealToFactorThreshold(4);
 		char separator = options.getSeparator();
@@ -75,7 +76,7 @@ public class PoisonedLabelExperiment {
 		// we will store sample graphs from each poison level to visualize some results in the paper
 		Map<Integer, Graph<Integer, Integer>> sampleGraphs = new HashMap<>();
 		long treeId = 0;
-		BufferedWriter wr = new BufferedWriter(new FileWriter(aucFile, true));
+		BufferedWriter wr = new BufferedWriter(new FileWriter(VFAUCFile, true));
 		for (int poisonLevel = poisonFirst; poisonLevel <= poisonLast; poisonLevel += poisonInc) {
 			LabelFlippingPoisoner poisoner = new LabelFlippingPoisoner(random);
 			Dataset poisonedDataset = poisoner.poison(training, poisonLevel);
@@ -87,8 +88,7 @@ public class PoisonedLabelExperiment {
 			}
 			System.out.println(poisonLevel + "% poisoned training dataset has " + pos + " positive labeled data points.");
 			RandomForest rf = new RandomForest(random);
-			rf.setNumTrees(300);
-			//rf.setSampleSize(2000);
+			rf.setNumTrees(numTree);
 			var featureSize = new HashSet(training.getFeatureMap().values()).size();
 			int splitFeatureSize = (int) Math.ceil(Math.sqrt(featureSize));
 			rf.setNumFeaturesToConsiderWhenSplitting(splitFeatureSize);

@@ -1,7 +1,11 @@
+
+# this script analyzes multiverse results in two main lines
+# 1- we look at the auc of best decision trees from the vanilla forest.
+# this part does not involve the topological forest at all.
+# 2- we look at the best topological forest auc results
 require(plyr)
 require(ggplot2)
 projectPath<-"C:/Users/cakcora/IdeaProjects/multiverseJ/"
-#"Bank-note","mushroom"
 datasets<-c("adult", "LR", "Poker","Nursery","connect-4","Breast-cancer", 
             "Diabetes" ,"spambase","credit",
                "News-popularity")
@@ -11,13 +15,20 @@ allData<-data.frame()
 poison1=0
 maxTrees<-50
 for(dataset in datasets){
+  # part 1 - ordinary random forest best k decision tree
+  kfile<-paste0(resultsPath,dataset,"VFfinalResults.txt")
+  if(!file.exists(kfile)) next;
+  kDat<-read.delim(kfile, header=FALSE)
+  
+  
+  # part 2 - TOpological forest analysis
   maxVanillaAUC=0
   maxVanillaLevel=""
   maxMultiverseAUC=0
   maxMultiverseLevel=""
   for(poison2 in c(0)){#},2,4,6,8,10,20,40)){
     resultsPath = paste0(projectPath, "results/",poison1,"_",poison2,"/")
-    vanillafile<-paste0(resultsPath,dataset,"finalResults.txt")
+    vanillafile<-paste0(resultsPath,dataset,"TFfinalResults.txt")
     if(!file.exists(vanillafile)) next;
     multiverseAUC<-read.delim(vanillafile, header=FALSE)
     vanillaAUC<-read.delim(paste0(resultsPath,dataset,"VanillaAucOnTestData.txt"), header=FALSE)
@@ -59,14 +70,11 @@ for(dataset in datasets){
     #show(sumRes2)
     ggplot(sumRes,aes(x=k,y=meanAUC,group=method,color=method))+geom_line()
   }
+  vanillaK<-read
   message(dataset," ",maxVanillaAUC," ",maxMultiverseAUC," ",maxMultiverseLevel,"(",multiverseMethod,",",multiverseK,")")
 }
 
 
-for(dataset in datasets){
-  multiverseOutput<-read.delim(paste0(resultsPath,dataset,"clusteroutput.txt"), header=FALSE)
-  colnames(multiverseOutput)<-c('cluster','phase','datapointID','poison2trees','poison1trees','yhat','y')
-  sumRes3<-ddply(multiverseOutput, .(cluster), summarize,
-                 numTrees = mean(poison1trees))
-  show(hist(sumRes3$numTrees))
-}
+
+
+

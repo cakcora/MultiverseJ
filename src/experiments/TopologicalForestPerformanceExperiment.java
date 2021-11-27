@@ -15,7 +15,7 @@ import java.util.*;
  * Assumes that we have computed the tdamapper graph from decision tree metrics.
  * The graph is written into clusterNodes.csv and clusterLinks.csv files
  */
-public class TDAMapperSelectionExperiment {
+public class TopologicalForestPerformanceExperiment {
     public static void main(String[] args) throws Exception {
 
 

@@ -1,6 +1,6 @@
-import experiments.ClusterSelectionExperiment;
 import experiments.PoisonedLabelExperiment;
-import experiments.TDAMapperSelectionExperiment;
+import experiments.TopologicalForestClusterSelectionExperiment;
+import experiments.TopologicalForestPerformanceExperiment;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -112,7 +112,7 @@ public class BatchRunner {
     public static void RunTDAMapper(String[] argArray) {
         System.out.print("\n Running TDAMap ... \n");
         try {
-            TDAMapperSelectionExperiment.main(argArray);
+            TopologicalForestPerformanceExperiment.main(argArray);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.print("Exception Occurred in running  TDAMap ... \n");
@@ -122,7 +122,7 @@ public class BatchRunner {
     public static void RunClusterSelectionExperiment(String[] argArray) {
         System.out.print("\n Running ClusterSelectionExperiment ... \n");
         try {
-            ClusterSelectionExperiment.main(argArray);
+            TopologicalForestClusterSelectionExperiment.main(argArray);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.print("Exception Occurred in running  ClusterSelectionExperiment ... \n");

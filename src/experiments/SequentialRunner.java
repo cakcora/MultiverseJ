@@ -10,19 +10,20 @@ import java.util.Random;
 public class SequentialRunner {
     public static void main(String[] args) throws Exception {
         String projectPath = args[0];
+        int numTree = 300;
 
         //Excluded datasets because AUC is strangely 1 everywhere. "Mushroom",
-        for (String datasetName : new String[]{"Breast-cancer", "spambase", "credit", "adult", "LR",
+        for (String datasetName : new String[]{"adult", "Breast-cancer", "spambase", "credit", "LR",
                 "Poker", "Nursery", "Connect-4", "Diabetes", "News-popularity"}) {
 
 
             int poisonFirst = 0;
-            for (int poisonLast : new int[]{0, 2, 4, 6, 8, 10, 20, 40}) {
+            for (int poisonLast : new int[]{0/*, 2, 4, 6, 8, 10, 20, 40*/}) {
                 System.out.println("############ DATASET " + datasetName + "########################################################");
 
                 System.out.println("Poisons: " + poisonFirst + " and " + poisonLast);
                 String resultsPath = projectPath + "results/" + poisonFirst + "_" + poisonLast + "/";
-                String treePath = resultsPath + "trees/";
+                String treePath = resultsPath + datasetName + "trees/";
                 FileUtils.deleteDirectory(new File(treePath));
 
                 File directory = new File(treePath);
@@ -31,17 +32,21 @@ public class SequentialRunner {
                 }
                 // 1 - poisoner experiment
                 String dataPath = projectPath + "data/" + datasetName + "/" + datasetName + ".DATA";
-                String expResultsFile = resultsPath + datasetName + "finalResults.txt";
-                new File(expResultsFile).delete();
+                String TFFinalResultsAUCFile = resultsPath + datasetName + "TFfinalResults.txt";
+                new File(TFFinalResultsAUCFile).delete();
 
                 String metricPath = resultsPath + datasetName + "metrics.txt";
                 String graphsPath = resultsPath + datasetName + "graphs.txt";
                 String quoter = " ";
                 String sep = ",";
                 int poisonIncrementBy = ((poisonLast == 0) ? 10 : poisonLast);
-                int replicate = 5;
-                String aucFile = resultsPath + datasetName + "VanillaAucOnTestData.txt";
-                new File(aucFile).delete();
+                int replicate = 3;
+                // We used firstAucFile to save the AUC score of the vanilla forest on the test data.
+                // this is kind of redundant now because experiment 5-2 can now compute the same auc value
+                String firstAucFile = resultsPath + datasetName + "VanillaAucOnTestData.txt";
+                new File(firstAucFile).delete();
+                String VFFinalResultsAUCFile = resultsPath + datasetName + "VFfinalResults.txt";
+                new File(VFFinalResultsAUCFile).delete();
                 // replicate experiments
                 Random r = new Random();
                 while (--replicate > 0) {
@@ -50,11 +55,11 @@ public class SequentialRunner {
                     String[] poisonerArgs = new String[]{dataPath, quoter, sep, treePath, metricPath,
                             graphsPath, String.valueOf(seed), String.valueOf(poisonFirst),
                             String.valueOf(poisonLast), String.valueOf(poisonIncrementBy),
-                            datasetName, aucFile};
+                            datasetName, firstAucFile, String.valueOf(numTree)};
                     poisonedLabelExp(poisonerArgs);
 
                     //2 - Mapper clustering experiment
-                    // first got to python (offline) and install pandas, numpy, sklearn
+                    // first go to python (offline) and install pandas, numpy, sklearn
                     String clusterNodes = resultsPath + datasetName + "clusterNodes.csv";
                     String clusterLinks = resultsPath + datasetName + "clusterLinks.csv";
                     String nodeIDS = resultsPath + datasetName + "clusternodeIDs.csv";
@@ -77,19 +82,28 @@ public class SequentialRunner {
 
                     //4 - Cluster performance experiment
 
-                    String[] clusterArgs = new String[]{output, clusterLinks, expResultsFile, clusterNodes};
+                    String[] clusterArgs = new String[]{output, clusterLinks, TFFinalResultsAUCFile, clusterNodes};
                     mapperClusterSectionExp(clusterArgs);
 
-                    //new File(clusterNodes).delete();
-                    new File(clusterLinks).delete();
-                    //new File(nodeIDS).delete();
-                    new File(output).delete();
-                    new File(graphsPath).delete();
-                    new File(metricPath).delete();
+                    //5-1 Vanilla forest performance experiments
+                    String kPredictionOutputFile = resultsPath + "adultVFK.csv";
+
+                    String[] vanillaPerfArgs = new String[]{
+                            String.valueOf(numTree), treePath, dataPath, quoter, sep, kPredictionOutputFile, String.valueOf(seed)};
+                    VanillaForestPerformanceExperiment.main(vanillaPerfArgs);
+                    //5-2 Vanilla forest tree selection experiments
+                    String[] vanillaAucArgs = new String[]{kPredictionOutputFile, VFFinalResultsAUCFile};
+                    VanillaForestPerformanceExperiment.main(vanillaAucArgs);
+
+                    // Should we keep result files for future analysis: yes
+                    //new File(clusterLinks).delete();
+                    //new File(output).delete();
+                    //new File(graphsPath).delete();
+                    //new File(metricPath).delete();
 
                 }
 
-                //delete aux files (todo)
+                //delete aux files (may be)
             }
         }
     }
@@ -101,27 +115,27 @@ public class SequentialRunner {
             PoisonedLabelExperiment.main(argArray);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.print("Exception Occurred in running  PLE ... \n");
+            System.out.print("error in   PLE ... \n");
         }
     }
 
     public static void mapperClusterExp(String[] argArray) {
         System.out.print("Running TDAMap ... \n");
         try {
-            TDAMapperSelectionExperiment.main(argArray);
+            TopologicalForestPerformanceExperiment.main(argArray);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.print("Exception Occurred in running  TDAMap ... \n");
+            System.out.print("error in   TDAMap ... \n");
         }
     }
 
     public static void mapperClusterSectionExp(String[] argArray) {
         System.out.print("Running ClusterSelectionExperiment ... \n");
         try {
-            ClusterSelectionExperiment.main(argArray);
+            TopologicalForestClusterSelectionExperiment.main(argArray);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.print("Exception Occurred in running  ClusterSelectionExperiment ... \n");
+            System.out.print("error in   ClusterSelectionExperiment ... \n");
         }
     }
 }
