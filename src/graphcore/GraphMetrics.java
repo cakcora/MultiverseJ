@@ -20,8 +20,7 @@ public class GraphMetrics {
     TreeMap<String, Double> metrics = new TreeMap<String, Double>();
 
     public void computeAllMetrices(DirectedSparseMultigraph<Integer, Integer> graph) {
-        // 1- avInDegree: average in degree of $G_j$ vertices
-        // 2- mavgOutDegre: average out degree of $G_j$ vertices
+
         metrics = new TreeMap<>();
         int vertexCount = graph.getVertexCount();
         metrics.put("vertexCount", (double) vertexCount);
@@ -58,23 +57,10 @@ public class GraphMetrics {
         }
         if (distanceMap.isEmpty()) {
             metrics.put("diameter", Double.MAX_VALUE);
-            metrics.put("diameter", Double.MAX_VALUE);
         } else {
             metrics.put("diameter", Collections.max(distanceMap.values()));
             metrics.put("meanDistance", Utils.getAverage(distanceMap.values()));
         }
-
-
-        // 6- numStrongCluster: number of strongly connected components on $G_j$
-
-        // 7- avgStrCompSize: average size of strong connected components on $G_j$
-        // 8- meanDist: mean distance between node pairs on the directed graph $G_j$
-
-
-        // 9- medHub: mean hub scores of nodes on the undirected graph $G_j$
-        // pass
-        // 10- medAuth: median hub scores of nodes on the undirected graph $G_j$
-        // pass
 
         // 11 TriadicCensus is a standard social network tool that counts, for each of the different possible
         // configurations of three vertices, the number of times that that configuration occurs in the given graph

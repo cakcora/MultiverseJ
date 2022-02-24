@@ -1,5 +1,7 @@
 /trees
 /trees/
+results/
 /.idea
 /.idea/
+*.class
 randomIndexes.txt

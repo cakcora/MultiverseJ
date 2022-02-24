@@ -14,11 +14,14 @@ public class TDAcluster {
     private String clusterID;
     private int treeCount;
     private final int fn = 0;
-    private final Map<String, SingleEval> evals;
-    private double auc;
+    private final Map<String, SingleEval> validationEvals;
+    private final Map<String, SingleEval> testEvals;
+    private double aucValidation;
+    private double aucTest;
 
     public TDAcluster() {
-        this.evals = new HashMap<>();
+        this.validationEvals = new HashMap<>();
+        this.testEvals = new HashMap<>();
         this.trees = new ArrayList();
     }
 
@@ -42,24 +45,43 @@ public class TDAcluster {
         this.treeCount = size;
     }
 
-
-    public void addToEvals(String dp, SingleEval eval) {
-        evals.put(dp, eval);
+    public int getTreeCount() {
+        return (this.treeCount);
     }
 
-    public Map<String, SingleEval> getEvals() {
-        return evals;
+    public void addToValidationEvals(String dp, SingleEval eval) {
+        validationEvals.put(dp, eval);
     }
 
-    public double getAUC() {
-        return this.auc;
+    public void addToTestEvals(String dp, SingleEval eval) {
+        testEvals.put(dp, eval);
     }
 
-    public void setAUC(double auc) {
-        this.auc = auc;
+    public Map<String, SingleEval> getValidationEvals() {
+        return validationEvals;
     }
 
-    public List<SingleEval> getEvalProbs() {
-        return new ArrayList<>(evals.values());
+    public Map<String, SingleEval> getTestEvals() {
+        return testEvals;
+    }
+
+    public double getValidationAUC() {
+        return this.aucValidation;
+    }
+
+    public void setValidationAUC(double auc) {
+        this.aucValidation = auc;
+    }
+
+    public void setTestAUC(double auc) {
+        this.aucTest = auc;
+    }
+
+    public List<SingleEval> getValidationEvalProbs() {
+        return new ArrayList<>(validationEvals.values());
+    }
+
+    public List<SingleEval> getTestEvalProbs() {
+        return new ArrayList<>(testEvals.values());
     }
 }

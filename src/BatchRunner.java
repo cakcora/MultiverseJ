@@ -1,10 +1,8 @@
 import experiments.PoisonedLabelExperiment;
-import experiments.TDAMapperSelectionExperiment;
-import experiments.ClusterSelectionExperiment;
+import experiments.TopologicalForestClusterSelectionExperiment;
+import experiments.TopologicalForestPerformanceExperiment;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 
@@ -18,18 +16,18 @@ public class BatchRunner {
     public static void main(String[] args) throws Exception {
         // Change before run
         // ATTENTION: Dont Forget to change the Path in Python File
-        String projectPath = "C:\\Users\\win_10\\Desktop\\MyProject\\Multiverse\\";
-        int sampleSize = 1 ;
+        String projectPath = "C:\\Users\\etr\\IdeaProjects";
+        int sampleSize = 1;
 
         // List of variables will place here
 
         //TODO: Clean the variables section for final batch run
-        HashMap  <Integer , String[]> sampleVariablesPoisoner = new HashMap<Integer, String[]>();
+        HashMap<Integer, String[]> sampleVariablesPoisoner = new HashMap<Integer, String[]>();
         // Variables for Poisoned Function Run
-        String[] argArrayPoisoned =new String[] {
-                projectPath +"data\\Sonar(Small)\\test.data", " ",
-                "," , projectPath +"\\trees\\trees"
-                , projectPath +"Results\\metrics.txt"
+        String[] argArrayPoisoned = new String[]{
+                projectPath + "data\\Sonar(Small)\\test.data", " ",
+                ",", projectPath + "\\trees\\trees"
+                , projectPath + "Results\\metrics.txt"
                 , projectPath +"Results\\graphs.txt"};
         sampleVariablesPoisoner.put(1,argArrayPoisoned);
 
@@ -101,8 +99,7 @@ public class BatchRunner {
 
     }
 
-    public static void RunPoisonedLabelExperiment(String[] argArray)
-    {
+    public static void RunPoisonedLabelExperiment(String[] argArray) {
         System.out.print("\n Running PLE ... \n");
         try {
             PoisonedLabelExperiment.main(argArray);
@@ -112,22 +109,20 @@ public class BatchRunner {
         }
     }
 
-    public static void RunTDAMapper(String[] argArray)
-    {
+    public static void RunTDAMapper(String[] argArray) {
         System.out.print("\n Running TDAMap ... \n");
         try {
-            TDAMapperSelectionExperiment.main(argArray);
+            TopologicalForestPerformanceExperiment.main(argArray);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.print("Exception Occurred in running  TDAMap ... \n");
         }
     }
 
-    public static void RunClusterSelectionExperiment(String[] argArray)
-    {
+    public static void RunClusterSelectionExperiment(String[] argArray) {
         System.out.print("\n Running ClusterSelectionExperiment ... \n");
         try {
-            ClusterSelectionExperiment.main(argArray);
+            TopologicalForestClusterSelectionExperiment.main(argArray);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.print("Exception Occurred in running  ClusterSelectionExperiment ... \n");
