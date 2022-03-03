@@ -130,7 +130,7 @@ seed
                     continue;
                 }
 
-                evaluateClusterPrediction(truePredict,falsePredict,y, treesOfACluster.size());
+                evaluatePerCluster(truePredict,falsePredict,y, treesOfACluster.size());
                 int dTreesWithPoison1 = 0;
                 int dTreesWithPoison2 = 0;
                 if (treePoisons.containsKey(targetPoison1)) dTreesWithPoison1 = treePoisons.get(targetPoison1);
@@ -162,7 +162,7 @@ seed
 
 
 
-                evaluateClusterPrediction(truePredict,falsePredict,y, treesOfACluster.size());
+                evaluatePerCluster(truePredict,falsePredict,y, treesOfACluster.size());
                 int dTreesWithPoison1 = 0;
                 int dTreesWithPoison2 = 0;
                 if (treePoisons.containsKey(targetPoison1)) dTreesWithPoison1 = treePoisons.get(targetPoison1);
@@ -214,7 +214,7 @@ seed
         return ids;
     }
 
-    private static void evaluateClusterPrediction(double truePredict, double falsePredict, double y, int size)
+    private static void evaluatePerCluster(double truePredict, double falsePredict, double y, int size)
     {
         if (truePredict > falsePredict)
         {
