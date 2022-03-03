@@ -7,13 +7,12 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="Multiverse" />
         <module name="MultiverseJ" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="Multiverse" target="1.11" />
-      <module name="MultiverseJ" target="17" />
+      <module name="MultiverseJ" target="12" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">

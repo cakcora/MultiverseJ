@@ -9,13 +9,14 @@ import java.util.Random;
 
 public class SequentialRunner {
     public static void main(String[] args) throws Exception {
+        //
         String projectPath = args[0];
         int numTree = 300;
 
         //Excluded datasets because AUC is strangely 1 everywhere. "Mushroom",
-        for (String datasetName : new String[]{"adult", "Breast-cancer", "spambase", "credit", "LR",
-                "Poker", "Nursery", "Connect-4", "Diabetes", "News-popularity"}) {
-
+        for (String datasetName : new String[]{"adult"}) {
+        // , "Breast-cancer", "spambase", "credit", "LR",
+            //                "Poker", "Nursery", "Connect-4", "Diabetes", "News-popularity"
 
             int poisonFirst = 0;
             for (int poisonLast : new int[]{0/*, 2, 4, 6, 8, 10, 20, 40*/}) {
@@ -93,7 +94,7 @@ public class SequentialRunner {
                     VanillaForestPerformanceExperiment.main(vanillaPerfArgs);
                     //5-2 Vanilla forest tree selection experiments
                     String[] vanillaAucArgs = new String[]{kPredictionOutputFile, VFFinalResultsAUCFile};
-                    VanillaForestPerformanceExperiment.main(vanillaAucArgs);
+                    VanillaForestTreeSelectionExperiment.main(vanillaAucArgs);
 
                     // Should we keep result files for future analysis: yes
                     //new File(clusterLinks).delete();
