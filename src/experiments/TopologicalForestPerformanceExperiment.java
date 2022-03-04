@@ -122,7 +122,7 @@ seed
 
                     for (DecisionTree tree : treesOfACluster) {
                         prob += tree.predict(dp.getFeatures());
-                        if (prob > 0.5) truePredict += 1;
+                        if (tree.predict(dp.getFeatures()) > 0.5) truePredict += 1;
                         else falsePredict += 1;
                     }
                     double yhat = prob / treesOfACluster.size();
@@ -152,7 +152,7 @@ seed
                 int falsePredict = 0;
                 for (DecisionTree tree : treesOfACluster) {
                     prob += tree.predict(dp.getFeatures());
-                    if (prob > 0.5) truePredict += 1;
+                    if (tree.predict(dp.getFeatures()) > 0.5) truePredict += 1;
                     else falsePredict += 1 ;
                 }
                 double yhat = prob / treesOfACluster.size();
@@ -301,7 +301,7 @@ seed
         try
         {
             String header = "";
-            if (!new File(clusterPredictionOutputFile.split("\\.")[0]+"perClusterEval.txt").exists()) {
+            if (!new File(clusterPredictionOutputFile.split("\\.")[0]+"perClusterEval.csv").exists()) {
                 header = "Replica" + "," +"ClusterID" + "," + "ClusterSize" +  "," + "EvaluationType" + "," + "TruePredictionCount" +"," + "TruePredictionAvg" +"," + "FalsePredictionCount" +"," + "FalsePredictionAvg" +"," + "NeutralPredictionCountT" +"," + "NeutralPredictionCountF" + "\n" ;
             }
             FileWriter evaluationOut = new FileWriter(clusterPredictionOutputFile.split("\\.")[0]+"perClusterEval.txt",true);
@@ -321,7 +321,7 @@ seed
         try
         {
             String header = "";
-            if (!new File(clusterPredictionOutputFile.split("\\.")[0]+"OverallEval.txt").exists()) {
+            if (!new File(clusterPredictionOutputFile.split("\\.")[0]+"OverallEval.csv").exists()) {
                 header = "Replica" + "," + "Type" + "," + "truePredictionAvg" +  "," + "falsePredictionAvg" + "," + "neutralPredictionAvg"  + "\n" ;
             }
             FileWriter evaluationOut = new FileWriter(clusterPredictionOutputFile.split("\\.")[0]+"OverallEval.txt",true); //the true will append the new data

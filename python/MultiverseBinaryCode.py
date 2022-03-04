@@ -41,7 +41,7 @@ if __name__ == "__main__":
             lens,
             Xfilt,
             clusterer=sklearn.cluster.KMeans(n_clusters=cls, random_state=1618033),
-            cover=km.Cover(n_cubes=10, perc_overlap=0.6)
+            cover=km.Cover(n_cubes=10, perc_overlap=0.6) # TODO: Playing with this parameter
         )
 
         treeFrame = pd.DataFrame(treeID)
