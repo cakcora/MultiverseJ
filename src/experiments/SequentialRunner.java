@@ -78,7 +78,7 @@ public class SequentialRunner {
 
                     String output = resultsPath + datasetName + "clusteroutput.txt";
                     String[] mapperArgs = new String[]{clusterNodes, clusterLinks, treePath, nodeIDS, dataPath,
-                            quoter, sep, output, String.valueOf(poisonFirst), String.valueOf(poisonLast), String.valueOf(seed)};
+                            quoter, sep, output, String.valueOf(poisonFirst), String.valueOf(poisonLast), String.valueOf(seed), String.valueOf(replicate) };
                     mapperClusterExp(mapperArgs);
 
                     //4 - Cluster performance experiment

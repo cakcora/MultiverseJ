@@ -17,11 +17,10 @@ import java.util.*;
  */
 public class TopologicalForestPerformanceExperiment {
     private static final double DEFAULT_VALUE = 0d;
+    private static boolean EVALUATE_ON_VALIDATION = false;
     static double countTrue,sumTrue;
     static double countFalse,sumFalse;
     static double countNeutralT,countNeutralF,sumNeutral;
-    // storing TRUE FALSE NEUTRAL for overall assessment
-    List<Double> overallValidationCountParams = new ArrayList<>();
     // 0 -> True 1-> False 2-> Neutral
     static double [] overallValidationSumAvgParams = {0.0 , 0.0 , 0.0};
     static int validationCounter = 0,validationNeutralCounter = 0;
@@ -56,6 +55,7 @@ seed
         int targetPoison1 = Integer.parseInt(args[8]);
         int targetPoison2 = Integer.parseInt(args[9]);
         int seed = Integer.parseInt(args[10]);
+        int replica = Integer.parseInt(args[11]);
         // evaluation variables
 
 
@@ -112,34 +112,36 @@ seed
 
 
             // using trees on validation data
-            initiateEvaluationVariables();
-            for (DataPoint dp : validation.getDatapoints()) {
-                double prob = 0d;
-                int truePredict = 0;
-                int falsePredict = 0;
 
-                for (DecisionTree tree : treesOfACluster) {
-                    prob += tree.predict(dp.getFeatures());
-                    if (prob > 0.5) truePredict += 1;
-                    else falsePredict += 1 ;
+            if (EVALUATE_ON_VALIDATION) {
+                initiateEvaluationVariables();
+                for (DataPoint dp : validation.getDatapoints()) {
+                    double prob = 0d;
+                    int truePredict = 0;
+                    int falsePredict = 0;
+
+                    for (DecisionTree tree : treesOfACluster) {
+                        prob += tree.predict(dp.getFeatures());
+                        if (prob > 0.5) truePredict += 1;
+                        else falsePredict += 1;
+                    }
+                    double yhat = prob / treesOfACluster.size();
+                    double y = dp.getLabel();
+                    if (Double.isNaN(yhat)) {
+                        System.out.println(" Data point leads to Nan probability.");
+                        continue;
+                    }
+
+                    evaluatePerCluster(truePredict, falsePredict, y, treesOfACluster.size());
+                    int dTreesWithPoison1 = 0;
+                    int dTreesWithPoison2 = 0;
+                    if (treePoisons.containsKey(targetPoison1)) dTreesWithPoison1 = treePoisons.get(targetPoison1);
+                    if (treePoisons.containsKey(targetPoison2)) dTreesWithPoison2 = treePoisons.get(targetPoison2);
+                    out.write(cls.getID() + "\tvalidation\t" + dp.getID() + "\t" + dTreesWithPoison2 + "\t" + dTreesWithPoison1 + "\t" + yhat + "\t" + y + "\t" + falsePredict + "\t" + truePredict + "\t" + treesOfACluster.size() + "\r\n");
+
                 }
-                double yhat = prob / treesOfACluster.size();
-                double y = dp.getLabel();
-                if (Double.isNaN(yhat)) {
-                    System.out.println(" Data point leads to Nan probability.");
-                    continue;
-                }
-
-                evaluatePerCluster(truePredict,falsePredict,y, treesOfACluster.size());
-                int dTreesWithPoison1 = 0;
-                int dTreesWithPoison2 = 0;
-                if (treePoisons.containsKey(targetPoison1)) dTreesWithPoison1 = treePoisons.get(targetPoison1);
-                if (treePoisons.containsKey(targetPoison2)) dTreesWithPoison2 = treePoisons.get(targetPoison2);
-                out.write(cls.getID() + "\tvalidation\t" + dp.getID() + "\t" + dTreesWithPoison2 + "\t" + dTreesWithPoison1 + "\t" + yhat + "\t" + y + "\t" + falsePredict + "\t" + truePredict + "\t" +  treesOfACluster.size() + "\r\n");
-
+                writeClusterEvaluationResult("VALIDATION", cls.getID(), clusterPredictionOutputFile, treesOfACluster.size(), replica);
             }
-            writeClusterEvaluationResult("VALIDATION",  cls.getID()  ,clusterPredictionOutputFile);
-
 
             // using trees on test data
 
@@ -169,11 +171,11 @@ seed
                 if (treePoisons.containsKey(targetPoison2)) dTreesWithPoison2 = treePoisons.get(targetPoison2);
                 out.write(cls.getID() + "\ttest\t" + dp.getID() + "\t" + dTreesWithPoison2 + "\t" + dTreesWithPoison1 + "\t" + yhat + "\t" + y + "\t" + falsePredict + "\t" + truePredict +  "\t" +  treesOfACluster.size() + "\r\n");
             }
-            writeClusterEvaluationResult("TEST",  cls.getID()  ,clusterPredictionOutputFile);
+            writeClusterEvaluationResult("TEST",  cls.getID()  ,clusterPredictionOutputFile,  treesOfACluster.size(),replica);
         }
 
         out.close();
-        writeTotalEvaluationResult(clusterPredictionOutputFile);
+        writeTotalEvaluationResult(clusterPredictionOutputFile, replica);
     }
 
     private static List getClusters(String treeDir, Map<Integer, Integer> ids, String nodeFile) throws IOException {
@@ -294,12 +296,17 @@ seed
     }
 
 
-    private static void writeClusterEvaluationResult(String evaluationType, String clsID ,String clusterPredictionOutputFile){
+    private static void writeClusterEvaluationResult(String evaluationType, String clsID ,String clusterPredictionOutputFile, int clusterSize, int replica){
 
         try
         {
-            FileWriter evaluationOut = new FileWriter(clusterPredictionOutputFile.split("\\.")[0]+"perClusterEval.txt",true); //the true will append the new data
-            evaluationOut.write(clsID + "\t"+ evaluationType +  "\ttruePredictionCount:" + countTrue + "\ttruePredictionAvg:" + (sumTrue / countTrue) + "\tfalsePredictionCount:" + countFalse + "\tfalsePredictionAvg:" + (sumFalse / countFalse) + "\tneutralPredictionCountT:" + countNeutralT + "\tneutralPredictionCountF:" + countNeutralF + "\n" );
+            String header = "";
+            if (!new File(clusterPredictionOutputFile.split("\\.")[0]+"perClusterEval.txt").exists()) {
+                header = "Replica" + "," +"ClusterID" + "," + "ClusterSize" +  "," + "EvaluationType" + "," + "TruePredictionCount" +"," + "TruePredictionAvg" +"," + "FalsePredictionCount" +"," + "FalsePredictionAvg" +"," + "NeutralPredictionCountT" +"," + "NeutralPredictionCountF" + "\n" ;
+            }
+            FileWriter evaluationOut = new FileWriter(clusterPredictionOutputFile.split("\\.")[0]+"perClusterEval.txt",true);
+            evaluationOut.write(header);
+            evaluationOut.write(replica + "," + clsID + ","+ clusterSize +  "," + evaluationType +  "," + countTrue + "," + (sumTrue / countTrue) + "," + countFalse + "," + (sumFalse / countFalse) + "," + countNeutralT + "," + countNeutralF + "\n" );
             evaluationOut.close();
             evaluatePerTest(evaluationType);
         }
@@ -309,14 +316,19 @@ seed
         }
     }
 
-    private static void writeTotalEvaluationResult(String clusterPredictionOutputFile){
+    private static void writeTotalEvaluationResult(String clusterPredictionOutputFile, int replica){
 
         try
         {
+            String header = "";
+            if (!new File(clusterPredictionOutputFile.split("\\.")[0]+"OverallEval.txt").exists()) {
+                header = "Replica" + "," + "Type" + "," + "truePredictionAvg" +  "," + "falsePredictionAvg" + "," + "neutralPredictionAvg"  + "\n" ;
+            }
             FileWriter evaluationOut = new FileWriter(clusterPredictionOutputFile.split("\\.")[0]+"OverallEval.txt",true); //the true will append the new data
-            evaluationOut.write("TYPE:" + "VALIDATION" + "\ttruePredictionAvg:" + (overallValidationSumAvgParams[0] / validationCounter) + "\tfalsePredictionAvg:" + (overallValidationSumAvgParams[1] / validationCounter) +  "\tneutralPredictionAvg:" + (overallValidationSumAvgParams[2] / validationNeutralCounter) +"\n" );
-            evaluationOut.write("TYPE:" + "TEST" + "\ttruePredictionAvg:" + (overallTestSumAvgParams[0] / testCounter) + "\tfalsePredictionAvg:" + (overallTestSumAvgParams[1] / testCounter) + "\tneutralPredictionAvg:" + (overallTestSumAvgParams[2] / testNeutralCounter) + "\n" );
-            evaluationOut.write("## END OF EVALUATION ##\n");
+            evaluationOut.write(header);
+            if (EVALUATE_ON_VALIDATION)
+            evaluationOut.write(replica + "," + "VALIDATION" + "," + (overallValidationSumAvgParams[0] / validationCounter) + "," + (overallValidationSumAvgParams[1] / validationCounter) +  "," + (overallValidationSumAvgParams[2] / validationNeutralCounter) +"\n" );
+            evaluationOut.write(replica + "," + "TEST" + "," + (overallTestSumAvgParams[0] / testCounter) + "," + (overallTestSumAvgParams[1] / testCounter) + "," + (overallTestSumAvgParams[2] / testNeutralCounter) + "\n" );
             evaluationOut.close();
         }
         catch(IOException ioe)
