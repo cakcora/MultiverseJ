@@ -302,9 +302,9 @@ seed
         {
             String header = "";
             if (!new File(clusterPredictionOutputFile.split("\\.")[0]+"perClusterEval.csv").exists()) {
-                header = "Replica" + "," +"ClusterID" + "," + "ClusterSize" +  "," + "EvaluationType" + "," + "TruePredictionCount" +"," + "TruePredictionAvg" +"," + "FalsePredictionCount" +"," + "FalsePredictionAvg" +"," + "NeutralPredictionCountT" +"," + "NeutralPredictionCountF" + "\n" ;
+                header = "Replica" + "," +"ClusterID" + "," + "ClusterSize" +  "," + "EvaluationType" + "," + "TruePredictionCount" +"," + "TruePredictionHomogeneity" +"," + "FalsePredictionCount" +"," + "FalsePredictionHomogeneity" +"," + "NeutralPredictionCountT" +"," + "NeutralPredictionCountF" + "\n" ;
             }
-            FileWriter evaluationOut = new FileWriter(clusterPredictionOutputFile.split("\\.")[0]+"perClusterEval.txt",true);
+            FileWriter evaluationOut = new FileWriter(clusterPredictionOutputFile.split("\\.")[0]+"perClusterEval.csv",true);
             evaluationOut.write(header);
             evaluationOut.write(replica + "," + clsID + ","+ clusterSize +  "," + evaluationType +  "," + countTrue + "," + (sumTrue / countTrue) + "," + countFalse + "," + (sumFalse / countFalse) + "," + countNeutralT + "," + countNeutralF + "\n" );
             evaluationOut.close();
@@ -322,9 +322,9 @@ seed
         {
             String header = "";
             if (!new File(clusterPredictionOutputFile.split("\\.")[0]+"OverallEval.csv").exists()) {
-                header = "Replica" + "," + "Type" + "," + "truePredictionAvg" +  "," + "falsePredictionAvg" + "," + "neutralPredictionAvg"  + "\n" ;
+                header = "Replica" + "," + "Type" + "," + "truePredictionHomogeneity" +  "," + "falsePredictionHomogeneity" + "," + "neutralPredictionAvg"  + "\n" ;
             }
-            FileWriter evaluationOut = new FileWriter(clusterPredictionOutputFile.split("\\.")[0]+"OverallEval.txt",true); //the true will append the new data
+            FileWriter evaluationOut = new FileWriter(clusterPredictionOutputFile.split("\\.")[0]+"OverallEval.csv",true); //the true will append the new data
             evaluationOut.write(header);
             if (EVALUATE_ON_VALIDATION)
             evaluationOut.write(replica + "," + "VALIDATION" + "," + (overallValidationSumAvgParams[0] / validationCounter) + "," + (overallValidationSumAvgParams[1] / validationCounter) +  "," + (overallValidationSumAvgParams[2] / validationNeutralCounter) +"\n" );
