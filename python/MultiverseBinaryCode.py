@@ -29,7 +29,6 @@ if __name__ == "__main__":
         treeIDNew = np.array(range(0, 0 + len(treeID)))
 
         Xfilt = Xfilt.drop(columns=['label', 'treeID'])
-canon 80d
         mapper = km.KeplerMapper()
         scaler = MinMaxScaler(feature_range=(0, 1))
 
