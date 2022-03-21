@@ -1,6 +1,7 @@
 package experiments;
 
 import TDA.TDAcluster;
+import TDA.TFEvaluationOutput;
 import core.DataPoint;
 import core.Dataset;
 import core.DecisionTree;
@@ -26,9 +27,13 @@ public class TopologicalForestPerformanceExperiment {
     static int validationCounter = 0,validationNeutralCounter = 0;
     static double [] overallTestSumAvgParams = {0.0 , 0.0 , 0.0};
     static int testCounter = 0, testNeutralCounter = 0;
+    static Map<String, Double> clusterQualityIndexHashMap = new HashMap<>();
+    // ClusterID -> List of cluster's tree Map{treeID -> Score}
+    static Map<String, Map<String , Double>> treeOfClusterQualityIndexHashMap = new HashMap<>();
+    static TFEvaluationOutput returnObject;
 
 
-    public static void main(String[] args) throws Exception {
+    public static TFEvaluationOutput main(String[] args) throws Exception {
 
 
         /*  run params:
@@ -56,6 +61,10 @@ seed
         int targetPoison2 = Integer.parseInt(args[9]);
         int seed = Integer.parseInt(args[10]);
         int replica = Integer.parseInt(args[11]);
+        returnObject = new TFEvaluationOutput();
+        clusterQualityIndexHashMap.clear();
+        treeOfClusterQualityIndexHashMap.clear();
+
         // evaluation variables
 
 
@@ -101,6 +110,7 @@ seed
 
 
         for (TDAcluster cls : clusters) {
+            treeOfClusterQualityIndexHashMap.put(cls.getID() , new HashMap<String,Double>());
             ArrayList<DecisionTree> treesOfACluster = cls.getTrees();
             HashMap<Integer, Integer> treePoisons = new HashMap<>();
             for (DecisionTree tree : treesOfACluster) {
@@ -112,18 +122,28 @@ seed
 
 
             // using trees on validation data
-
             if (EVALUATE_ON_VALIDATION) {
                 initiateEvaluationVariables();
                 for (DataPoint dp : validation.getDatapoints()) {
                     double prob = 0d;
                     int truePredict = 0;
                     int falsePredict = 0;
-
+                    double treePredict = 0;
                     for (DecisionTree tree : treesOfACluster) {
                         prob += tree.predict(dp.getFeatures());
-                        if (tree.predict(dp.getFeatures()) > 0.5) truePredict += 1;
-                        else falsePredict += 1;
+                        if (tree.predict(dp.getFeatures()) > 0.5)
+                        {
+                            // Tree true prediction
+                            truePredict += 1;
+                            treePredict = 1.0;
+                        }
+                        else
+                        {
+                            // Tree false prediction
+                            falsePredict += 1 ;
+                            treePredict = 0 ;
+                        }
+                        updateTreeScore(cls.getID(), String.valueOf(tree.getID()), treePredict , dp.getLabel());
                     }
                     double yhat = prob / treesOfACluster.size();
                     double y = dp.getLabel();
@@ -144,16 +164,28 @@ seed
             }
 
             // using trees on test data
-
             initiateEvaluationVariables();
             for (DataPoint dp : test.getDatapoints()) {
                 double prob = 0d;
                 int truePredict = 0;
                 int falsePredict = 0;
+                double treePredict = 0;
                 for (DecisionTree tree : treesOfACluster) {
                     prob += tree.predict(dp.getFeatures());
-                    if (tree.predict(dp.getFeatures()) > 0.5) truePredict += 1;
-                    else falsePredict += 1 ;
+                    if (tree.predict(dp.getFeatures()) > 0.5)
+                    {
+                        // Tree true prediction
+                        truePredict += 1;
+                        treePredict = 1.0;
+                    }
+                    else
+                    {
+                        // Tree false prediction
+                        falsePredict += 1 ;
+                        treePredict = 0;
+
+                    }
+                    updateTreeScore(cls.getID(), String.valueOf(tree.getID()), treePredict , dp.getLabel());
                 }
                 double yhat = prob / treesOfACluster.size();
                 double y = dp.getLabel();
@@ -169,13 +201,45 @@ seed
                 int dTreesWithPoison2 = 0;
                 if (treePoisons.containsKey(targetPoison1)) dTreesWithPoison1 = treePoisons.get(targetPoison1);
                 if (treePoisons.containsKey(targetPoison2)) dTreesWithPoison2 = treePoisons.get(targetPoison2);
-                out.write(cls.getID() + "\ttest\t" + dp.getID() + "\t" + dTreesWithPoison2 + "\t" + dTreesWithPoison1 + "\t" + yhat + "\t" + y + "\t" + falsePredict + "\t" + truePredict +  "\t" +  treesOfACluster.size() + "\r\n");
+                out.write(cls.getID() + "\ttest\t" + dp.getID() + "\t" + dTreesWithPoison2 + "\t" + dTreesWithPoison1 + "\t" + yhat + "\t" + y + "\t" + falsePredict + "\t" + truePredict +  "\t" +  treesOfACluster.size() +  "\r\n");
             }
             writeClusterEvaluationResult("TEST",  cls.getID()  ,clusterPredictionOutputFile,  treesOfACluster.size(),replica);
         }
 
         out.close();
         writeTotalEvaluationResult(clusterPredictionOutputFile, replica);
+        returnObject.setClusterQualityIndexHashMap(clusterQualityIndexHashMap);
+        returnObject.setTreeOfClusterQualityIndexHashMap(treeOfClusterQualityIndexHashMap);
+        return returnObject;
+    }
+
+    private static void updateTreeScore(String clusterID, String treeID, double treePredict, double label) {
+
+        if (treePredict == label) {
+            // tree participated as True homogeneity
+            if (treeOfClusterQualityIndexHashMap.get(clusterID).containsKey(String.valueOf(treeID))) {
+                // key exist
+                treeOfClusterQualityIndexHashMap.get(clusterID).computeIfPresent(String.valueOf(treeID), (k, v) -> v + 1);
+            } else {
+                treeOfClusterQualityIndexHashMap.get(clusterID).put(String.valueOf(treeID), 1.0);
+            }
+        }
+        else
+        {
+            // tree participated as False homogeneity
+            if (treeOfClusterQualityIndexHashMap.get(clusterID).containsKey(String.valueOf(treeID)))
+            {
+                // key exist
+                treeOfClusterQualityIndexHashMap.get(clusterID).computeIfPresent(String.valueOf(treeID), (k, v) -> v - 1);
+            }
+            else
+            {
+                treeOfClusterQualityIndexHashMap.get(clusterID).put(String.valueOf(treeID) , -1.0) ;
+            }
+
+        }
+
+
     }
 
     private static List getClusters(String treeDir, Map<Integer, Integer> ids, String nodeFile) throws IOException {
@@ -301,12 +365,15 @@ seed
         try
         {
             String header = "";
+            // double total size for division in the next step
             if (!new File(clusterPredictionOutputFile.split("\\.")[0]+"perClusterEval.csv").exists()) {
-                header = "Replica" + "," +"ClusterID" + "," + "ClusterSize" +  "," + "EvaluationType" + "," + "TruePredictionCount" +"," + "TruePredictionHomogeneity" +"," + "FalsePredictionCount" +"," + "FalsePredictionHomogeneity" +"," + "NeutralPredictionCountT" +"," + "NeutralPredictionCountF" + "\n" ;
+                header = "Replica" + "," +"ClusterID" + "," + "ClusterSize" +  "," + "EvaluationType" + "," + "TruePredictionCount" +"," + "TruePredictionHomogeneity" +"," + "FalsePredictionCount" +"," + "FalsePredictionHomogeneity" +"," + "NeutralPredictionCountT" +"," + "NeutralPredictionCountF" + "," + "ClusterQualityIndex" +  "\n" ;
             }
             FileWriter evaluationOut = new FileWriter(clusterPredictionOutputFile.split("\\.")[0]+"perClusterEval.csv",true);
             evaluationOut.write(header);
-            evaluationOut.write(replica + "," + clsID + ","+ clusterSize +  "," + evaluationType +  "," + countTrue + "," + (sumTrue / countTrue) + "," + countFalse + "," + (sumFalse / countFalse) + "," + countNeutralT + "," + countNeutralF + "\n" );
+            double clusterQualityIndex = calculateClusterQualityIndex();
+            clusterQualityIndexHashMap.put(clsID,clusterQualityIndex);
+            evaluationOut.write(replica + "," + clsID + ","+ clusterSize +  "," + evaluationType +  "," + countTrue + "," + (sumTrue / countTrue) + "," + countFalse + "," + (sumFalse / countFalse) + "," + countNeutralT + "," + countNeutralF + "," + (clusterQualityIndex) + "\n" );
             evaluationOut.close();
             evaluatePerTest(evaluationType);
         }
@@ -314,6 +381,13 @@ seed
         {
             System.err.println("IOException: " + ioe.getMessage());
         }
+    }
+
+    private static double calculateClusterQualityIndex()
+    {
+        double totalTestSize = countTrue + countFalse + countNeutralT + countNeutralF;
+        return ((countTrue/totalTestSize) * (sumTrue / countTrue)) - ((countFalse/totalTestSize) * (sumFalse / countFalse));
+
     }
 
     private static void writeTotalEvaluationResult(String clusterPredictionOutputFile, int replica){

@@ -1,17 +1,23 @@
 package experiments;
 
+import TDA.TFEvaluationOutput;
 import org.apache.commons.io.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
-import java.util.Random;
+import java.util.*;
 
 public class SequentialRunner {
+    private static Map<String, Double> clusterQualityIndexHashMap = new HashMap<>();
+    private static Map<String, Map<String , Double>> treeOfClusterQualityIndexHashMap = new HashMap<>();
+
     public static void main(String[] args) throws Exception {
         //
         String projectPath = args[0];
         int numTree = 300;
+        // K variable for Top K Cluster Selection
+        int numClusterSelectionK = 5;
 
         //Excluded datasets because AUC is strangely 1 everywhere. "Mushroom",
         for (String datasetName : new String[]{"adult"}) {
@@ -83,7 +89,7 @@ public class SequentialRunner {
 
                     //4 - Cluster performance experiment
 
-                    String[] clusterArgs = new String[]{output, clusterLinks, TFFinalResultsAUCFile, clusterNodes};
+                    String[] clusterArgs = new String[]{output, clusterLinks, TFFinalResultsAUCFile, clusterNodes, String.valueOf(numClusterSelectionK)};
                     mapperClusterSectionExp(clusterArgs);
 
                     //5-1 Vanilla forest performance experiments
@@ -123,7 +129,12 @@ public class SequentialRunner {
     public static void mapperClusterExp(String[] argArray) {
         System.out.print("Running TDAMap ... \n");
         try {
-            TopologicalForestPerformanceExperiment.main(argArray);
+            TFEvaluationOutput returnObj = new TFEvaluationOutput();
+            returnObj = TopologicalForestPerformanceExperiment.main(argArray);
+            clusterQualityIndexHashMap = returnObj.getClusterQualityIndexHashMap();
+            treeOfClusterQualityIndexHashMap = returnObj.getTreeOfClusterQualityIndexHashMap();
+
+
         } catch (Exception e) {
             e.printStackTrace();
             System.out.print("error in   TDAMap ... \n");
@@ -133,7 +144,7 @@ public class SequentialRunner {
     public static void mapperClusterSectionExp(String[] argArray) {
         System.out.print("Running ClusterSelectionExperiment ... \n");
         try {
-            TopologicalForestClusterSelectionExperiment.main(argArray);
+            TopologicalForestClusterSelectionExperiment.main(argArray, clusterQualityIndexHashMap, treeOfClusterQualityIndexHashMap);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.print("error in   ClusterSelectionExperiment ... \n");

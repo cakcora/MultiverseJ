@@ -18,6 +18,7 @@ public class TDAcluster {
     private final Map<String, SingleEval> testEvals;
     private double aucValidation;
     private double aucTest;
+    private double qualityIndex ;
 
     public TDAcluster() {
         this.validationEvals = new HashMap<>();
@@ -83,5 +84,13 @@ public class TDAcluster {
 
     public List<SingleEval> getTestEvalProbs() {
         return new ArrayList<>(testEvals.values());
+    }
+
+    public double getQualityIndex() {
+        return qualityIndex;
+    }
+
+    public void setQualityIndex(double qualityIndex) {
+        this.qualityIndex = qualityIndex;
     }
 }

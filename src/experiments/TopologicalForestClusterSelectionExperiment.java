@@ -6,16 +6,19 @@ import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import metrics.MetricComputer;
 import metrics.SingleEval;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class TopologicalForestClusterSelectionExperiment {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args, Map<String, Double> clusterQualityIndexHashMap,  Map<String, Map<String , Double>> treeOfClusterQualityIndexHashMap) throws IOException {
+
         String clusterPredictionOutputFile = args[0];
         String edgeFile = args[1];
         String resultFile = args[2];
         String nodeFile = args[3];
+        int numClusterSelectionK = Integer.parseInt(args[4]);
         BufferedWriter wr = new BufferedWriter(new FileWriter(resultFile, true));
         BufferedReader rd = new BufferedReader(new FileReader(edgeFile));
         UndirectedSparseGraph<String, Integer> graph = new UndirectedSparseGraph();
@@ -55,7 +58,8 @@ public class TopologicalForestClusterSelectionExperiment {
                 cls = clusters.get(cluster);
             else cls = new TDAcluster();
             cls.setId(cluster);
-            cls.setTreeCount(vote1 + vote2);
+            cls.setTreeCount(Integer.parseInt(arr[9]));
+            cls.setQualityIndex(clusterQualityIndexHashMap.get(cluster));
             SingleEval eval = new SingleEval(predicted, label);
             if (type.equalsIgnoreCase("validation")) {
                 cls.addToValidationEvals(dp, eval);
@@ -95,6 +99,7 @@ public class TopologicalForestClusterSelectionExperiment {
         }
 
         for (int selectThisManyClusters : new int[]{1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 500}) {
+
             MetricComputer metric = metricComputer;
             // option 1 selectThisManyClusters randomly
 
@@ -131,6 +136,20 @@ public class TopologicalForestClusterSelectionExperiment {
 
                 }
             }
+
+            // option 3 select Top-K based on clusterQualityIndex
+            // sort clusterQualityIndex
+            Set<String> selectedClusterQuality = new HashSet<>();
+            Map<String,Double> sortedMap = new LinkedHashMap<String, Double>();
+            sortedMap = sortByValue(clusterQualityIndexHashMap);
+            List<String> clusterIDs = new ArrayList<String>(sortedMap.keySet());
+            Collections.reverse(clusterIDs);
+            for (int n = 0; n < selectThisManyClusters ; n++)
+            {
+                selectedClusterQuality.add(clusterIDs.get(n));
+            }
+
+
             //System.out.println("Greedy clusters: " + selectedGreedy.toString());
             List<SingleEval> evaluationsGreedy = evaluateWithSelected(selectedGreedy, clusters);
             double greedyAUC = metric.computeAUC(evaluationsGreedy);
@@ -158,7 +177,18 @@ public class TopologicalForestClusterSelectionExperiment {
             //System.out.println("Random" + "\t" + selectThisManyClusters + "\t\t" + randomAUC + "\t" + bias + "\t" + logloss);
             wr.write("Random" + "\t" + selectThisManyClusters + "\t\t" + randomAUC + "\t" + bias + "\t" + logloss + "\t" + randomCLusterTreeCount + "\r\n");
 
-            //option 3 network selection
+            List<SingleEval> evaluationsClusterQuality = evaluateWithSelected(selectedClusterQuality, clusters);
+            double clusterQualityAUC = metric.computeAUC(evaluationsClusterQuality);
+            bias = metric.computeBias(evaluationsClusterQuality);
+            logloss = metric.computeLogLoss(evaluationsClusterQuality);
+            gh = new HashSet();
+            for (String clust : selectedClusterQuality) {
+                gh.addAll(clusters.get(clust).getTrees());
+            }
+            int qualityCLusterTreeCount = gh.size();
+            wr.write("Quality" + "\t" + numClusterSelectionK + "\t\t" + clusterQualityAUC + "\t" + bias + "\t" + logloss + "\t" + qualityCLusterTreeCount + "\r\n");
+
+            //option 4 network selection
             double maxTDA = 0;
             for (TDAcluster cls : clusters.values()) {
                 String id = cls.getID();
@@ -192,11 +222,24 @@ public class TopologicalForestClusterSelectionExperiment {
                 }
             }
 
+
+
         }
         wr.close();
 
     }
 
+    public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
+        List<Map.Entry<K, V>> list = new ArrayList<>(map.entrySet());
+        list.sort(Map.Entry.comparingByValue());
+
+        Map<K, V> result = new LinkedHashMap<>();
+        for (Map.Entry<K, V> entry : list) {
+            result.put(entry.getKey(), entry.getValue());
+        }
+
+        return result;
+    }
     private static List<SingleEval> evaluateWithSelected(Set<String> selected, Map<String, TDAcluster> clusters) throws IOException {
         String line = "";
         Map<String, SingleEval> probs = new HashMap<>();
