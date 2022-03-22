@@ -17,8 +17,7 @@ import java.util.Map;
  */
 
 public class BatchRunner {
-    private static Map<String, Double> clusterQualityIndexHashMap = new HashMap<>();
-    private static Map<String, Map<String , Double>> treeOfClusterQualityIndexHashMap = new HashMap<>();
+    static TFEvaluationOutput returnObj = new TFEvaluationOutput();
     public static void main(String[] args) throws Exception {
         // Change before run
         // ATTENTION: Dont Forget to change the Path in Python File
@@ -118,10 +117,7 @@ public class BatchRunner {
     public static void RunTDAMapper(String[] argArray) {
         System.out.print("\n Running TDAMap ... \n");
         try {
-            TFEvaluationOutput returnObj = new TFEvaluationOutput();
             returnObj = TopologicalForestPerformanceExperiment.main(argArray);
-            clusterQualityIndexHashMap = returnObj.getClusterQualityIndexHashMap();
-            treeOfClusterQualityIndexHashMap = returnObj.getTreeOfClusterQualityIndexHashMap();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.print("Exception Occurred in running  TDAMap ... \n");
@@ -131,7 +127,7 @@ public class BatchRunner {
     public static void RunClusterSelectionExperiment(String[] argArray) {
         System.out.print("\n Running ClusterSelectionExperiment ... \n");
         try {
-            TopologicalForestClusterSelectionExperiment.main(argArray, clusterQualityIndexHashMap, treeOfClusterQualityIndexHashMap);
+            TopologicalForestClusterSelectionExperiment.main(argArray, returnObj.getClusterQualityIndexHashMap(), returnObj.getTreeOfClusterQualityIndexHashMap(), returnObj.getTopKTreeSelection());
         } catch (Exception e) {
             e.printStackTrace();
             System.out.print("Exception Occurred in running  ClusterSelectionExperiment ... \n");

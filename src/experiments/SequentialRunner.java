@@ -9,11 +9,11 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 public class SequentialRunner {
-    private static Map<String, Double> clusterQualityIndexHashMap = new HashMap<>();
-    private static Map<String, Map<String , Double>> treeOfClusterQualityIndexHashMap = new HashMap<>();
+    static TFEvaluationOutput returnObj = new TFEvaluationOutput();
 
     public static void main(String[] args) throws Exception {
         //
+
         String projectPath = args[0];
         int numTree = 300;
         // K variable for Top K Cluster Selection
@@ -129,11 +129,8 @@ public class SequentialRunner {
     public static void mapperClusterExp(String[] argArray) {
         System.out.print("Running TDAMap ... \n");
         try {
-            TFEvaluationOutput returnObj = new TFEvaluationOutput();
-            returnObj = TopologicalForestPerformanceExperiment.main(argArray);
-            clusterQualityIndexHashMap = returnObj.getClusterQualityIndexHashMap();
-            treeOfClusterQualityIndexHashMap = returnObj.getTreeOfClusterQualityIndexHashMap();
 
+            returnObj = TopologicalForestPerformanceExperiment.main(argArray);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -144,7 +141,7 @@ public class SequentialRunner {
     public static void mapperClusterSectionExp(String[] argArray) {
         System.out.print("Running ClusterSelectionExperiment ... \n");
         try {
-            TopologicalForestClusterSelectionExperiment.main(argArray, clusterQualityIndexHashMap, treeOfClusterQualityIndexHashMap);
+            TopologicalForestClusterSelectionExperiment.main(argArray, returnObj.getClusterQualityIndexHashMap(), returnObj.getTreeOfClusterQualityIndexHashMap(), returnObj.getTopKTreeSelection());
         } catch (Exception e) {
             e.printStackTrace();
             System.out.print("error in   ClusterSelectionExperiment ... \n");

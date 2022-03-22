@@ -7,6 +7,7 @@ public class TFEvaluationOutput {
     private Map<String, Double> clusterQualityIndexHashMap = new HashMap<>();
     // ClusterID -> List of cluster's tree Map{treeID -> Score}
     private Map<String, Map<String , Double>> treeOfClusterQualityIndexHashMap = new HashMap<>();
+    private int [] topKTreeSelection ;
 
     public Map<String, Double> getClusterQualityIndexHashMap() {
         return clusterQualityIndexHashMap;
@@ -22,5 +23,13 @@ public class TFEvaluationOutput {
 
     public void setTreeOfClusterQualityIndexHashMap(Map<String, Map<String, Double>> treeOfClusterQualityIndexHashMap) {
         this.treeOfClusterQualityIndexHashMap = treeOfClusterQualityIndexHashMap;
+    }
+
+    public int[] getTopKTreeSelection() {
+        return topKTreeSelection;
+    }
+
+    public void setTopKTreeSelection(int[] topKTreeSelection) {
+        this.topKTreeSelection = topKTreeSelection;
     }
 }

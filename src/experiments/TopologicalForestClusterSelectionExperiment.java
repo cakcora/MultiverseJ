@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class TopologicalForestClusterSelectionExperiment {
-    public static void main(String[] args, Map<String, Double> clusterQualityIndexHashMap,  Map<String, Map<String , Double>> treeOfClusterQualityIndexHashMap) throws IOException {
+    public static void main(String[] args, Map<String, Double> clusterQualityIndexHashMap,  Map<String, Map<String , Double>> treeOfClusterQualityIndexHashMap, int [] topKTresSelection) throws IOException {
 
         String clusterPredictionOutputFile = args[0];
         String edgeFile = args[1];
@@ -61,10 +61,24 @@ public class TopologicalForestClusterSelectionExperiment {
             cls.setTreeCount(Integer.parseInt(arr[9]));
             cls.setQualityIndex(clusterQualityIndexHashMap.get(cluster));
             SingleEval eval = new SingleEval(predicted, label);
+
             if (type.equalsIgnoreCase("validation")) {
                 cls.addToValidationEvals(dp, eval);
             } else if (type.equalsIgnoreCase("test")) {
                 cls.addToTestEvals(dp, eval);
+            }
+            // add top k tree selection results
+            // set to last index before top k tree scores
+            int i = 10 ;
+            double topKTreePrediction = 0;
+            for (int k : topKTresSelection) {
+                topKTreePrediction = Double.parseDouble(arr[i]);
+                SingleEval treeEval = new SingleEval(topKTreePrediction, label);
+                treeEval.setK(k);
+                if (type.equalsIgnoreCase("test")) {
+                    cls.addToTestTopKTreeEvals((dp+"-"+String.valueOf(k)),treeEval);
+                }
+                i ++;
             }
             clusters.put(cluster, cls);
         }
@@ -137,7 +151,7 @@ public class TopologicalForestClusterSelectionExperiment {
                 }
             }
 
-            // option 3 select Top-K based on clusterQualityIndex
+            // option 3 select Top-K based on clusterQualityIndex without tree selection strategy
             // sort clusterQualityIndex
             Set<String> selectedClusterQuality = new HashSet<>();
             Map<String,Double> sortedMap = new LinkedHashMap<String, Double>();
@@ -148,6 +162,9 @@ public class TopologicalForestClusterSelectionExperiment {
             {
                 selectedClusterQuality.add(clusterIDs.get(n));
             }
+
+            // Option 4 clusterQualityIndex with top K tree
+            // We need just to change evaluation part in the next steps
 
 
             //System.out.println("Greedy clusters: " + selectedGreedy.toString());
@@ -186,9 +203,29 @@ public class TopologicalForestClusterSelectionExperiment {
                 gh.addAll(clusters.get(clust).getTrees());
             }
             int qualityCLusterTreeCount = gh.size();
-            wr.write("Quality" + "\t" + numClusterSelectionK + "\t\t" + clusterQualityAUC + "\t" + bias + "\t" + logloss + "\t" + qualityCLusterTreeCount + "\r\n");
+            wr.write("Quality" + "\t" + selectThisManyClusters + "\t\t" + clusterQualityAUC + "\t" + bias + "\t" + logloss + "\t" + qualityCLusterTreeCount + "\r\n");
 
-            //option 4 network selection
+
+            // for Option 4
+            for (int n : topKTresSelection)
+            {
+                List<SingleEval> evaluationsClusterQualityWithTreeSelection = evaluateWithSelectedForTreeSelection(selectedClusterQuality, clusters, String.valueOf(n));
+                double clusterQualityWithTreeSelectionAUC = metric.computeAUC(evaluationsClusterQualityWithTreeSelection);
+                bias = metric.computeBias(evaluationsClusterQualityWithTreeSelection);
+                logloss = metric.computeLogLoss(evaluationsClusterQualityWithTreeSelection);
+                int qualityCLusterWithTreeSelectionTreeCount = 0 ;
+                for (String clust : selectedClusterQuality) {
+                    // change here for cluster number of trees
+                    qualityCLusterWithTreeSelectionTreeCount += Math.min(clusters.get(clust).getTrees().size(), n);
+
+                }
+
+                wr.write("QualityWithTreeSelection_Top" + String.valueOf(n) + "\t" + selectThisManyClusters + "\t\t" + clusterQualityWithTreeSelectionAUC + "\t" + bias + "\t" + logloss + "\t" + qualityCLusterWithTreeSelectionTreeCount + "\r\n");
+
+            }
+
+
+            //option 5 network selection
             double maxTDA = 0;
             for (TDAcluster cls : clusters.values()) {
                 String id = cls.getID();
@@ -254,6 +291,37 @@ public class TopologicalForestClusterSelectionExperiment {
                     SingleEval eval2 = probs.get(dp);
                     double runningSum = eval.getPredicted() + eval2.getPredicted();
                     probs.put(dp, new SingleEval(runningSum, eval2.getActual()));
+                }
+            }
+        }
+        // recompute mean probabilities
+        int size = selected.size();
+        for (String dp : probs.keySet()) {
+            SingleEval value = probs.get(dp);
+            double prob = value.getPredicted() / size;
+            double label = value.getActual();
+            probs.put(dp, new SingleEval(prob, label));
+        }
+        return new ArrayList<>(probs.values());
+    }
+
+    private static List<SingleEval> evaluateWithSelectedForTreeSelection(Set<String> selected, Map<String, TDAcluster> clusters, String treeSelectionK) throws IOException {
+        String line = "";
+        Map<String, SingleEval> probs = new HashMap<>();
+        for (String c : selected) {
+            TDAcluster tda = clusters.get(c);
+            Map<String, SingleEval> evals = tda.getTestTopKTreeEvals();
+            for (String dp : evals.keySet()) {
+                if (dp.split("-")[1].equals(treeSelectionK)) {
+                    SingleEval eval = evals.get(dp);
+
+                    if (!probs.containsKey(dp)) {
+                        probs.put(dp, eval);
+                    } else {
+                        SingleEval eval2 = probs.get(dp);
+                        double runningSum = eval.getPredicted() + eval2.getPredicted();
+                        probs.put(dp, new SingleEval(runningSum, eval2.getActual()));
+                    }
                 }
             }
         }

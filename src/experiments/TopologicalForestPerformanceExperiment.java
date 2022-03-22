@@ -30,7 +30,9 @@ public class TopologicalForestPerformanceExperiment {
     static Map<String, Double> clusterQualityIndexHashMap = new HashMap<>();
     // ClusterID -> List of cluster's tree Map{treeID -> Score}
     static Map<String, Map<String , Double>> treeOfClusterQualityIndexHashMap = new HashMap<>();
+    static Map<String, String> finalOutput = new HashMap<>();
     static TFEvaluationOutput returnObject;
+    static int [] topKOptions ={1, 2, 5};
 
 
     public static TFEvaluationOutput main(String[] args) throws Exception {
@@ -64,6 +66,7 @@ seed
         returnObject = new TFEvaluationOutput();
         clusterQualityIndexHashMap.clear();
         treeOfClusterQualityIndexHashMap.clear();
+        finalOutput.clear();
 
         // evaluation variables
 
@@ -110,6 +113,7 @@ seed
 
 
         for (TDAcluster cls : clusters) {
+            finalOutput.clear();
             treeOfClusterQualityIndexHashMap.put(cls.getID() , new HashMap<String,Double>());
             ArrayList<DecisionTree> treesOfACluster = cls.getTrees();
             HashMap<Integer, Integer> treePoisons = new HashMap<>();
@@ -152,13 +156,19 @@ seed
                         continue;
                     }
 
+
                     evaluatePerCluster(truePredict, falsePredict, y, treesOfACluster.size());
                     int dTreesWithPoison1 = 0;
                     int dTreesWithPoison2 = 0;
                     if (treePoisons.containsKey(targetPoison1)) dTreesWithPoison1 = treePoisons.get(targetPoison1);
                     if (treePoisons.containsKey(targetPoison2)) dTreesWithPoison2 = treePoisons.get(targetPoison2);
-                    out.write(cls.getID() + "\tvalidation\t" + dp.getID() + "\t" + dTreesWithPoison2 + "\t" + dTreesWithPoison1 + "\t" + yhat + "\t" + y + "\t" + falsePredict + "\t" + truePredict + "\t" + treesOfACluster.size() + "\r\n");
-
+                    String output = cls.getID() + "\tvalidation\t" + dp.getID() + "\t" + dTreesWithPoison2 + "\t" + dTreesWithPoison1 + "\t" + yhat + "\t" + y + "\t" + falsePredict + "\t" + truePredict + "\t" + treesOfACluster.size() + "\t";
+                    finalOutput.put(String.valueOf(dp.getID()), output);
+                }
+                // Evaluate for tree selection prediction on each data set
+                for (DataPoint dp : test.getDatapoints()) {
+                    topKTreeEvaluation(cls, dp);
+                    out.write(finalOutput.get(String.valueOf(dp.getID())));
                 }
                 writeClusterEvaluationResult("VALIDATION", cls.getID(), clusterPredictionOutputFile, treesOfACluster.size(), replica);
             }
@@ -170,7 +180,8 @@ seed
                 int truePredict = 0;
                 int falsePredict = 0;
                 double treePredict = 0;
-                for (DecisionTree tree : treesOfACluster) {
+                for (DecisionTree tree : treesOfACluster)
+                {
                     prob += tree.predict(dp.getFeatures());
                     if (tree.predict(dp.getFeatures()) > 0.5)
                     {
@@ -194,15 +205,20 @@ seed
                     continue;
                 }
 
-
-
                 evaluatePerCluster(truePredict,falsePredict,y, treesOfACluster.size());
                 int dTreesWithPoison1 = 0;
                 int dTreesWithPoison2 = 0;
                 if (treePoisons.containsKey(targetPoison1)) dTreesWithPoison1 = treePoisons.get(targetPoison1);
                 if (treePoisons.containsKey(targetPoison2)) dTreesWithPoison2 = treePoisons.get(targetPoison2);
-                out.write(cls.getID() + "\ttest\t" + dp.getID() + "\t" + dTreesWithPoison2 + "\t" + dTreesWithPoison1 + "\t" + yhat + "\t" + y + "\t" + falsePredict + "\t" + truePredict +  "\t" +  treesOfACluster.size() +  "\r\n");
+                String output = cls.getID() + "\ttest\t" + dp.getID() + "\t" + dTreesWithPoison2 + "\t" + dTreesWithPoison1 + "\t" + yhat + "\t" + y + "\t" + falsePredict + "\t" + truePredict + "\t" + treesOfACluster.size() + "\t";
+                finalOutput.put(String.valueOf(dp.getID()), output);
             }
+            // Evaluate for tree selection prediction on each data set
+            for (DataPoint dp : test.getDatapoints()) {
+                topKTreeEvaluation(cls, dp);
+                out.write(finalOutput.get(String.valueOf(dp.getID())));
+            }
+
             writeClusterEvaluationResult("TEST",  cls.getID()  ,clusterPredictionOutputFile,  treesOfACluster.size(),replica);
         }
 
@@ -210,7 +226,55 @@ seed
         writeTotalEvaluationResult(clusterPredictionOutputFile, replica);
         returnObject.setClusterQualityIndexHashMap(clusterQualityIndexHashMap);
         returnObject.setTreeOfClusterQualityIndexHashMap(treeOfClusterQualityIndexHashMap);
+        returnObject.setTopKTreeSelection(topKOptions);
         return returnObject;
+    }
+
+    private static void topKTreeEvaluation(TDAcluster cls, DataPoint dp)
+    {
+        Map<String, Double> tempTreeOfClusterQualityIndexHashMap = new HashMap<>();
+        // get tree scores of this cluster for re assessment
+        tempTreeOfClusterQualityIndexHashMap = sortMapByValue(treeOfClusterQualityIndexHashMap.get(cls.getID()));
+        Map<String, Double> eachTopKSelectionScore = new HashMap<>();
+        for (int treeSelectionTopK : topKOptions)
+        {
+            int treeSelectionTopKIndex = treeSelectionTopK ;
+            // ASk for alternatives if cluster has less than K trees
+            eachTopKSelectionScore.put(("Top" + String.valueOf(treeSelectionTopK) + "TreePrediction"), 0d);
+            double topKProb = 0d;
+            if (treeSelectionTopK > cls.getTrees().size())
+            {
+                treeSelectionTopKIndex = cls.getTrees().size();
+
+            }
+            // sort the list
+            Map<String,Double> sortedMap = new LinkedHashMap<String, Double>();
+            Set<String> selectedTrees = new HashSet<>();
+            sortedMap = sortMapByValue(tempTreeOfClusterQualityIndexHashMap);
+            List<String> treeIDs = new ArrayList<String>(sortedMap.keySet());
+            Collections.reverse(treeIDs);
+            for (int n = 0 ; n < treeSelectionTopKIndex ; n++)
+            {
+                // select Top K trees
+                selectedTrees.add(treeIDs.get(n));
+            }
+            for (DecisionTree tree : cls.getTrees()) {
+                if (selectedTrees.contains(String.valueOf(tree.getID())))
+                    topKProb += tree.predict(dp.getFeatures());
+            }
+            double prediction = topKProb / selectedTrees.size();
+            eachTopKSelectionScore.put(("Top" + String.valueOf(treeSelectionTopK) + "TreePrediction"), prediction);
+        }
+        StringBuilder output = new StringBuilder(finalOutput.get(String.valueOf(dp.getID())));
+        for (int n : topKOptions)
+        {
+
+            output.append(String.valueOf(eachTopKSelectionScore.get(("Top" + String.valueOf(n) + "TreePrediction"))));
+            output.append("\t");
+        }
+        output.append("\r\n");
+        finalOutput.put(String.valueOf(dp.getID()),output.toString());
+
     }
 
     private static void updateTreeScore(String clusterID, String treeID, double treePredict, double label) {
@@ -409,6 +473,18 @@ seed
         {
             System.err.println("IOException: " + ioe.getMessage());
         }
+    }
+
+    public static <K, V extends Comparable<? super V>> Map<K, V> sortMapByValue(Map<K, V> map) {
+        List<Map.Entry<K, V>> list = new ArrayList<>(map.entrySet());
+        list.sort(Map.Entry.comparingByValue());
+
+        Map<K, V> result = new LinkedHashMap<>();
+        for (Map.Entry<K, V> entry : list) {
+            result.put(entry.getKey(), entry.getValue());
+        }
+
+        return result;
     }
 
 }
