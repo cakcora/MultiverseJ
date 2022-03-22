@@ -25,12 +25,20 @@ public class SingleEval implements Comparable<SingleEval>{
 	 * The bin number for AUC between [0, 999]
 	 */
 	private int binId;
+
+	/**
+	 * Number of K in Top K selection. Shows the K of this eval
+	 */
+	private int K;
+
+
 	
 	public SingleEval(double predicted, double actual)
 	{
 		this.predicted = predicted;
 		this.actual = actual;
 		this.binId = (int)(predicted * 1000.0d);
+		this.K = 0;
 	}
 
 	public double getPredicted() {
@@ -86,4 +94,11 @@ public class SingleEval implements Comparable<SingleEval>{
 	}
 
 
+	public int getK() {
+		return K;
+	}
+
+	public void setK(int k) {
+		K = k;
+	}
 }

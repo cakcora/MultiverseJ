@@ -1,10 +1,14 @@
+import TDA.TFEvaluationOutput;
 import experiments.PoisonedLabelExperiment;
 import experiments.TopologicalForestClusterSelectionExperiment;
 import experiments.TopologicalForestPerformanceExperiment;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created By Kiarash Shamsi
@@ -13,6 +17,7 @@ import java.util.HashMap;
  */
 
 public class BatchRunner_CC {
+    static TFEvaluationOutput returnObj = new TFEvaluationOutput();
     public static void main(String[] args) throws Exception {
         // Change before run
         // ATTENTION: Dont Forget to change the Path in Python File
@@ -99,7 +104,7 @@ public class BatchRunner_CC {
     {
         System.out.print("\n Running TDAMap ... \n");
         try {
-            TopologicalForestPerformanceExperiment.main(argArray);
+            returnObj = TopologicalForestPerformanceExperiment.main(argArray);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.print("Exception Occurred in running  TDAMap ... \n");
@@ -110,7 +115,7 @@ public class BatchRunner_CC {
     {
         System.out.print("\n Running ClusterSelectionExperiment ... \n");
         try {
-            TopologicalForestClusterSelectionExperiment.main(argArray);
+            TopologicalForestClusterSelectionExperiment.main(argArray, returnObj.getClusterQualityIndexHashMap(), returnObj.getTreeOfClusterQualityIndexHashMap(), returnObj.getTopKTreeSelection());
         } catch (Exception e) {
             e.printStackTrace();
             System.out.print("Exception Occurred in running  ClusterSelectionExperiment ... \n");

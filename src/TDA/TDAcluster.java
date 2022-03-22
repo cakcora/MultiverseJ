@@ -16,12 +16,15 @@ public class TDAcluster {
     private final int fn = 0;
     private final Map<String, SingleEval> validationEvals;
     private final Map<String, SingleEval> testEvals;
+    private final Map<String , SingleEval> testTopKTreeEvals;
     private double aucValidation;
     private double aucTest;
+    private double qualityIndex ;
 
     public TDAcluster() {
         this.validationEvals = new HashMap<>();
         this.testEvals = new HashMap<>();
+        this.testTopKTreeEvals = new HashMap<>();
         this.trees = new ArrayList();
     }
 
@@ -49,12 +52,15 @@ public class TDAcluster {
         return (this.treeCount);
     }
 
-    public void addToValidationEvals(String dp, SingleEval eval) {
-        validationEvals.put(dp, eval);
-    }
+    public void addToValidationEvals(String dp, SingleEval eval) {validationEvals.put(dp, eval);}
 
     public void addToTestEvals(String dp, SingleEval eval) {
         testEvals.put(dp, eval);
+    }
+
+    public void addToTestTopKTreeEvals(String dp, SingleEval eval) {
+        testTopKTreeEvals.put(dp,eval);
+
     }
 
     public Map<String, SingleEval> getValidationEvals() {
@@ -83,5 +89,17 @@ public class TDAcluster {
 
     public List<SingleEval> getTestEvalProbs() {
         return new ArrayList<>(testEvals.values());
+    }
+
+    public double getQualityIndex() {
+        return qualityIndex;
+    }
+
+    public void setQualityIndex(double qualityIndex) {
+        this.qualityIndex = qualityIndex;
+    }
+
+    public Map<String , SingleEval> getTestTopKTreeEvals() {
+        return testTopKTreeEvals;
     }
 }

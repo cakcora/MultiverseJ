@@ -1,21 +1,28 @@
 package experiments;
 
+import TDA.TFEvaluationOutput;
 import org.apache.commons.io.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
-import java.util.Random;
+import java.util.*;
 
 public class SequentialRunner {
+    static TFEvaluationOutput returnObj = new TFEvaluationOutput();
+
     public static void main(String[] args) throws Exception {
+        //
+
         String projectPath = args[0];
         int numTree = 300;
+        // K variable for Top K Cluster Selection
+        int numClusterSelectionK = 5;
 
         //Excluded datasets because AUC is strangely 1 everywhere. "Mushroom",
-        for (String datasetName : new String[]{"adult", "Breast-cancer", "spambase", "credit", "LR",
-                "Poker", "Nursery", "Connect-4", "Diabetes", "News-popularity"}) {
-
+        for (String datasetName : new String[]{"adult"}) {
+        // , "Breast-cancer", "spambase", "credit", "LR",
+            //                "Poker", "Nursery", "Connect-4", "Diabetes", "News-popularity"
 
             int poisonFirst = 0;
             for (int poisonLast : new int[]{0/*, 2, 4, 6, 8, 10, 20, 40*/}) {
@@ -77,12 +84,12 @@ public class SequentialRunner {
 
                     String output = resultsPath + datasetName + "clusteroutput.txt";
                     String[] mapperArgs = new String[]{clusterNodes, clusterLinks, treePath, nodeIDS, dataPath,
-                            quoter, sep, output, String.valueOf(poisonFirst), String.valueOf(poisonLast), String.valueOf(seed)};
+                            quoter, sep, output, String.valueOf(poisonFirst), String.valueOf(poisonLast), String.valueOf(seed), String.valueOf(replicate) };
                     mapperClusterExp(mapperArgs);
 
                     //4 - Cluster performance experiment
 
-                    String[] clusterArgs = new String[]{output, clusterLinks, TFFinalResultsAUCFile, clusterNodes};
+                    String[] clusterArgs = new String[]{output, clusterLinks, TFFinalResultsAUCFile, clusterNodes, String.valueOf(numClusterSelectionK)};
                     mapperClusterSectionExp(clusterArgs);
 
                     //5-1 Vanilla forest performance experiments
@@ -93,7 +100,7 @@ public class SequentialRunner {
                     VanillaForestPerformanceExperiment.main(vanillaPerfArgs);
                     //5-2 Vanilla forest tree selection experiments
                     String[] vanillaAucArgs = new String[]{kPredictionOutputFile, VFFinalResultsAUCFile};
-                    VanillaForestPerformanceExperiment.main(vanillaAucArgs);
+                    VanillaForestTreeSelectionExperiment.main(vanillaAucArgs);
 
                     // Should we keep result files for future analysis: yes
                     //new File(clusterLinks).delete();
@@ -122,7 +129,9 @@ public class SequentialRunner {
     public static void mapperClusterExp(String[] argArray) {
         System.out.print("Running TDAMap ... \n");
         try {
-            TopologicalForestPerformanceExperiment.main(argArray);
+
+            returnObj = TopologicalForestPerformanceExperiment.main(argArray);
+
         } catch (Exception e) {
             e.printStackTrace();
             System.out.print("error in   TDAMap ... \n");
@@ -132,7 +141,7 @@ public class SequentialRunner {
     public static void mapperClusterSectionExp(String[] argArray) {
         System.out.print("Running ClusterSelectionExperiment ... \n");
         try {
-            TopologicalForestClusterSelectionExperiment.main(argArray);
+            TopologicalForestClusterSelectionExperiment.main(argArray, returnObj.getClusterQualityIndexHashMap(), returnObj.getTreeOfClusterQualityIndexHashMap(), returnObj.getTopKTreeSelection());
         } catch (Exception e) {
             e.printStackTrace();
             System.out.print("error in   ClusterSelectionExperiment ... \n");
