@@ -47,7 +47,7 @@ public class SequentialRunner {
                 String quoter = " ";
                 String sep = ",";
                 int poisonIncrementBy = ((poisonLast == 0) ? 10 : poisonLast);
-                int replicate = 3;
+                int replicate = 2;
                 // We used firstAucFile to save the AUC score of the vanilla forest on the test data.
                 // this is kind of redundant now because experiment 5-2 can now compute the same auc value
                 String firstAucFile = resultsPath + datasetName + "VanillaAucOnTestData.txt";

@@ -248,10 +248,8 @@ seed
 
             }
             // sort the list
-            Map<String,Double> sortedMap = new LinkedHashMap<String, Double>();
             Set<String> selectedTrees = new HashSet<>();
-            sortedMap = sortMapByValue(tempTreeOfClusterQualityIndexHashMap);
-            List<String> treeIDs = new ArrayList<String>(sortedMap.keySet());
+            List<String> treeIDs = new ArrayList<String>(tempTreeOfClusterQualityIndexHashMap.keySet());
             Collections.reverse(treeIDs);
             for (int n = 0 ; n < treeSelectionTopKIndex ; n++)
             {
