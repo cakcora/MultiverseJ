@@ -136,25 +136,28 @@ def draw_bar_eval_graph():
                 tf_df_Quality.groupby('ID').agg(AucMin=('Auc', 'min'), AucMax=('Auc', 'max'), Auc=('Auc', 'mean'),
                                                 TreeNo=('TreeNo', 'mean'))[
                     ['Auc', 'TreeNo', 'AucMin', 'AucMax']].reset_index().sort_values(by=['TreeNo'])
+            tf_df_Quality['TreeNo'] = tf_df_Quality['TreeNo'].astype(int)
 
             tf_df_Quality_Top_1 = tf_df.loc[tf_df['Method'] == 'QualityWithTreeSelection_Top1']
             tf_df_Quality_Top_1 = \
                 tf_df_Quality_Top_1.groupby('ID').agg(AucMin=('Auc', 'min'), AucMax=('Auc', 'max'), Auc=('Auc', 'mean'),
                                                       TreeNo=('TreeNo', 'mean'))[
                     ['Auc', 'TreeNo', 'AucMin', 'AucMax']].reset_index().sort_values(by=['TreeNo'])
+            tf_df_Quality_Top_1['TreeNo'] = tf_df_Quality_Top_1['TreeNo'].astype(int)
 
             tf_df_Quality_Top_2 = tf_df.loc[tf_df['Method'] == 'QualityWithTreeSelection_Top2']
             tf_df_Quality_Top_2 = \
                 tf_df_Quality_Top_2.groupby('ID').agg(AucMin=('Auc', 'min'), AucMax=('Auc', 'max'), Auc=('Auc', 'mean'),
                                                       TreeNo=('TreeNo', 'mean'))[
                     ['Auc', 'TreeNo', 'AucMin', 'AucMax']].reset_index().sort_values(by=['TreeNo'])
+            tf_df_Quality_Top_2['TreeNo'] = tf_df_Quality_Top_2['TreeNo'].astype(int)
 
             tf_df_Quality_Top_5 = tf_df.loc[tf_df['Method'] == 'QualityWithTreeSelection_Top5']
             tf_df_Quality_Top_5 = \
                 tf_df_Quality_Top_5.groupby('ID').agg(AucMin=('Auc', 'min'), AucMax=('Auc', 'max'), Auc=('Auc', 'mean'),
                                                       TreeNo=('TreeNo', 'mean'))[
                     ['Auc', 'TreeNo', 'AucMin', 'AucMax']].reset_index().sort_values(by=['TreeNo'])
-
+            tf_df_Quality_Top_5['TreeNo'] = tf_df_Quality_Top_5['TreeNo'].astype(int)
             greedy_closest = tf_df_greedy.loc[[tf_df_greedy['TreeNo'].sub(treeNumber).abs().idxmin()]]
             greedy_closest["TreeEvalNo"] = treeNumber
             greedy_closest["Dataset"] = dataset
@@ -226,9 +229,21 @@ def draw_bar_eval_graph():
         random_max_list = eval_by_dataset[cond].RandomMaxAuc.values[:]
         random_min_list = eval_by_dataset[cond].RandomMinAuc.values[:]
         quality_list = eval_by_dataset[cond].Quality.values[:]
+        quality_max_list = eval_by_dataset[cond].QualityMaxAuc.values[:]
+        quality_min_list = eval_by_dataset[cond].QualityMinAuc.values[:]
+
         top1_list = eval_by_dataset[cond].Top1.values[:]
+        top1_max_list = eval_by_dataset[cond].Top1MaxAuc.values[:]
+        top1_min_list = eval_by_dataset[cond].Top1MinAuc.values[:]
+
         top2_list = eval_by_dataset[cond].Top2.values[:]
+        top2_max_list = eval_by_dataset[cond].Top2MaxAuc.values[:]
+        top2_min_list = eval_by_dataset[cond].Top2MinAuc.values[:]
+
         top5_list = eval_by_dataset[cond].Top5.values[:]
+        top5_max_list = eval_by_dataset[cond].Top5MaxAuc.values[:]
+        top5_min_list = eval_by_dataset[cond].Top5MinAuc.values[:]
+
         x = np.arange(len(dataset_list))  # the label locations
         width = 0.13  # the width of the bars
 
@@ -244,14 +259,14 @@ def draw_bar_eval_graph():
                         yerr=[np.subtract(greedy_max_list, greedy_list), np.subtract(greedy_list, greedy_min_list)])
         rects2 = ax.bar(r2, random_list, width, label='Random', color="#1976D2",
                         yerr=[np.subtract(random_max_list, random_list), np.subtract(random_list, random_min_list)])
-        rects3 = ax.bar(r3, quality_list, width, label='Quality', color="#4DD0E1")
-        rects4 = ax.bar(r4, top1_list, width, label='Top1', color="#00695C")
-        rects5 = ax.bar(r5, top2_list, width, label='Top2', color="#8BC34A")
-        rects6 = ax.bar(r6, top5_list, width, label='Top5', color="#AFB42B")
+        rects3 = ax.bar(r3, quality_list, width, label='Quality', color="#4DD0E1", yerr=[np.subtract(quality_max_list, quality_list), np.subtract(quality_list, quality_min_list)] )
+        rects4 = ax.bar(r4, top1_list, width, label='Top1', color="#00695C" , yerr=[np.subtract(top1_max_list, top1_list), np.subtract(top1_list, top1_min_list)])
+        rects5 = ax.bar(r5, top2_list, width, label='Top2', color="#8BC34A" , yerr=[np.subtract(top2_max_list, top2_list), np.subtract(top2_list, top2_min_list)])
+        rects6 = ax.bar(r6, top5_list, width, label='Top5', color="#AFB42B" , yerr=[np.subtract(top5_max_list, top5_list), np.subtract(top5_list, top5_min_list)])
 
         # Add some text for labels, title and custom x-axis tick labels, etc.
         ax.set_ylabel('Auc')
-        ax.set_title('Auc in Different Datasets (Tree selection {}% )'.format((treeNo / total_tree_number) * 100))
+        # ax.set_title('Auc in Different Datasets (Tree selection {}% )'.format((treeNo / total_tree_number) * 100))
         plt.xticks([r + (2 * width) for r in range(len(dataset_list))], Datasets_names)
         ax.legend(loc="upper left", prop={'size': 6})
 
