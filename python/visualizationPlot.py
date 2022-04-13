@@ -109,7 +109,8 @@ def draw_bar_eval_graph():
     eval_by_dataset = pd.DataFrame()
     total_tree_number = 300
     treeEvalNumber = [30, 60, 150]
-    Datasets = ["Nursery", "adult", "Diabetes", "LR", "Poker", "C4", "BankNote", "BreastCancer"]
+    Datasets_names = ["Diabetes", "Connect-4", "Adult", "Poker", "Letter Recognition", "Nursery", ]
+    Datasets = ["Diabetes", "C4", "adult", "Poker", "LR", "Nursery"]
     for treeNumber in treeEvalNumber:
         for dataset in Datasets:
             datapath = dataset + "TFfinalResults.csv"
@@ -117,11 +118,42 @@ def draw_bar_eval_graph():
             tf_df['Auc'] = pd.to_numeric(tf_df['Auc'], errors='coerce')
             tf_df = tf_df.loc[(tf_df["TreeNo"] <= 300)]
             tf_df_greedy = tf_df.loc[tf_df['Method'] == 'Greedy']
+            tf_df_greedy = \
+                tf_df_greedy.groupby('ID').agg(AucMin=('Auc', 'min'), AucMax=('Auc', 'max'), Auc=('Auc', 'mean'),
+                                               TreeNo=('TreeNo', 'mean'))[
+                    ['Auc', 'TreeNo', 'AucMin', 'AucMax']].reset_index().sort_values(by=['TreeNo'])
+            tf_df_greedy['TreeNo'] = tf_df_greedy['TreeNo'].astype(int)
+
             tf_df_Random = tf_df.loc[tf_df['Method'] == 'Random']
+            tf_df_Random = \
+                tf_df_Random.groupby('ID').agg(AucMin=('Auc', 'min'), AucMax=('Auc', 'max'), Auc=('Auc', 'mean'),
+                                               TreeNo=('TreeNo', 'mean'))[
+                    ['Auc', 'TreeNo', 'AucMin', 'AucMax']].reset_index().sort_values(by=['TreeNo'])
+            tf_df_Random['TreeNo'] = tf_df_Random['TreeNo'].astype(int)
+
             tf_df_Quality = tf_df.loc[tf_df['Method'] == 'Quality']
+            tf_df_Quality = \
+                tf_df_Quality.groupby('ID').agg(AucMin=('Auc', 'min'), AucMax=('Auc', 'max'), Auc=('Auc', 'mean'),
+                                                TreeNo=('TreeNo', 'mean'))[
+                    ['Auc', 'TreeNo', 'AucMin', 'AucMax']].reset_index().sort_values(by=['TreeNo'])
+
             tf_df_Quality_Top_1 = tf_df.loc[tf_df['Method'] == 'QualityWithTreeSelection_Top1']
+            tf_df_Quality_Top_1 = \
+                tf_df_Quality_Top_1.groupby('ID').agg(AucMin=('Auc', 'min'), AucMax=('Auc', 'max'), Auc=('Auc', 'mean'),
+                                                      TreeNo=('TreeNo', 'mean'))[
+                    ['Auc', 'TreeNo', 'AucMin', 'AucMax']].reset_index().sort_values(by=['TreeNo'])
+
             tf_df_Quality_Top_2 = tf_df.loc[tf_df['Method'] == 'QualityWithTreeSelection_Top2']
+            tf_df_Quality_Top_2 = \
+                tf_df_Quality_Top_2.groupby('ID').agg(AucMin=('Auc', 'min'), AucMax=('Auc', 'max'), Auc=('Auc', 'mean'),
+                                                      TreeNo=('TreeNo', 'mean'))[
+                    ['Auc', 'TreeNo', 'AucMin', 'AucMax']].reset_index().sort_values(by=['TreeNo'])
+
             tf_df_Quality_Top_5 = tf_df.loc[tf_df['Method'] == 'QualityWithTreeSelection_Top5']
+            tf_df_Quality_Top_5 = \
+                tf_df_Quality_Top_5.groupby('ID').agg(AucMin=('Auc', 'min'), AucMax=('Auc', 'max'), Auc=('Auc', 'mean'),
+                                                      TreeNo=('TreeNo', 'mean'))[
+                    ['Auc', 'TreeNo', 'AucMin', 'AucMax']].reset_index().sort_values(by=['TreeNo'])
 
             greedy_closest = tf_df_greedy.loc[[tf_df_greedy['TreeNo'].sub(treeNumber).abs().idxmin()]]
             greedy_closest["TreeEvalNo"] = treeNumber
@@ -158,32 +190,47 @@ def draw_bar_eval_graph():
             overall_total_eval = overall_total_eval.append(quality_top_5_closest)
 
             eval_by_dataset = eval_by_dataset.append(
-                pd.DataFrame([(dataset, treeNumber, greedy_closest.iloc[0]['Auc'], random_closest.iloc[0]['Auc'],
-                               quality_closest.iloc[0]['Auc'],
-                               quality_top_1_closest.iloc[0]['Auc'], quality_top_2_closest.iloc[0]['Auc'],
-                               quality_top_5_closest.iloc[0]['Auc'])],
-                             columns=['Dataset', 'TreeEvalNo', 'Greedy', 'Random', 'Quality', 'Top1', 'Top2',
-                                      'Top5'], ))
+                pd.DataFrame([(dataset, treeNumber, greedy_closest.iloc[0]['Auc'], greedy_closest.iloc[0]['AucMin'],
+                               greedy_closest.iloc[0]['AucMax'], random_closest.iloc[0]['Auc'],
+                               random_closest.iloc[0]['AucMin'],
+                               random_closest.iloc[0]['AucMax'],
+                               quality_closest.iloc[0]['Auc'], quality_closest.iloc[0]['AucMin'],
+                               quality_closest.iloc[0]['AucMax'],
+                               quality_top_1_closest.iloc[0]['Auc'], quality_top_1_closest.iloc[0]['AucMin'],
+                               quality_top_1_closest.iloc[0]['AucMax'], quality_top_2_closest.iloc[0]['Auc'],
+                               quality_top_2_closest.iloc[0]['AucMin'],
+                               quality_top_2_closest.iloc[0]['AucMax'],
+                               quality_top_5_closest.iloc[0]['Auc'], quality_top_5_closest.iloc[0]['AucMin'],
+                               quality_top_5_closest.iloc[0]['AucMax'])],
+                             columns=['Dataset', 'TreeEvalNo', 'Greedy', 'GreedyMinAuc', 'GreedyMaxAuc', 'Random',
+                                      'RandomMinAuc', 'RandomMaxAuc',
+                                      'Quality', 'QualityMinAuc', 'QualityMaxAuc', 'Top1', 'Top1MinAuc', 'Top1MaxAuc',
+                                      'Top2', 'Top2MinAuc', 'Top2MaxAuc',
+                                      'Top5', 'Top5MinAuc', 'Top5MaxAuc'], ))
 
         # draw group bar chart for this tree numbers
-        width = 0.35  # the width of the bars
+        width = 0.4  # the width of the bars
 
     # draw group bar chart for each
     eval_by_dataset['Best'] = eval_by_dataset[['Greedy', 'Random', 'Quality', 'Top1', 'Top2',
                                                'Top5']].idxmax(axis=1)
 
     eval_by_dataset.to_csv("Dataset_Evaluation.csv", sep=',', encoding='utf-8', index=False)
-    for treeNo in treeEvalNumber :
+    for treeNo in treeEvalNumber:
         cond = (eval_by_dataset['TreeEvalNo'] == treeNo)
         dataset_list = eval_by_dataset[cond].Dataset.values[:]
         greedy_list = eval_by_dataset[cond].Greedy.values[:]
+        greedy_max_list = eval_by_dataset[cond].GreedyMaxAuc.values[:]
+        greedy_min_list = eval_by_dataset[cond].GreedyMinAuc.values[:]
         random_list = eval_by_dataset[cond].Random.values[:]
+        random_max_list = eval_by_dataset[cond].RandomMaxAuc.values[:]
+        random_min_list = eval_by_dataset[cond].RandomMinAuc.values[:]
         quality_list = eval_by_dataset[cond].Quality.values[:]
         top1_list = eval_by_dataset[cond].Top1.values[:]
         top2_list = eval_by_dataset[cond].Top2.values[:]
         top5_list = eval_by_dataset[cond].Top5.values[:]
         x = np.arange(len(dataset_list))  # the label locations
-        width = 0.1  # the width of the bars
+        width = 0.13  # the width of the bars
 
         r1 = np.arange(len(dataset_list))
         r2 = [x + width for x in r1]
@@ -192,20 +239,21 @@ def draw_bar_eval_graph():
         r5 = [x + width for x in r4]
         r6 = [x + width for x in r5]
 
-
         fig, ax = plt.subplots()
-        rects1 = ax.bar(r1, greedy_list, width, label='Greedy' )
-        rects2 = ax.bar(r2, random_list, width, label='Random')
-        rects3 = ax.bar(r3, quality_list, width, label='Quality')
-        rects4 = ax.bar(r4, top1_list, width, label='Top1')
-        rects5 = ax.bar(r5, top2_list, width, label='Top2')
-        rects6 = ax.bar(r6, top5_list, width, label='Top5')
+        rects1 = ax.bar(r1, greedy_list, width, label='Greedy', color="#0D47A1",
+                        yerr=[np.subtract(greedy_max_list, greedy_list), np.subtract(greedy_list, greedy_min_list)])
+        rects2 = ax.bar(r2, random_list, width, label='Random', color="#1976D2",
+                        yerr=[np.subtract(random_max_list, random_list), np.subtract(random_list, random_min_list)])
+        rects3 = ax.bar(r3, quality_list, width, label='Quality', color="#4DD0E1")
+        rects4 = ax.bar(r4, top1_list, width, label='Top1', color="#00695C")
+        rects5 = ax.bar(r5, top2_list, width, label='Top2', color="#8BC34A")
+        rects6 = ax.bar(r6, top5_list, width, label='Top5', color="#AFB42B")
 
         # Add some text for labels, title and custom x-axis tick labels, etc.
         ax.set_ylabel('Auc')
-        ax.set_title('Auc in Different Datasets (Tree selection {}% )'.format( (treeNo / total_tree_number ) * 100 ))
-        plt.xticks([r + (2*width) for r in range(len(dataset_list))], dataset_list)
-        ax.legend( loc = "upper left" , prop={'size': 6})
+        ax.set_title('Auc in Different Datasets (Tree selection {}% )'.format((treeNo / total_tree_number) * 100))
+        plt.xticks([r + (2 * width) for r in range(len(dataset_list))], Datasets_names)
+        ax.legend(loc="upper left", prop={'size': 6})
 
         # ax.bar_label(rects1, padding=6)
         # ax.bar_label(rects2, padding=6)
@@ -215,8 +263,9 @@ def draw_bar_eval_graph():
         # ax.bar_label(rects6, padding=6)
         plt.tick_params(labelsize=7)
         fig.tight_layout()
-        #fig.set_size_inches(18.5, 10.5, forward=True)
-        output = "graphs/" + 'Auc in Different Datasets (Tree selection {}% )'.format( (treeNo / total_tree_number)) + ".jpg"
+        # fig.set_size_inches(18.5, 10.5, forward=True)
+        output = "graphs/" + 'Auc in Different Datasets (Tree selection {}% )'.format(
+            (treeNo / total_tree_number)) + ".jpg"
         plt.savefig(output, dpi=300)
         plt.show()
 

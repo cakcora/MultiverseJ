@@ -20,7 +20,7 @@ public class SequentialRunner {
         int numClusterSelectionK = 5;
 
         //Excluded datasets because AUC is strangely 1 everywhere. "Mushroom",
-        for (String datasetName : new String[]{"NewsPopularity"}) {
+        for (String datasetName : new String[]{"Diabetes"}) {
         // , "adult","Diabetes", "Breast-cancer", "spambase", "credit", "LR",
             //                "Poker", "Nursery", "C4", "Diabetes", "News-popularity , "Poker" , "Nursery""
 
