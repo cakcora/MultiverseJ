@@ -255,14 +255,22 @@ def draw_bar_eval_graph():
         r6 = [x + width for x in r5]
 
         fig, ax = plt.subplots()
-        rects1 = ax.bar(r1, greedy_list, width, label='Greedy', color="#0D47A1",
+        right_side = ax.spines["right"]
+        top_side = ax.spines["top"]
+        right_side.set_visible(False)
+        top_side.set_visible(False)
+        rects1 = ax.bar(r1, greedy_list, width, label='Greedy Mapper', color="#0D47A1",
                         yerr=[np.subtract(greedy_max_list, greedy_list), np.subtract(greedy_list, greedy_min_list)])
         rects2 = ax.bar(r2, random_list, width, label='Random', color="#1976D2",
                         yerr=[np.subtract(random_max_list, random_list), np.subtract(random_list, random_min_list)])
-        rects3 = ax.bar(r3, quality_list, width, label='Quality', color="#4DD0E1", yerr=[np.subtract(quality_max_list, quality_list), np.subtract(quality_list, quality_min_list)] )
-        rects4 = ax.bar(r4, top1_list, width, label='Top1', color="#00695C" , yerr=[np.subtract(top1_max_list, top1_list), np.subtract(top1_list, top1_min_list)])
-        rects5 = ax.bar(r5, top2_list, width, label='Top2', color="#8BC34A" , yerr=[np.subtract(top2_max_list, top2_list), np.subtract(top2_list, top2_min_list)])
-        rects6 = ax.bar(r6, top5_list, width, label='Top5', color="#AFB42B" , yerr=[np.subtract(top5_max_list, top5_list), np.subtract(top5_list, top5_min_list)])
+        rects3 = ax.bar(r3, quality_list, width, label='Quality', color="#4DD0E1",
+                        yerr=[np.subtract(quality_max_list, quality_list), np.subtract(quality_list, quality_min_list)])
+        rects4 = ax.bar(r4, top1_list, width, label='Top1', color="#00695C",
+                        yerr=[np.subtract(top1_max_list, top1_list), np.subtract(top1_list, top1_min_list)])
+        rects5 = ax.bar(r5, top2_list, width, label='Top2', color="#8BC34A",
+                        yerr=[np.subtract(top2_max_list, top2_list), np.subtract(top2_list, top2_min_list)])
+        rects6 = ax.bar(r6, top5_list, width, label='Top5', color="#AFB42B",
+                        yerr=[np.subtract(top5_max_list, top5_list), np.subtract(top5_list, top5_min_list)])
 
         # Add some text for labels, title and custom x-axis tick labels, etc.
         ax.set_ylabel('Auc')
@@ -278,8 +286,204 @@ def draw_bar_eval_graph():
         # ax.bar_label(rects6, padding=6)
         plt.tick_params(labelsize=7)
         fig.tight_layout()
-        # fig.set_size_inches(18.5, 10.5, forward=True)
+        fig.set_size_inches(10, 5)
         output = "graphs/" + 'Auc in Different Datasets (Tree selection {}% )'.format(
+            (treeNo / total_tree_number)) + ".jpg"
+        plt.savefig(output, dpi=300)
+        plt.show()
+
+        print(overall_total_eval.head())
+
+def draw_bar_loss_eval_graph():
+    greedy_total_eval = pd.DataFrame()
+    random_total_eval = pd.DataFrame()
+    quality_total_eval = pd.DataFrame()
+    quality_top_1_total_eval = pd.DataFrame()
+    quality_top_2_total_eval = pd.DataFrame()
+    quality_top_5_total_eval = pd.DataFrame()
+    overall_total_eval = pd.DataFrame()
+    eval_by_dataset = pd.DataFrame()
+    total_tree_number = 300
+    treeEvalNumber = [30, 60, 150]
+    Datasets_names = ["Diabetes", "Connect-4", "Adult", "Poker", "Letter Recognition", "Nursery", ]
+    Datasets = ["Diabetes", "C4", "adult", "Poker", "LR", "Nursery"]
+    for treeNumber in treeEvalNumber:
+        for dataset in Datasets:
+            datapath = dataset + "TFfinalResults.csv"
+            tf_df = pd.read_csv(datapath, sep=',')
+            tf_df['Loss'] = pd.to_numeric(tf_df['Loss'], errors='coerce')
+            tf_df = tf_df.loc[(tf_df["TreeNo"] <= 300)]
+            tf_df_greedy = tf_df.loc[tf_df['Method'] == 'Greedy']
+            tf_df_greedy = \
+                tf_df_greedy.groupby('ID').agg(LossMin=('Loss', 'min'), LossMax=('Loss', 'max'), Loss=('Loss', 'mean'),
+                                               TreeNo=('TreeNo', 'mean'))[
+                    ['Loss', 'TreeNo', 'LossMin', 'LossMax']].reset_index().sort_values(by=['TreeNo'])
+            tf_df_greedy['TreeNo'] = tf_df_greedy['TreeNo'].astype(int)
+
+            tf_df_Random = tf_df.loc[tf_df['Method'] == 'Random']
+            tf_df_Random = \
+                tf_df_Random.groupby('ID').agg(LossMin=('Loss', 'min'), LossMax=('Loss', 'max'), Loss=('Loss', 'mean'),
+                                               TreeNo=('TreeNo', 'mean'))[
+                    ['Loss', 'TreeNo', 'LossMin', 'LossMax']].reset_index().sort_values(by=['TreeNo'])
+            tf_df_Random['TreeNo'] = tf_df_Random['TreeNo'].astype(int)
+
+            tf_df_Quality = tf_df.loc[tf_df['Method'] == 'Quality']
+            tf_df_Quality = \
+                tf_df_Quality.groupby('ID').agg(LossMin=('Loss', 'min'), LossMax=('Loss', 'max'), Loss=('Loss', 'mean'),
+                                                TreeNo=('TreeNo', 'mean'))[
+                    ['Loss', 'TreeNo', 'LossMin', 'LossMax']].reset_index().sort_values(by=['TreeNo'])
+            tf_df_Quality['TreeNo'] = tf_df_Quality['TreeNo'].astype(int)
+
+            tf_df_Quality_Top_1 = tf_df.loc[tf_df['Method'] == 'QualityWithTreeSelection_Top1']
+            tf_df_Quality_Top_1 = \
+                tf_df_Quality_Top_1.groupby('ID').agg(LossMin=('Loss', 'min'), LossMax=('Loss', 'max'), Loss=('Loss', 'mean'),
+                                                      TreeNo=('TreeNo', 'mean'))[
+                    ['Loss', 'TreeNo', 'LossMin', 'LossMax']].reset_index().sort_values(by=['TreeNo'])
+            tf_df_Quality_Top_1['TreeNo'] = tf_df_Quality_Top_1['TreeNo'].astype(int)
+
+            tf_df_Quality_Top_2 = tf_df.loc[tf_df['Method'] == 'QualityWithTreeSelection_Top2']
+            tf_df_Quality_Top_2 = \
+                tf_df_Quality_Top_2.groupby('ID').agg(LossMin=('Loss', 'min'), LossMax=('Loss', 'max'), Loss=('Loss', 'mean'),
+                                                      TreeNo=('TreeNo', 'mean'))[
+                    ['Loss', 'TreeNo', 'LossMin', 'LossMax']].reset_index().sort_values(by=['TreeNo'])
+            tf_df_Quality_Top_2['TreeNo'] = tf_df_Quality_Top_2['TreeNo'].astype(int)
+
+            tf_df_Quality_Top_5 = tf_df.loc[tf_df['Method'] == 'QualityWithTreeSelection_Top5']
+            tf_df_Quality_Top_5 = \
+                tf_df_Quality_Top_5.groupby('ID').agg(LossMin=('Loss', 'min'), LossMax=('Loss', 'max'), Loss=('Loss', 'mean'),
+                                                      TreeNo=('TreeNo', 'mean'))[
+                    ['Loss', 'TreeNo', 'LossMin', 'LossMax']].reset_index().sort_values(by=['TreeNo'])
+            tf_df_Quality_Top_5['TreeNo'] = tf_df_Quality_Top_5['TreeNo'].astype(int)
+            greedy_closest = tf_df_greedy.loc[[tf_df_greedy['TreeNo'].sub(treeNumber).abs().idxmin()]]
+            greedy_closest["TreeEvalNo"] = treeNumber
+            greedy_closest["Dataset"] = dataset
+            greedy_total_eval = greedy_total_eval.append(greedy_closest)
+            overall_total_eval = overall_total_eval.append(greedy_closest)
+            random_closest = tf_df_Random.loc[[tf_df_Random['TreeNo'].sub(treeNumber).abs().idxmin()]]
+            random_closest["TreeEvalNo"] = treeNumber
+            random_closest["Dataset"] = dataset
+            random_total_eval = random_total_eval.append(random_closest)
+            overall_total_eval = overall_total_eval.append(random_closest)
+            quality_closest = tf_df_Quality.loc[[tf_df_Quality['TreeNo'].sub(treeNumber).abs().idxmin()]]
+            quality_closest["TreeEvalNo"] = treeNumber
+            quality_closest["Dataset"] = dataset
+            quality_total_eval = quality_total_eval.append(quality_closest)
+            overall_total_eval = overall_total_eval.append(quality_closest)
+            quality_top_1_closest = tf_df_Quality_Top_1.loc[
+                [tf_df_Quality_Top_1['TreeNo'].sub(treeNumber).abs().idxmin()]]
+            quality_top_1_closest["TreeEvalNo"] = treeNumber
+            quality_top_1_closest["Dataset"] = dataset
+            quality_top_1_total_eval = quality_top_1_total_eval.append(quality_top_1_closest)
+            overall_total_eval = overall_total_eval.append(quality_top_1_closest)
+            quality_top_2_closest = tf_df_Quality_Top_2.loc[
+                [tf_df_Quality_Top_2['TreeNo'].sub(treeNumber).abs().idxmin()]]
+            quality_top_2_closest["TreeEvalNo"] = treeNumber
+            quality_top_2_closest["Dataset"] = dataset
+            quality_top_2_total_eval = quality_top_2_total_eval.append(quality_top_2_closest)
+            overall_total_eval = overall_total_eval.append(quality_top_2_closest)
+            quality_top_5_closest = tf_df_Quality_Top_5.loc[
+                [tf_df_Quality_Top_5['TreeNo'].sub(treeNumber).abs().idxmin()]]
+            quality_top_5_closest["TreeEvalNo"] = treeNumber
+            quality_top_5_closest["Dataset"] = dataset
+            quality_top_5_total_eval = quality_top_5_total_eval.append(quality_top_5_closest)
+            overall_total_eval = overall_total_eval.append(quality_top_5_closest)
+
+            eval_by_dataset = eval_by_dataset.append(
+                pd.DataFrame([(dataset, treeNumber, greedy_closest.iloc[0]['Loss'], greedy_closest.iloc[0]['LossMin'],
+                               greedy_closest.iloc[0]['LossMax'], random_closest.iloc[0]['Loss'],
+                               random_closest.iloc[0]['LossMin'],
+                               random_closest.iloc[0]['LossMax'],
+                               quality_closest.iloc[0]['Loss'], quality_closest.iloc[0]['LossMin'],
+                               quality_closest.iloc[0]['LossMax'],
+                               quality_top_1_closest.iloc[0]['Loss'], quality_top_1_closest.iloc[0]['LossMin'],
+                               quality_top_1_closest.iloc[0]['LossMax'], quality_top_2_closest.iloc[0]['Loss'],
+                               quality_top_2_closest.iloc[0]['LossMin'],
+                               quality_top_2_closest.iloc[0]['LossMax'],
+                               quality_top_5_closest.iloc[0]['Loss'], quality_top_5_closest.iloc[0]['LossMin'],
+                               quality_top_5_closest.iloc[0]['LossMax'])],
+                             columns=['Dataset', 'TreeEvalNo', 'Greedy', 'GreedyMinLoss', 'GreedyMaxLoss', 'Random',
+                                      'RandomMinLoss', 'RandomMaxLoss',
+                                      'Quality', 'QualityMinLoss', 'QualityMaxLoss', 'Top1', 'Top1MinLoss', 'Top1MaxLoss',
+                                      'Top2', 'Top2MinLoss', 'Top2MaxLoss',
+                                      'Top5', 'Top5MinLoss', 'Top5MaxLoss'], ))
+
+        # draw group bar chart for this tree numbers
+        width = 0.4  # the width of the bars
+
+    # draw group bar chart for each
+    eval_by_dataset['Best'] = eval_by_dataset[['Greedy', 'Random', 'Quality', 'Top1', 'Top2',
+                                               'Top5']].idxmax(axis=1)
+
+    eval_by_dataset.to_csv("Dataset_Evaluation_Log_Loss.csv", sep=',', encoding='utf-8', index=False)
+    for treeNo in treeEvalNumber:
+        cond = (eval_by_dataset['TreeEvalNo'] == treeNo)
+        dataset_list = eval_by_dataset[cond].Dataset.values[:]
+        greedy_list = eval_by_dataset[cond].Greedy.values[:]
+        greedy_max_list = eval_by_dataset[cond].GreedyMaxLoss.values[:]
+        greedy_min_list = eval_by_dataset[cond].GreedyMinLoss.values[:]
+        random_list = eval_by_dataset[cond].Random.values[:]
+        random_max_list = eval_by_dataset[cond].RandomMaxLoss.values[:]
+        random_min_list = eval_by_dataset[cond].RandomMinLoss.values[:]
+        quality_list = eval_by_dataset[cond].Quality.values[:]
+        quality_max_list = eval_by_dataset[cond].QualityMaxLoss.values[:]
+        quality_min_list = eval_by_dataset[cond].QualityMinLoss.values[:]
+
+        top1_list = eval_by_dataset[cond].Top1.values[:]
+        top1_max_list = eval_by_dataset[cond].Top1MaxLoss.values[:]
+        top1_min_list = eval_by_dataset[cond].Top1MinLoss.values[:]
+
+        top2_list = eval_by_dataset[cond].Top2.values[:]
+        top2_max_list = eval_by_dataset[cond].Top2MaxLoss.values[:]
+        top2_min_list = eval_by_dataset[cond].Top2MinLoss.values[:]
+
+        top5_list = eval_by_dataset[cond].Top5.values[:]
+        top5_max_list = eval_by_dataset[cond].Top5MaxLoss.values[:]
+        top5_min_list = eval_by_dataset[cond].Top5MinLoss.values[:]
+
+        x = np.arange(len(dataset_list))  # the label locations
+        width = 0.13  # the width of the bars
+
+        r1 = np.arange(len(dataset_list))
+        r2 = [x + width for x in r1]
+        r3 = [x + width for x in r2]
+        r4 = [x + width for x in r3]
+        r5 = [x + width for x in r4]
+        r6 = [x + width for x in r5]
+
+        fig, ax = plt.subplots()
+        right_side = ax.spines["right"]
+        top_side = ax.spines["top"]
+        right_side.set_visible(False)
+        top_side.set_visible(False)
+        rects1 = ax.bar(r1, greedy_list, width, label='Greedy Mapper', color="#0D47A1",
+                        yerr=[np.subtract(greedy_max_list, greedy_list), np.subtract(greedy_list, greedy_min_list)])
+        rects2 = ax.bar(r2, random_list, width, label='Random', color="#1976D2",
+                        yerr=[np.subtract(random_max_list, random_list), np.subtract(random_list, random_min_list)])
+        rects3 = ax.bar(r3, quality_list, width, label='Quality', color="#4DD0E1",
+                        yerr=[np.subtract(quality_max_list, quality_list), np.subtract(quality_list, quality_min_list)])
+        rects4 = ax.bar(r4, top1_list, width, label='Top1', color="#00695C",
+                        yerr=[np.subtract(top1_max_list, top1_list), np.subtract(top1_list, top1_min_list)])
+        rects5 = ax.bar(r5, top2_list, width, label='Top2', color="#8BC34A",
+                        yerr=[np.subtract(top2_max_list, top2_list), np.subtract(top2_list, top2_min_list)])
+        rects6 = ax.bar(r6, top5_list, width, label='Top5', color="#AFB42B",
+                        yerr=[np.subtract(top5_max_list, top5_list), np.subtract(top5_list, top5_min_list)])
+
+        # Add some text for labels, title and custom x-axis tick labels, etc.
+        ax.set_ylabel('Log Loss')
+        # ax.set_title('Loss in Different Datasets (Tree selection {}% )'.format((treeNo / total_tree_number) * 100))
+        plt.xticks([r + (2 * width) for r in range(len(dataset_list))], Datasets_names)
+        ax.legend(loc="upper left", prop={'size': 6})
+
+        # ax.bar_label(rects1, padding=6)
+        # ax.bar_label(rects2, padding=6)
+        # ax.bar_label(rects3, padding=6)
+        # ax.bar_label(rects4, padding=6)
+        # ax.bar_label(rects5, padding=6)
+        # ax.bar_label(rects6, padding=6)
+        plt.tick_params(labelsize=7)
+        fig.tight_layout()
+        fig.set_size_inches(10, 5)
+        output = "graphs/" + 'log Loss in Different Datasets (Tree selection {}% )'.format(
             (treeNo / total_tree_number)) + ".jpg"
         plt.savefig(output, dpi=300)
         plt.show()
@@ -291,4 +495,4 @@ def draw_bar_eval_graph():
 # vf_df ['Random' 1 nan 0.8510975301168158 0.0606594975954072 0.3503614547442671]
 
 if __name__ == '__main__':
-    draw_bar_eval_graph()
+    draw_bar_loss_eval_graph()
