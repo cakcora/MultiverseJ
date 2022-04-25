@@ -47,7 +47,7 @@ public class VanillaForestTreeSelectionExperiment {
         MetricComputer metricComputer = new MetricComputer();
         for (String c : clusters.keySet()) {
             TDAcluster tdAcluster = clusters.get(c);
-            List<SingleEval> evals = tdAcluster.getValidationEvalProbs();
+            List<SingleEval> evals = tdAcluster.getTestEvalProbs();
             double auc_validation = metricComputer.computeAUC(evals);
             tdAcluster.setValidationAUC(auc_validation);
 
@@ -78,7 +78,7 @@ public class VanillaForestTreeSelectionExperiment {
             PriorityQueue<Double> queue = new PriorityQueue<>(size, Collections.reverseOrder());
 
             for (TDAcluster cls : clusters.values()) {
-                queue.add(metricComputer.computeAUC(cls.getValidationEvalProbs()));
+                queue.add(metricComputer.computeAUC(cls.getTestEvalProbs()));
             }
             Set<String> selectedGreedy = new HashSet<>();
             double last = 0d;

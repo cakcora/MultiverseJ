@@ -21,8 +21,8 @@ public class SequentialRunner {
 
         //Excluded datasets because AUC is strangely 1 everywhere. "Mushroom",
         for (String datasetName : new String[]{"adult"}) {
-        // , "Breast-cancer", "spambase", "credit", "LR",
-            //                "Poker", "Nursery", "Connect-4", "Diabetes", "News-popularity"
+        // , "adult","Diabetes", "Breast-cancer", "spambase", "credit", "LR",
+            //                "Poker", "Nursery", "C4", "Diabetes", "News-popularity , "Poker" , "Nursery""
 
             int poisonFirst = 0;
             for (int poisonLast : new int[]{0/*, 2, 4, 6, 8, 10, 20, 40*/}) {
@@ -47,7 +47,7 @@ public class SequentialRunner {
                 String quoter = " ";
                 String sep = ",";
                 int poisonIncrementBy = ((poisonLast == 0) ? 10 : poisonLast);
-                int replicate = 3;
+                int replicate = 2;
                 // We used firstAucFile to save the AUC score of the vanilla forest on the test data.
                 // this is kind of redundant now because experiment 5-2 can now compute the same auc value
                 String firstAucFile = resultsPath + datasetName + "VanillaAucOnTestData.txt";
@@ -89,7 +89,7 @@ public class SequentialRunner {
 
                     //4 - Cluster performance experiment
 
-                    String[] clusterArgs = new String[]{output, clusterLinks, TFFinalResultsAUCFile, clusterNodes, String.valueOf(numClusterSelectionK)};
+                    String[] clusterArgs = new String[]{output, clusterLinks, TFFinalResultsAUCFile, clusterNodes, String.valueOf(numClusterSelectionK) , String.valueOf(replicate)};
                     mapperClusterSectionExp(clusterArgs);
 
                     //5-1 Vanilla forest performance experiments

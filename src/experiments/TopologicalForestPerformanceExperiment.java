@@ -8,9 +8,11 @@ import core.DecisionTree;
 import core.RandomForest;
 import loader.CSVLoader;
 import loader.LoaderOptions;
-
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import java.io.*;
 import java.util.*;
+
+import static java.lang.Math.abs;
 
 /**
  * Assumes that we have computed the tdamapper graph from decision tree metrics.
@@ -33,6 +35,9 @@ public class TopologicalForestPerformanceExperiment {
     static Map<String, String> finalOutput = new HashMap<>();
     static TFEvaluationOutput returnObject;
     static int [] topKOptions ={1, 2, 5};
+
+    // for tree evaluation
+    static ArrayList<Long> visitedTress = new ArrayList<>();
 
 
     public static TFEvaluationOutput main(String[] args) throws Exception {
@@ -110,6 +115,9 @@ seed
         Dataset test = split[2];
         System.out.println("Validation dataset contains " + validation.getDatapoints().size() + " datapoints");
         BufferedWriter out = new BufferedWriter(new FileWriter(clusterPredictionOutputFile));
+        BufferedWriter treeEvalOut = new BufferedWriter(new FileWriter(clusterPredictionOutputFile.split("\\.")[0] + "TreeEval.csv"));
+        treeEvalOut.write("TreeID,Mean,STD\n");
+
 
 
         for (TDAcluster cls : clusters) {
@@ -182,6 +190,8 @@ seed
                 double treePredict = 0;
                 for (DecisionTree tree : treesOfACluster)
                 {
+                    // eval tree
+                    evalTree(test.getDatapoints() , tree, treeEvalOut);
                     prob += tree.predict(dp.getFeatures());
                     if (tree.predict(dp.getFeatures()) > 0.5)
                     {
@@ -223,11 +233,35 @@ seed
         }
 
         out.close();
+        treeEvalOut.close();
         writeTotalEvaluationResult(clusterPredictionOutputFile, replica);
         returnObject.setClusterQualityIndexHashMap(clusterQualityIndexHashMap);
         returnObject.setTreeOfClusterQualityIndexHashMap(treeOfClusterQualityIndexHashMap);
         returnObject.setTopKTreeSelection(topKOptions);
         return returnObject;
+    }
+
+    private static void evalTree(List<DataPoint> Dataset , DecisionTree tree, BufferedWriter treeEvalOut) {
+        if (!visitedTress.contains(tree.getID()))
+        {
+            // new tree visited
+            visitedTress.add(tree.getID());
+            DescriptiveStatistics ds = new DescriptiveStatistics();
+            for (DataPoint dp : Dataset)
+            {
+                double error = abs(dp.getLabel() - tree.predict(dp.getFeatures()));
+                ds.addValue(error);
+            }
+            double mean = ds.getMean();
+            double std = ds.getStandardDeviation();
+            try {
+                treeEvalOut.write(String.valueOf(tree.getID()) + "," + String.valueOf(mean) + "," + String.valueOf(std) + "\r\n");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+
+        }
     }
 
     private static void topKTreeEvaluation(TDAcluster cls, DataPoint dp)
@@ -248,10 +282,8 @@ seed
 
             }
             // sort the list
-            Map<String,Double> sortedMap = new LinkedHashMap<String, Double>();
             Set<String> selectedTrees = new HashSet<>();
-            sortedMap = sortMapByValue(tempTreeOfClusterQualityIndexHashMap);
-            List<String> treeIDs = new ArrayList<String>(sortedMap.keySet());
+            List<String> treeIDs = new ArrayList<String>(tempTreeOfClusterQualityIndexHashMap.keySet());
             Collections.reverse(treeIDs);
             for (int n = 0 ; n < treeSelectionTopKIndex ; n++)
             {
