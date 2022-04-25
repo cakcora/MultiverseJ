@@ -20,7 +20,7 @@ public class SequentialRunner {
         int numClusterSelectionK = 5;
 
         //Excluded datasets because AUC is strangely 1 everywhere. "Mushroom",
-        for (String datasetName : new String[]{"Diabetes"}) {
+        for (String datasetName : new String[]{"adult"}) {
         // , "adult","Diabetes", "Breast-cancer", "spambase", "credit", "LR",
             //                "Poker", "Nursery", "C4", "Diabetes", "News-popularity , "Poker" , "Nursery""
 
@@ -47,7 +47,7 @@ public class SequentialRunner {
                 String quoter = " ";
                 String sep = ",";
                 int poisonIncrementBy = ((poisonLast == 0) ? 10 : poisonLast);
-                int replicate = 31;
+                int replicate = 2;
                 // We used firstAucFile to save the AUC score of the vanilla forest on the test data.
                 // this is kind of redundant now because experiment 5-2 can now compute the same auc value
                 String firstAucFile = resultsPath + datasetName + "VanillaAucOnTestData.txt";

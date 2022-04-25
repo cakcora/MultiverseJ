@@ -5,7 +5,6 @@ import core.DecisionTree;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import metrics.MetricComputer;
 import metrics.SingleEval;
-
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -133,6 +132,8 @@ public class TopologicalForestClusterSelectionExperiment {
                 TDAcluster next = iterator.next();
                 selectedRandom.add(next.getID());
             }
+
+
 
 
             // option 2 selectThisManyClusters greedily
