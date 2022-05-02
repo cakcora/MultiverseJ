@@ -267,13 +267,12 @@ seed
     private static void topKTreeEvaluation(TDAcluster cls, DataPoint dp)
     {
         Map<String, Double> tempTreeOfClusterQualityIndexHashMap = new HashMap<>();
-        // get tree scores of this cluster for re assessment
+        // get tree scores of this cluster
         tempTreeOfClusterQualityIndexHashMap = sortMapByValue(treeOfClusterQualityIndexHashMap.get(cls.getID()));
         Map<String, Double> eachTopKSelectionScore = new HashMap<>();
         for (int treeSelectionTopK : topKOptions)
         {
             int treeSelectionTopKIndex = treeSelectionTopK ;
-            // ASk for alternatives if cluster has less than K trees
             eachTopKSelectionScore.put(("Top" + String.valueOf(treeSelectionTopK) + "TreePrediction"), 0d);
             double topKProb = 0d;
             if (treeSelectionTopK > cls.getTrees().size())
