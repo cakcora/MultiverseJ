@@ -3,9 +3,9 @@ package experiments;
 import TDA.TFEvaluationOutput;
 import org.apache.commons.io.FileUtils;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.*;
 
 public class SequentialRunner {
@@ -18,9 +18,11 @@ public class SequentialRunner {
         int numTree = 300;
         // K variable for Top K Cluster Selection
         int numClusterSelectionK = 5;
-
+        BufferedWriter wr = new BufferedWriter(new FileWriter("TDATime.csv", true));
+        wr.write("Dataset,Replica,RunTime\n");
+        wr.flush();
         //Excluded datasets because AUC is strangely 1 everywhere. "Mushroom",
-        for (String datasetName : new String[]{"adult"}) {
+        for (String datasetName : new String[]{"Nursery"}) {
         // , "adult","Diabetes", "Breast-cancer", "spambase", "credit", "LR",
             //                "Poker", "Nursery", "C4", "Diabetes", "News-popularity , "Poker" , "Nursery""
 
@@ -47,7 +49,7 @@ public class SequentialRunner {
                 String quoter = " ";
                 String sep = ",";
                 int poisonIncrementBy = ((poisonLast == 0) ? 10 : poisonLast);
-                int replicate = 2;
+                int replicate = 31;
                 // We used firstAucFile to save the AUC score of the vanilla forest on the test data.
                 // this is kind of redundant now because experiment 5-2 can now compute the same auc value
                 String firstAucFile = resultsPath + datasetName + "VanillaAucOnTestData.txt";
@@ -66,6 +68,7 @@ public class SequentialRunner {
                     poisonedLabelExp(poisonerArgs);
 
                     //2 - Mapper clustering experiment
+                    long start = System.currentTimeMillis();
                     // first go to python (offline) and install pandas, numpy, sklearn
                     String clusterNodes = resultsPath + datasetName + "clusterNodes.csv";
                     String clusterLinks = resultsPath + datasetName + "clusterLinks.csv";
@@ -79,6 +82,11 @@ public class SequentialRunner {
                     BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
                     String result = in.readLine();
                     System.out.println("result is : " + result);
+                    long end = System.currentTimeMillis();
+                    NumberFormat formatter = new DecimalFormat("#0.00000");
+                    wr.write(datasetName + "," + replicate + "," + formatter.format((end - start) / 1000d) + "\r\n");
+                    wr.flush();
+                    System.out.println("Mapper Cluster Creatin Time : " + formatter.format((end - start) / 1000d) + "\n");
 
                     //3 - Mapper cluster selection experiment
 
@@ -113,6 +121,7 @@ public class SequentialRunner {
                 //delete aux files (may be)
             }
         }
+        wr.close();
     }
 
     public static void poisonedLabelExp(String[] argArray) {

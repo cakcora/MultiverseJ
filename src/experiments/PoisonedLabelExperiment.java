@@ -15,6 +15,8 @@ import poisoner.LabelFlippingPoisoner;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.*;
 
 public class PoisonedLabelExperiment {
@@ -87,6 +89,7 @@ public class PoisonedLabelExperiment {
 				}
 			}
 			System.out.println(poisonLevel + "% poisoned training dataset has " + pos + " positive labeled data points.");
+			long start = System.currentTimeMillis();
 			RandomForest rf = new RandomForest(random);
 			rf.setNumTrees(numTree);
 			var featureSize = new HashSet(training.getFeatureMap().values()).size();
@@ -101,8 +104,12 @@ public class PoisonedLabelExperiment {
 			double auc = metricComputer.computeAUC(evaluations);
 			double bias = metricComputer.computeBias(evaluations);
 			double logloss = metricComputer.computeLogLoss(evaluations);
+			long end = System.currentTimeMillis();
+			NumberFormat formatter = new DecimalFormat("#0.00000");
+			System.out.print("VF  Creation Execution time is " + formatter.format((end - start) / 1000d) + " seconds");
+
 			System.out.println("\tRF auc on test data is " + auc);
-			wr.write(datasetName + "\t" + poisonLevel + "\t" + auc + "\t" + bias + "\t" + logloss + "\t" + System.currentTimeMillis() + "\r\n");
+			wr.write(datasetName + "\t" + poisonLevel + "\t" + auc + "\t" + bias + "\t" + logloss + "\t" + System.currentTimeMillis() + "\t" + formatter.format((end - start) / 1000d) + "\r\n");
 
 			List<DecisionTree> decisionTrees = rf.getDecisionTrees();
 			GraphExtractor extractor = new GraphExtractor(decisionTrees.get(0));
