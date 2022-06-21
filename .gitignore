@@ -6,3 +6,4 @@ results/
 *.class
 randomIndexes.txt
 /venv
+/data/

@@ -22,7 +22,7 @@ public class SequentialRunner {
         wr.write("Dataset,Replica,RunTime\n");
         wr.flush();
         //Excluded datasets because AUC is strangely 1 everywhere. "Mushroom",
-        for (String datasetName : new String[]{"Nursery"}) {
+        for (String datasetName : new String[]{"LR"}) {
         // , "adult","Diabetes", "Breast-cancer", "spambase", "credit", "LR",
             //                "Poker", "Nursery", "C4", "Diabetes", "News-popularity , "Poker" , "Nursery""
 
@@ -49,7 +49,7 @@ public class SequentialRunner {
                 String quoter = " ";
                 String sep = ",";
                 int poisonIncrementBy = ((poisonLast == 0) ? 10 : poisonLast);
-                int replicate = 31;
+                int replicate = 27;
                 // We used firstAucFile to save the AUC score of the vanilla forest on the test data.
                 // this is kind of redundant now because experiment 5-2 can now compute the same auc value
                 String firstAucFile = resultsPath + datasetName + "VanillaAucOnTestData.txt";
@@ -61,6 +61,7 @@ public class SequentialRunner {
                 while (--replicate > 0) {
                     int seed = r.nextInt(100);
 
+                    long start = System.currentTimeMillis();
                     String[] poisonerArgs = new String[]{dataPath, quoter, sep, treePath, metricPath,
                             graphsPath, String.valueOf(seed), String.valueOf(poisonFirst),
                             String.valueOf(poisonLast), String.valueOf(poisonIncrementBy),
@@ -68,7 +69,7 @@ public class SequentialRunner {
                     poisonedLabelExp(poisonerArgs);
 
                     //2 - Mapper clustering experiment
-                    long start = System.currentTimeMillis();
+
                     // first go to python (offline) and install pandas, numpy, sklearn
                     String clusterNodes = resultsPath + datasetName + "clusterNodes.csv";
                     String clusterLinks = resultsPath + datasetName + "clusterLinks.csv";
@@ -109,6 +110,9 @@ public class SequentialRunner {
                     //5-2 Vanilla forest tree selection experiments
                     String[] vanillaAucArgs = new String[]{kPredictionOutputFile, VFFinalResultsAUCFile};
                     VanillaForestTreeSelectionExperiment.main(vanillaAucArgs);
+
+                    // 6 - Evaluate our model
+                    
 
                     // Should we keep result files for future analysis: yes
                     //new File(clusterLinks).delete();

@@ -89,7 +89,7 @@ public class PoisonedLabelExperiment {
 				}
 			}
 			System.out.println(poisonLevel + "% poisoned training dataset has " + pos + " positive labeled data points.");
-			long start = System.currentTimeMillis();
+			long startTrain = System.currentTimeMillis();
 			RandomForest rf = new RandomForest(random);
 			rf.setNumTrees(numTree);
 			var featureSize = new HashSet(training.getFeatureMap().values()).size();
@@ -98,18 +98,25 @@ public class PoisonedLabelExperiment {
 			rf.setMaxTreeDepth(100);
 			rf.setMinLeafPopulation(3);
 			rf.train(poisonedDataset);
+			long endTrain = System.currentTimeMillis();
+			NumberFormat formatterTrain = new DecimalFormat("#0.00000");
+			System.out.print("VF Train Execution time is " + formatterTrain.format((endTrain - startTrain) / 1000d) + " seconds\n");
+			String finalTrainTime = formatterTrain.format((endTrain - startTrain) / 1000d) ;
 
+			long startInfer = System.currentTimeMillis();
 			List evaluations = rf.evaluate(test);
 			MetricComputer metricComputer = new MetricComputer();
 			double auc = metricComputer.computeAUC(evaluations);
 			double bias = metricComputer.computeBias(evaluations);
 			double logloss = metricComputer.computeLogLoss(evaluations);
-			long end = System.currentTimeMillis();
-			NumberFormat formatter = new DecimalFormat("#0.00000");
-			System.out.print("VF  Creation Execution time is " + formatter.format((end - start) / 1000d) + " seconds");
+
+			long endInfer = System.currentTimeMillis();
+			NumberFormat formatterInfer = new DecimalFormat("#0.00000");
+			System.out.print("VF Infer Execution time is " + formatterInfer.format((endInfer - startInfer) / 1000d) + " seconds\n");
+			String finalInferTime = formatterInfer.format((endInfer - startInfer) / 1000d) ;
 
 			System.out.println("\tRF auc on test data is " + auc);
-			wr.write(datasetName + "\t" + poisonLevel + "\t" + auc + "\t" + bias + "\t" + logloss + "\t" + System.currentTimeMillis() + "\t" + formatter.format((end - start) / 1000d) + "\r\n");
+			wr.write(datasetName + "\t" + poisonLevel + "\t" + auc + "\t" + bias + "\t" + logloss + "\t" + System.currentTimeMillis() + "\t" + finalTrainTime + "\t" + finalInferTime +"\r\n");
 
 			List<DecisionTree> decisionTrees = rf.getDecisionTrees();
 			GraphExtractor extractor = new GraphExtractor(decisionTrees.get(0));

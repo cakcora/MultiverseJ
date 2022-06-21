@@ -125,7 +125,7 @@ public class TopologicalForestClusterSelectionExperiment {
             if (selectThisManyClusters > size) break;
 
             // option 1 selectThisManyClusters greedily
-            long start = System.currentTimeMillis();
+
             PriorityQueue<Double> queue = new PriorityQueue<>(size, Collections.reverseOrder());
 
             for (TDAcluster cls : clusters.values()) {
@@ -144,6 +144,7 @@ public class TopologicalForestClusterSelectionExperiment {
                 }
             }
             //System.out.println("Greedy clusters: " + selectedGreedy.toString());
+            long start = System.currentTimeMillis();
             List<SingleEval> evaluationsGreedy = evaluateWithSelected(selectedGreedy, clusters);
             double greedyAUC = metric.computeAUC(evaluationsGreedy);
             double bias = metric.computeBias(evaluationsGreedy);
@@ -156,7 +157,7 @@ public class TopologicalForestClusterSelectionExperiment {
             int greedyCLusterTreeCount = gh.size();
             //System.out.println("Greedy" + "\t" + selectThisManyClusters + "\t\t" + greedyAUC + "\t" + bias + "\t" + logloss);
             long end = System.currentTimeMillis();
-            NumberFormat formatter = new DecimalFormat("#0.00000");
+            NumberFormat formatter = new DecimalFormat("#0.00000000");
             ID = "Greedy_" + String.valueOf(selectThisManyClusters);
             wr.write("Greedy" + "\t" + selectThisManyClusters + "\t\t" + greedyAUC + "\t" + bias + "\t" + logloss + "\t" + greedyCLusterTreeCount + "\r\n");
             csvWr.write(ID + "," + Replica + "," +"Greedy" + "," + selectThisManyClusters + ",," + greedyAUC + "," + bias + "," + logloss + "," + greedyCLusterTreeCount + "," +  formatter.format((end - start) / 1000d) + "\r\n");
@@ -165,7 +166,7 @@ public class TopologicalForestClusterSelectionExperiment {
 
 
             // option 2 selectThisManyClusters randomly
-            start = System.currentTimeMillis();
+
             Set<String> selectedRandom = new HashSet<>();
             ThreadLocalRandom current = ThreadLocalRandom.current();
             for (int n = 0; n < selectThisManyClusters; n++) {
@@ -178,6 +179,7 @@ public class TopologicalForestClusterSelectionExperiment {
                 selectedRandom.add(next.getID());
             }
             //System.out.println("Random clusters: " + selectedRandom.toString());
+            start = System.currentTimeMillis();
             List<SingleEval> evaluationsRandom = evaluateWithSelected(selectedRandom, clusters);
             double randomAUC = metric.computeAUC(evaluationsRandom);
             bias = metric.computeBias(evaluationsRandom);
@@ -188,7 +190,7 @@ public class TopologicalForestClusterSelectionExperiment {
             }
             int randomCLusterTreeCount = gh.size();
             end = System.currentTimeMillis();
-            formatter = new DecimalFormat("#0.00000");
+            formatter = new DecimalFormat("#0.00000000");
             //System.out.println("Random" + "\t" + selectThisManyClusters + "\t\t" + randomAUC + "\t" + bias + "\t" + logloss);
             ID = "Random_" + String.valueOf(selectThisManyClusters);
             wr.write("Random" + "\t" + selectThisManyClusters + "\t\t" + randomAUC + "\t" + bias + "\t" + logloss + "\t" + randomCLusterTreeCount + "\r\n");
@@ -197,7 +199,7 @@ public class TopologicalForestClusterSelectionExperiment {
 
             // option 3 select Top-K based on clusterQualityIndex without tree selection strategy
             // sort clusterQualityIndex
-            start = System.currentTimeMillis();
+
             long qualitySelectionStart = System.currentTimeMillis();
             Set<String> selectedClusterQuality = new HashSet<>();
             Map<String,Double> sortedMap = new LinkedHashMap<String, Double>();
@@ -211,6 +213,8 @@ public class TopologicalForestClusterSelectionExperiment {
 
             long endQualitySelection = System.currentTimeMillis();
             long qualitySelectionTime = endQualitySelection - qualitySelectionStart ;
+
+            start = System.currentTimeMillis();
             List<SingleEval> evaluationsClusterQuality = evaluateWithSelected(selectedClusterQuality, clusters);
             double clusterQualityAUC = metric.computeAUC(evaluationsClusterQuality);
             bias = metric.computeBias(evaluationsClusterQuality);
@@ -221,7 +225,7 @@ public class TopologicalForestClusterSelectionExperiment {
             }
             int qualityCLusterTreeCount = gh.size();
             end = System.currentTimeMillis();
-            formatter = new DecimalFormat("#0.00000");
+            formatter = new DecimalFormat("#0.00000000");
             ID = "Quality_" + String.valueOf(selectThisManyClusters);
             wr.write("Quality" + "\t" + selectThisManyClusters + "\t\t" + clusterQualityAUC + "\t" + bias + "\t" + logloss + "\t" + qualityCLusterTreeCount + "\r\n");
             csvWr.write(ID + "," + Replica + "," + "Quality" + "," + selectThisManyClusters + ",," + clusterQualityAUC + "," + bias + "," + logloss + "," + qualityCLusterTreeCount + "," +  formatter.format((end - start) / 1000d) +  "\r\n");
@@ -246,10 +250,11 @@ public class TopologicalForestClusterSelectionExperiment {
                     totalSelectedTrees.addAll(getTopKTreesPerCluster(treeOfClusterQualityIndexHashMap, clusters.get(clust), n));
                 }
                 end = System.currentTimeMillis();
-                formatter = new DecimalFormat("#0.00000");
+                formatter = new DecimalFormat("#0.00000000");
                 ID = "QualityWithTreeSelection_Top" + String.valueOf(n) + "_" + String.valueOf(selectThisManyClusters);
                 wr.write("QualityWithTreeSelection_Top" + String.valueOf(n) + "\t" + selectThisManyClusters + "\t\t" + clusterQualityWithTreeSelectionAUC + "\t" + bias + "\t" + logloss + "\t" + totalSelectedTrees.size() + "\r\n");
-                csvWr.write(ID + "," + Replica + "," + "QualityWithTreeSelection_Top" + String.valueOf(n) + "," + selectThisManyClusters + ",," + clusterQualityWithTreeSelectionAUC + "," + bias + "," + logloss + "," + totalSelectedTrees.size() + "," +  formatter.format(((end - start) + qualitySelectionTime) / 1000d)+ "\r\n");
+                //csvWr.write(ID + "," + Replica + "," + "QualityWithTreeSelection_Top" + String.valueOf(n) + "," + selectThisManyClusters + ",," + clusterQualityWithTreeSelectionAUC + "," + bias + "," + logloss + "," + totalSelectedTrees.size() + "," +  formatter.format(((end - start) + qualitySelectionTime) / 1000d)+ "\r\n");
+                csvWr.write(ID + "," + Replica + "," + "QualityWithTreeSelection_Top" + String.valueOf(n) + "," + selectThisManyClusters + ",," + clusterQualityWithTreeSelectionAUC + "," + bias + "," + logloss + "," + totalSelectedTrees.size() + "," +  formatter.format(((end - start)) / 1000d)+ "\r\n");
 
 
 
