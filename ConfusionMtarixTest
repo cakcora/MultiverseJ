@@ -1,0 +1,11 @@
+Adult
+Confusion Matrix : {totalFalseLabels=2484.0, truePositive=238.0, totalTrueLabels=773.0, falsePositive=58.0, falseNegative=535.0, trueNegative=2426.0}
+
+Amazon with additional features
+{totalFalseLabels=84357.0, truePositive=6.0, totalTrueLabels=15693.0, falsePositive=0.0, falseNegative=15687.0, trueNegative=84357.0}
+
+Amazon just vectors
+Confusion Matrix : {totalFalseLabels=84357.0, truePositive=0.0, totalTrueLabels=15693.0, falsePositive=0.0, falseNegative=15693.0, trueNegative=84357.0}
+
+Civil just comments
+Confusion Matrix : {totalFalseLabels=118558.0, truePositive=0.0, totalTrueLabels=15224.0, falsePositive=0.0, falseNegative=15224.0, trueNegative=118558.0}

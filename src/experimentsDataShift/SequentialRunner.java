@@ -30,7 +30,7 @@ public class SequentialRunner {
             int poisonFirst = 0;
             // TODO: load each month data in one poison last experiment
             for (int poisonLast : new int[]{0/*, 2, 4, 6, 8, 10, 20, 40*/}) {
-                System.out.println("############ DATASET " + datasetName + "########################################################");
+                System.out.println("############ DATASET " + datasetName + "  ########################################################");
 
                 System.out.println("Poisons: " + poisonFirst + " and " + poisonLast);
                 String resultsPath = projectPath + "results/" + poisonFirst + "_" + poisonLast + "/";
@@ -54,7 +54,7 @@ public class SequentialRunner {
                 String quoter = " ";
                 String sep = ",";
                 int poisonIncrementBy = ((poisonLast == 0) ? 10 : poisonLast);
-                int replicate = 31;
+                int replicate = 2;
                 // We used firstAucFile to save the AUC score of the vanilla forest on the test data.
                 // this is kind of redundant now because experiment 5-2 can now compute the same auc value
                 String firstAucFile = resultsPath + datasetName + "VanillaAucOnTestData.txt";
@@ -72,20 +72,22 @@ public class SequentialRunner {
                             datasetName, firstAucFile, String.valueOf(numTree) , trainDataPath, testDataPath};
                     poisonedLabelExp(poisonerArgs);
 
+
                     //2 - Mapper clustering experiment
                     long start = System.currentTimeMillis();
                     // first go to python (offline) and install pandas, numpy, sklearn
                     String clusterNodes = resultsPath + datasetName + "clusterNodes.csv";
                     String clusterLinks = resultsPath + datasetName + "clusterLinks.csv";
                     String nodeIDS = resultsPath + datasetName + "clusternodeIDs.csv";
-
+                    System.out.println("PYTHON CODE STARTED  \n");
                     String command = "python " + projectPath + "python/MultiverseBinaryCode.py " +
                             resultsPath + " " + metricPath + " " +
                             poisonFirst + " " + poisonLast + " " + datasetName;
                     // Python execution: System.out.println(command);
                     Process p = Runtime.getRuntime().exec(command);
-//                    BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                    BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
 //                    String result = in.readLine();
+//                    in.close();
 //                    System.out.println("result is : " + result);
                     System.out.println("PYTHON CODE RUN COMPLETED \n");
                     long end = System.currentTimeMillis();

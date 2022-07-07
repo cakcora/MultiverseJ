@@ -62,11 +62,16 @@ public class TopologicalForestClusterSelectionExperiment {
                 String treeIDs = arr[1].replaceAll("\\[", "");
                 treeIDs = treeIDs.replaceAll("\\]", "");
                 TDAcluster cluster = clusters.get(clusterID);
-                for (String i : treeIDs.split(",")) {
-                    DecisionTree dt = new DecisionTree();
-                    int id = Integer.parseInt(i.trim());
-                    dt.setID(id);
-                    cluster.addTree(dt);
+                if (cluster != null) {
+                    for (String i : treeIDs.split(",")) {
+                        DecisionTree dt = new DecisionTree();
+                        int id = Integer.parseInt(i.trim());
+                        dt.setID(id);
+                        cluster.addTree(dt);
+                    }
+                }
+                else {
+                    System.out.println("Cluster Null Error : " + clusterID + "\n" );
                 }
             }
         }

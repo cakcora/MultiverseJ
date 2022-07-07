@@ -43,7 +43,7 @@ public class CSVLoader {
 	 * @return list of data points from the csv file
 	 * @throws FileNotFoundException if the file does not exist
 	 */
-	public List<DataPoint> loadCSV(String csvFile) throws Exception {
+	public List<List<DataPoint>> loadCSV(String csvFile) throws Exception {
 		List<List<String>> lines = readLinesAsString(csvFile);
 		extractMetadataForAllFeaturesAndLabel(lines);
 		return encodeAllDataPointsForAllFeaturesAndLabel(lines);
@@ -163,8 +163,12 @@ public class CSVLoader {
 	 * @return a list of one hot encoded data points
 	 */
 
-	private List<DataPoint> encodeAllDataPointsForAllFeaturesAndLabel(List<List<String>> lines) {
+	private List<List<DataPoint>> encodeAllDataPointsForAllFeaturesAndLabel(List<List<String>> lines) {
 		List<DataPoint> points = new ArrayList<>();
+		List<DataPoint> onlyPositivePoints = new ArrayList<>();
+		List<DataPoint> onlyNegativePoints = new ArrayList<>();
+		List<DataPoint> equalPositiveNegative = new ArrayList<>();
+		List<List<DataPoint>> results =  new ArrayList<>();
 		var labelMap = featureStats.getLabelEncoding();
 		var usedFeatures = featureStats.getUsedFeatures();
 		//label is the last column in the file
@@ -199,10 +203,35 @@ public class CSVLoader {
 			}
 			dataPoint.setFeatureTypes(op);
 
+			if (dataPoint.IsPositive())
+			{
+				onlyPositivePoints.add(dataPoint);
+			}
+			else
+			{
+				onlyNegativePoints.add(dataPoint);
+			}
+
 			points.add(dataPoint);
 		}
+		if (onlyPositivePoints.size() >= onlyNegativePoints.size())
+		{
+			equalPositiveNegative.addAll(onlyNegativePoints);
+			equalPositiveNegative.addAll(onlyPositivePoints.subList(0,onlyNegativePoints.size()));
+
+		}
+		else
+		{
+			equalPositiveNegative.addAll(onlyPositivePoints);
+			equalPositiveNegative.addAll(onlyNegativePoints.subList(0,onlyPositivePoints.size()));
+		}
+
 		updateFeatureNames();
-		return points;
+		results.add(points);
+		results.add(onlyPositivePoints);
+		results.add(onlyNegativePoints);
+		results.add(equalPositiveNegative);
+		return results;
 	}
 
 	/**

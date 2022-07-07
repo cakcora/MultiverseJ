@@ -39,6 +39,7 @@ public class Utils {
             }
             wr.write(dp.getLabel() + "\r\n");
         }
+        wr.flush();
         wr.close();
     }
 
@@ -63,6 +64,7 @@ public class Utils {
                 wr.write(poison + "\t" + n1 + "\t" + n2 + "\r\n");
             }
         }
+        wr.flush();
         wr.close();
     }
     

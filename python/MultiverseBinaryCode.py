@@ -13,13 +13,18 @@ import sys
 
 
 if __name__ == "__main__":
-    abs_dir_path = sys.argv[1]
-    metricFile = sys.argv[2]
-    datasetName= sys.argv[5]
+    # abs_dir_path = sys.argv[1]
+    # metricFile = sys.argv[2]
+    # datasetName= sys.argv[5]
+
+    abs_dir_path ="\\Users\\kiara\\Desktop\\MyProject\\Multiverse\\results\\0_0\\"
+    metricFile = "\\Users\\kiara\\Desktop\\MyProject\\Multiverse\\results\\0_0\\Civilmetrics.txt"
+    datasetName= "Civil"
+
     try:
         dataset = pd.read_csv(metricFile,sep="\t",header=0)
-        firstPoisonLevel = float(sys.argv[3])
-        secondPoisonLevel = float(sys.argv[4])
+        firstPoisonLevel = float(0)
+        secondPoisonLevel = float(0)
 
         X = pd.read_csv(metricFile, sep="\t", header=0)
 
@@ -40,9 +45,9 @@ if __name__ == "__main__":
             lens,
             Xfilt,
             clusterer=sklearn.cluster.KMeans(n_clusters=cls, random_state=1618033),
-            cover=km.Cover(n_cubes=10, perc_overlap=0.6)
+            cover=km.Cover(n_cubes=10, perc_overlap=0.2)) # 0.2 0.4
 
-        treeFrame = pd.DataFrame(treeID)
+        treeFrame = pd.DataFrame(treeIDNew)
         treeFrame.insert(0, 'New_ID', range(0, 0 + len(treeFrame)))
         treeFrame.to_csv(os.path.join(abs_dir_path, datasetName+"clusternodeIDs.csv"), index=False)
 

@@ -95,7 +95,7 @@ seed
             System.out.println("Column separator is not set as a comma, space or tab character. Are you sure about that?");
         }
         var csvLoader = new CSVLoader(options);
-        List<DataPoint> dataPoints = csvLoader.loadCSV(csvFile);
+        List<DataPoint> dataPoints = csvLoader.loadCSV(csvFile).get(0);
         Dataset dataset = new Dataset(dataPoints);
         dataset.setFeatureNames(csvLoader.getFeatureNames());
         dataset.setFeatureParents(csvLoader.getFeatureMap());

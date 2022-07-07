@@ -1,10 +1,6 @@
 package metrics;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Hashtable;
-import java.util.List;
+import java.util.*;
 
 import core.MLContants;
 
@@ -136,7 +132,56 @@ public class MetricComputer {
 		}
 		return Math.abs(totalPredictedPositive - totalTruePositive) / totalTruePositive;
 	}
-	
+
+	public Map<String, Double> getConfusionMatrix(List<SingleEval> evaluationData , double truePredictionThreshold)
+	{
+		Map<String, Double> confusionMatrix = new HashMap<>();
+		double totalTrueLabels = 0.0d;
+		double totalFalseLabels = 0.0d;
+		double truePositive = 0.0d;
+		double trueNegative = 0.0d;
+		double falsePositive = 0.0d;
+		double falseNegative = 0.0d;
+
+		for (var data : evaluationData) {
+			if (data.IsPositive()) {
+				totalTrueLabels += 1.0d;
+				if (data.getPredicted() >= truePredictionThreshold)
+				{
+					// True positive
+					truePositive += 1.0d;
+				}
+				else
+				{
+					// False Negative
+					falseNegative += 1.0d;
+				}
+			} else if (data.IsNegative()) {
+				totalFalseLabels += 1.0d;
+				if (data.getPredicted() > truePredictionThreshold)
+				{
+					// False Positive
+					falsePositive += 1.0d;
+				}
+				else
+				{
+					// False Negative
+					trueNegative += 1.0d;
+				}
+
+			}
+		}
+
+		confusionMatrix.put("totalTrueLabels" ,  totalTrueLabels);
+		confusionMatrix.put("totalFalseLabels" ,  totalFalseLabels);
+		confusionMatrix.put("truePositive" ,  truePositive);
+		confusionMatrix.put("trueNegative" ,  trueNegative);
+		confusionMatrix.put("falsePositive" ,  falsePositive);
+		confusionMatrix.put("falseNegative" ,  falseNegative);
+
+
+		return confusionMatrix;
+	}
 	
 	/**
 	 * Order by Descending Bins.

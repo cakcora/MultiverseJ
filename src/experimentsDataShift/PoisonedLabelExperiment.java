@@ -54,13 +54,24 @@ public class PoisonedLabelExperiment {
 			System.out.println("Column separator is not set as a comma, space or tab character. Are you sure about that?");
 		// for Training
 		var csvLoader = new CSVLoader(options);
-		List<DataPoint> trainDataPoints = csvLoader.loadCSV(trainCsvFile);
+		List<DataPoint> trainDataPoints = csvLoader.loadCSV(trainCsvFile).get(0);
+		List<DataPoint> trainOnlyPositiveDataPoints = csvLoader.loadCSV(trainCsvFile).get(1);
+		List<DataPoint> trainEqualPositiveNegativeDataPoints = csvLoader.loadCSV(trainCsvFile).get(3);
 		Dataset trainDataset = new Dataset(trainDataPoints);
 		trainDataset.setFeatureNames(csvLoader.getFeatureNames());
 		trainDataset.setFeatureParents(csvLoader.getFeatureMap());
 
+
+		Dataset trainOnlyPositiveDataset = new Dataset(trainOnlyPositiveDataPoints);
+		trainOnlyPositiveDataset.setFeatureNames(csvLoader.getFeatureNames());
+		trainOnlyPositiveDataset.setFeatureParents(csvLoader.getFeatureMap());
+
+		Dataset trainEqualPositiveNegativeDataset = new Dataset(trainEqualPositiveNegativeDataPoints);
+		trainEqualPositiveNegativeDataset.setFeatureNames(csvLoader.getFeatureNames());
+		trainEqualPositiveNegativeDataset.setFeatureParents(csvLoader.getFeatureMap());
+
 		// for Testing
-		List<DataPoint> testDataPoints = csvLoader.loadCSV(testCsvFile);
+		List<DataPoint> testDataPoints = csvLoader.loadCSV(testCsvFile).get(0);
 		Dataset testDataset = new Dataset(testDataPoints);
 		testDataset.setFeatureNames(csvLoader.getFeatureNames());
 		testDataset.setFeatureParents(csvLoader.getFeatureMap());
@@ -101,18 +112,20 @@ public class PoisonedLabelExperiment {
 			var featureSize = new HashSet(trainDataset.getFeatureMap().values()).size();
 			int splitFeatureSize = (int) Math.ceil(Math.sqrt(featureSize));
 			rf.setNumFeaturesToConsiderWhenSplitting(splitFeatureSize);
-			rf.setMaxTreeDepth(100);
+			rf.setMaxTreeDepth(50); // TODO : play with 10 and 20
 			rf.setMinLeafPopulation(3);
-			rf.train(poisonedDataset);
+			rf.train(trainEqualPositiveNegativeDataset);
+
 
 			List evaluations = rf.evaluate(testDataset);
 			MetricComputer metricComputer = new MetricComputer();
 			double auc = metricComputer.computeAUC(evaluations);
 			double bias = metricComputer.computeBias(evaluations);
 			double logloss = metricComputer.computeLogLoss(evaluations);
+			System.out.println( " \n Confusion Matrix : " + metricComputer.getConfusionMatrix(evaluations , 0.5));
 			long end = System.currentTimeMillis();
 			NumberFormat formatter = new DecimalFormat("#0.00000");
-			System.out.print("VF  Creation Execution time is " + formatter.format((end - start) / 1000d) + " seconds");
+			System.out.print("\n VF  Creation Execution time is " + formatter.format((end - start) / 1000d) + " seconds");
 
 			System.out.println("\tRF auc on test data is " + auc);
 			wr.write(datasetName + "\t" + poisonLevel + "\t" + auc + "\t" + bias + "\t" + logloss + "\t" + System.currentTimeMillis() + "\t" + formatter.format((end - start) / 1000d) + "\r\n");
@@ -142,7 +155,11 @@ public class PoisonedLabelExperiment {
 				treeId++;
 			}
 		}
+
+		wr.flush();
 		wr.close();
+
+
 		int featureSize = secondLevelDataset.getFeatureNames().length;
 		System.out.println(featureSize + " metrics have been extracted from each decision tree");
 		// we have no fan-out for metric based features, but we still need to record feature parentage.

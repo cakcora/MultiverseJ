@@ -24,6 +24,9 @@ public class RandomForest {
     //  The number of data points to be used in bagging
     public int maxSamples = 1000;
 
+    // TODO print the number of minority classes
+    // TODO run for same number of majority and minority
+
     // Minimum number of samples for each node.
     // If reached the minimum, we mark the node as
     // leaf node without further splitting.
@@ -152,10 +155,22 @@ public class RandomForest {
         List<DataPoint> baggedDataset = new ArrayList<>();
         Random r = new Random();
         // add data points with replacement
+        int zero_sum = 0;
+        int one_sum = 0;
         for (int t = 0; t < maxSamples; t++) {
+
             int index = r.nextInt(size);
             baggedDataset.add(dataPoints.get(index));
+            if (dataPoints.get(index).IsPositive())
+            {
+                one_sum ++;
+            }
+            else
+            {
+                zero_sum ++;
+            }
         }
+        System.out.println("NO od Pos : " + one_sum + " NO of Neg: " + zero_sum + " \n");
         // checking how many duplicates we have sampled from the data
         HashSet<DataPoint> uniques = new HashSet<>();
         uniques.addAll(baggedDataset);
