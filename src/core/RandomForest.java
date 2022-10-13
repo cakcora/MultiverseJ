@@ -107,6 +107,31 @@ public class RandomForest {
 
 
     /**
+     * Evaluates a data point's label by using a subgroup of decision trees of the forest.
+     * returns the mean probability value of tree decisions.
+     *
+     * @param dp a single data point
+     * @param treeNumber number of randomly selected trees as a subgroup of the forest
+     * @return mean label probability
+     */
+    public double randomSubTreesEvaluate(DataPoint dp, int treeNumber) {
+        List<DecisionTree> randomSUbList = pickNRandom(decisionTrees, treeNumber);
+        double prob = 0d;
+        for (DecisionTree tree : randomSUbList) {
+            double predict = tree.predict(dp.getFeatures());
+            if (predict < 0.0 || predict > 1.0 || Double.isNaN(predict)) {
+                System.out.println("\tError: " + dp.toString() + " leads to invalid prob value:" + predict);
+                System.out.println("\tTree id that causes this issue is " + tree.getID());
+                return -1;
+            }
+            prob += predict;
+        }
+
+        return prob / randomSUbList.size();
+    }
+
+
+    /**
      * Sample a sampleThisMany number of features to be used in a decision tree.
      *
      * @param sampleThisMany we will return this many features
@@ -170,7 +195,7 @@ public class RandomForest {
                 zero_sum ++;
             }
         }
-        System.out.println("NO od Pos : " + one_sum + " NO of Neg: " + zero_sum + " \n");
+        // System.out.println("NO od Pos : " + one_sum + " NO of Neg: " + zero_sum + " \n");
         // checking how many duplicates we have sampled from the data
         HashSet<DataPoint> uniques = new HashSet<>();
         uniques.addAll(baggedDataset);
@@ -239,5 +264,40 @@ public class RandomForest {
             }
         }
         return evaluationData;
+    }
+
+    /**
+     * Uses the trained random forest to label a test dataset
+     *
+     * @param test dataset to be labeled
+     * @param numTrees Number of trees in subtree evaluation
+     * @return a set of evaluations
+     */
+
+    public List<SingleEval> evaluateRandomSubTree(Dataset test, int numTrees) {
+        List<SingleEval> evaluationData = new ArrayList<>();
+        for (DataPoint dp : test.getDatapoints()) {
+            double prob = randomSubTreesEvaluate(dp, numTrees);
+            double label = dp.getLabel();
+            if (prob != -1.0) {
+                SingleEval eval = new SingleEval(prob, label);
+                evaluationData.add(eval);
+            }
+        }
+        return evaluationData;
+    }
+
+    /**
+     * Return a Random sublist of the input list
+     *
+     * @param lst the original list
+     * @param n size of the sublist
+     * @return sublist
+     */
+
+    public static List<DecisionTree> pickNRandom(List<DecisionTree> lst, int n) {
+        List<DecisionTree> copy = new ArrayList<DecisionTree>(lst);
+        Collections.shuffle(copy);
+        return n > copy.size() ? copy.subList(0, copy.size()) : copy.subList(0, n);
     }
 }

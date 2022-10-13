@@ -8,6 +8,7 @@ import java.io.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 public class SequentialRunner {
     static TFEvaluationOutput returnObj = new TFEvaluationOutput();
@@ -86,11 +87,12 @@ public class SequentialRunner {
                     // Python execution: System.out.println(command);
                     Process p = Runtime.getRuntime().exec(command);
                     BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
-//                    String result = in.readLine();
-//                    in.close();
-//                    System.out.println("result is : " + result);
+                    String result = in.readLine();
+                    in.close();
+                    System.out.println("result is : " + result);
                     System.out.println("PYTHON CODE RUN COMPLETED \n");
                     long end = System.currentTimeMillis();
+                    TimeUnit.SECONDS.sleep(2);
                     NumberFormat formatter = new DecimalFormat("#0.00000");
                     wr.write(datasetName + "," + replicate + "," + formatter.format((end - start) / 1000d) + "\r\n");
                     wr.flush();

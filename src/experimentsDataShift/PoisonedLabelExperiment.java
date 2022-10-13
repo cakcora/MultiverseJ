@@ -112,8 +112,9 @@ public class PoisonedLabelExperiment {
 			var featureSize = new HashSet(trainDataset.getFeatureMap().values()).size();
 			int splitFeatureSize = (int) Math.ceil(Math.sqrt(featureSize));
 			rf.setNumFeaturesToConsiderWhenSplitting(splitFeatureSize);
-			rf.setMaxTreeDepth(50); // TODO : play with 10 and 20
+			rf.setMaxTreeDepth(2147483647); // TODO : play with 10 and 20
 			rf.setMinLeafPopulation(3);
+			rf.setSampleSize(128);
 			rf.train(trainEqualPositiveNegativeDataset);
 
 

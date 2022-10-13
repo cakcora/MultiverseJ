@@ -9,7 +9,7 @@ from sklearn.preprocessing import MinMaxScaler
 import kmapper as km
 import sklearn
 import csv
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import sys
 
 # abs_dir_path = "C:/Users/cakcora/IdeaProjects/multiverseJ/results/"
@@ -17,13 +17,13 @@ import sys
 
 
 if __name__ == "__main__":
-    # abs_dir_path = sys.argv[1]
-    # metricFile = sys.argv[2]
-    # datasetName= sys.argv[5]
+    abs_dir_path = sys.argv[1]
+    metricFile = sys.argv[2]
+    datasetName= sys.argv[5]
 
-    abs_dir_path = "\\Users\\kiara\\Desktop\\MyProject\\Multiverse\\results\\0_0\\"
-    metricFile = "\\Users\\kiara\\Desktop\\MyProject\\Multiverse\\results\\0_0\\Civilmetrics.txt"
-    datasetName = "Civil"
+    # abs_dir_path = "\\Users\\kiara\\Desktop\\MyProject\\Multiverse\\results\\0_0\\"
+    # metricFile = "\\Users\\kiara\\Desktop\\MyProject\\Multiverse\\results\\0_0\\Adultmetrics.txt"
+    # datasetName = "َAdult"
 
     try:
         dataset = pd.read_csv(metricFile, sep="\t", header=0)
@@ -59,11 +59,11 @@ if __name__ == "__main__":
         sort_neigh_dist = np.sort(neigh_dist, axis=0)
 
         k_dist = sort_neigh_dist[:, 4]
-        plt.plot(k_dist)
-        plt.axhline(y=2, linewidth=1, linestyle='dashed', color='k')
-        plt.ylabel("k-NN distance")
-        plt.xlabel("Sorted observations (5th NN)")
-        plt.show()
+        # plt.plot(k_dist)
+        # plt.axhline(y=2, linewidth=1, linestyle='dashed', color='k')
+        # plt.ylabel("k-NN distance")
+        # plt.xlabel("Sorted observations (5th NN)")
+        # plt.show()
 
         clusters = sklearn.cluster.DBSCAN(eps=0.05, min_samples=4).fit(lens)
         set(clusters.labels_)
@@ -85,7 +85,7 @@ if __name__ == "__main__":
                 writer.writerow([key, value])
         with open(os.path.join(abs_dir_path, datasetName + 'clusterNodes.csv'), 'w') as csv_file:
             writer = csv.writer(csv_file, delimiter='\t')
-            for key, value in graph['nodes'].items():
+            for key, value in cluster_series.items():
                 writer.writerow([key, value])
         print("TEST FINISHED")
     except Exception as e:

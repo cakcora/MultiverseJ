@@ -45,6 +45,7 @@ public class PoisonedLabelExperiment {
 		String datasetName = args[10];
 		String VFAUCFile = args[11];// to save AUC of the VF on test data
 		int numTree = Integer.parseInt(args[12]);
+		int replica = Integer.parseInt(args[13]);
 		options.featureIgnoreThreshold(20);
 		options.convertRealToFactorThreshold(4);
 		char separator = options.getSeparator();
@@ -117,7 +118,20 @@ public class PoisonedLabelExperiment {
 			String finalInferTime = formatterInfer.format((endInfer - startInfer) / 1000d) ;
 
 			System.out.println("\tRF auc on test data is " + auc);
-			wr.write(datasetName + "\t" + poisonLevel + "\t" + auc + "\t" + bias + "\t" + logloss + "\t" + System.currentTimeMillis() + "\t" + finalTrainTime + "\t" + finalInferTime +"\r\n");
+			wr.write("FullTree" + "\t" + replica  + "\t" + datasetName + "\t" + poisonLevel + "\t" + auc + "\t" + bias + "\t" + logloss + "\t" + System.currentTimeMillis() + "\t" + finalTrainTime + "\t" + finalInferTime + "\t" + numTree + "\r\n");
+
+			// evaluation for random subtrees
+			for (int numberOfTrees : new int[]{15, 30 , 60}) {
+				List randomSubTreesEvaluations = rf.evaluateRandomSubTree(test,numberOfTrees);
+				MetricComputer metricComputerSubTrees = new MetricComputer();
+				double aucSubTrees = metricComputerSubTrees.computeAUC(randomSubTreesEvaluations);
+				double biasSubTrees = metricComputerSubTrees.computeBias(randomSubTreesEvaluations);
+				double loglossSubTrees = metricComputerSubTrees.computeLogLoss(randomSubTreesEvaluations);
+				wr.write("RandomSubTree" + "\t" + replica  + "\t" + datasetName + "\t" + poisonLevel + "\t" + aucSubTrees + "\t" + biasSubTrees + "\t" + loglossSubTrees + "\t" + System.currentTimeMillis() + "\t" + finalTrainTime + "\t" + finalInferTime + "\t" + numberOfTrees +"\r\n");
+			}
+
+
+
 
 			List<DecisionTree> decisionTrees = rf.getDecisionTrees();
 			GraphExtractor extractor = new GraphExtractor(decisionTrees.get(0));

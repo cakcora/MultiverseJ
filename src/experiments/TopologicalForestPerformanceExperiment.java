@@ -100,6 +100,8 @@ seed
         dataset.setFeatureNames(csvLoader.getFeatureNames());
         dataset.setFeatureParents(csvLoader.getFeatureMap());
 
+        // redundant code -- the rf is not used anywhere
+        //TODO: Remove this section
         Random random = new Random(151);
         RandomForest rf = new RandomForest(random);
         rf.setNumTrees(300);
